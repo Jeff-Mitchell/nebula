@@ -1,8 +1,8 @@
 from nebula.core.utils.locker import Locker
 from nebula.utils import logging
 import asyncio
-from nebula.core.situationalawareness.awareness.samoduleagent import SAModuleAgent
-from nebula.core.situationalawareness.awareness.sacommand import SACommand
+from nebula.core.situationalawareness.awareness.sautils.samoduleagent import SAModuleAgent
+from nebula.core.situationalawareness.awareness.sautils.sacommand import SACommand
 from nebula.core.nebulaevents import NodeEvent, RoundEndEvent, AggregationEvent
 from collections import defaultdict
 from typing import Type

@@ -1,5 +1,5 @@
 from abc import abstractmethod, ABC
-from nebula.core.situationalawareness.awareness.sacommand import SACommand
+from nebula.core.situationalawareness.awareness.sautils.sacommand import SACommand
 
 class SAModuleAgent(ABC):
 

@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from nebula.core.situationalawareness.awareness.samoduleagent import SAModuleAgent
+from nebula.core.situationalawareness.awareness.sautils.samoduleagent import SAModuleAgent
 
 class TrainingPolicy(SAModuleAgent):
     

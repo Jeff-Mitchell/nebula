@@ -7,7 +7,7 @@ import logging
 from nebula.core.eventmanager import EventManager
 from nebula.core.nebulaevents import AggregationEvent, UpdateNeighborEvent, RoundEndEvent
 from nebula.core.situationalawareness.awareness.suggestionbuffer import SuggestionBuffer
-from nebula.core.situationalawareness.awareness.sacommand import SACommand, SACommandAction, SACommandPRIO, factory_sa_command
+from nebula.core.situationalawareness.awareness.sautils.sacommand import SACommand, SACommandAction, SACommandPRIO, factory_sa_command
 from nebula.core.network.communications import CommunicationsManager
 import math
 

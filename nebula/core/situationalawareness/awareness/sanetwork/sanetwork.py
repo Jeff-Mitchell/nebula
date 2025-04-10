@@ -9,8 +9,8 @@ from nebula.core.eventmanager import EventManager
 from nebula.core.nebulaevents import NodeFoundEvent, UpdateNeighborEvent, ExperimentFinishEvent, RoundEndEvent
 from nebula.core.network.communications import CommunicationsManager
 from nebula.core.situationalawareness.awareness.samodule import SAMComponent
-from nebula.core.situationalawareness.awareness.samoduleagent import SAModuleAgent
-from nebula.core.situationalawareness.awareness.sacommand import SACommand, SACommandAction, SACommandPRIO, SACommandState, factory_sa_command
+from nebula.core.situationalawareness.awareness.sautils.samoduleagent import SAModuleAgent
+from nebula.core.situationalawareness.awareness.sautils.sacommand import SACommand, SACommandAction, SACommandPRIO, SACommandState, factory_sa_command
 from nebula.core.situationalawareness.awareness.suggestionbuffer import SuggestionBuffer
 
 from typing import TYPE_CHECKING
@@ -20,6 +20,9 @@ if TYPE_CHECKING:
 RESTRUCTURE_COOLDOWN = 5
 
 class SANetwork(SAMComponent):
+    
+    NEIGHBOR_VERIFICATION_TIMEOUT = 30
+    
     def __init__(
         self,
         sam: "SAModule",
@@ -225,6 +228,14 @@ class SANetwork(SAMComponent):
         for n in neighbors:
             await self.cm.disconnect(n, mutual_disconnection=False, forced=True)
 
+    async def verify_neighbors_stablished(self, nodes: set):
+        await asyncio.sleep(self.NEIGHBOR_VERIFICATION_TIMEOUT)
+        nodes_to_forget = nodes.copy()
+        neighbors = self.np.get_nodes_known(neighbors_only=True)
+        if neighbors:
+            nodes_to_forget.difference_update(neighbors)
+        self.forget_nodes(nodes_to_forget)
+
     async def forget_nodes(self, nodes_to_forget):
         self.np.forget_nodes(nodes_to_forget)    
         
@@ -279,8 +290,9 @@ class SANetworkAgent(SAModuleAgent):
             await self.suggest_action(sac)
             await self.notify_all_suggestions_done(RoundEndEvent)
             sa_command_state = await sac.get_state_future()
-            #TODO en este caso se ha tratado de hacer conexiones con los nodos conocidos en el caso de haberlos,
-            # habría que lanzar una tarea que los borre en el caso de no realizarse la conexión a ellos
+            if sa_command_state == SACommandState.EXECUTED:
+                (nodes_to_forget,) = args
+                asyncio.create_task(self._san.verify_neighbors_stablished(nodes_to_forget))
         elif saca == SACommandAction.RECONNECT:
             sac = factory_sa_command(
                 "connectivity",

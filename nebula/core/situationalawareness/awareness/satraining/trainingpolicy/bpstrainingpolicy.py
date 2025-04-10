@@ -1,6 +1,6 @@
 from nebula.core.situationalawareness.awareness.satraining.trainingpolicy.trainingpolicy import TrainingPolicy
 from nebula.core.situationalawareness.awareness.suggestionbuffer import SuggestionBuffer
-from nebula.core.situationalawareness.awareness.sacommand import SACommand, factory_sa_command, SACommandAction, SACommandPRIO
+from nebula.core.situationalawareness.awareness.sautils.sacommand import SACommand, factory_sa_command, SACommandAction, SACommandPRIO
 from nebula.core.nebulaevents import RoundEndEvent
 
 class BPSTrainingPolicy(TrainingPolicy):

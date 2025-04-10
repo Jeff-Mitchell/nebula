@@ -3,12 +3,13 @@ import asyncio
 import logging
 from nebula.addons.functions import print_msg_box
 from nebula.core.situationalawareness.awareness.suggestionbuffer import SuggestionBuffer
-from nebula.core.situationalawareness.awareness.sacommand import SACommand
+from nebula.core.situationalawareness.awareness.sautils.sacommand import SACommand
 from nebula.core.utils.locker import Locker
 from nebula.core.nebulaevents import RoundEndEvent
 from nebula.core.eventmanager import EventManager
 from nebula.core.nebulaevents import RoundEndEvent, AggregationEvent
 from nebula.core.network.communications import CommunicationsManager
+from nebula.core.situationalawareness.awareness.sautils.sasystemmonitor import SystemMonitor
 
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
@@ -48,6 +49,7 @@ class SAModule:
         self._suggestion_buffer = SuggestionBuffer(self._arbitrator_notification, verbose=True)
         self._communciation_manager = CommunicationsManager.get_instance()
         self._verbose = verbose
+        self._sys_monitor = SystemMonitor()
 
     @property
     def nm(self):
@@ -78,7 +80,7 @@ class SAModule:
         await self.sat.init()
         await EventManager.get_instance().subscribe_node_event(RoundEndEvent, self._process_round_end_event)
         await EventManager.get_instance().subscribe_node_event(AggregationEvent, self._process_aggregation_event)
-
+        
     def is_additional_participant(self):
         return self.nm.is_additional_participant()
 
@@ -127,10 +129,10 @@ class SAModule:
         # Execute SACommand selected
         for cmd in valid_commands:
             if cmd.is_parallelizable():
-                if self._verbose: logging.info(f"going to execute parallelizable action: {cmd.get_action()}")
+                if self._verbose: logging.info(f"going to execute parallelizable action: {cmd.get_action()} made by: {await cmd.get_owner()}")
                 asyncio.create_task(cmd.execute())
             else:
-                if self._verbose: logging.info(f"going to execute action: {cmd.get_action()}")
+                if self._verbose: logging.info(f"going to execute action: {cmd.get_action()} made by: {await cmd.get_owner()}")
                 await cmd.execute()
 
     async def _process_aggregation_event(self, age : AggregationEvent):

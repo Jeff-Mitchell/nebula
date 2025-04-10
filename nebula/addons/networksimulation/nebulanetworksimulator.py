@@ -64,37 +64,7 @@ class NebulaNS(NetworkSimulator):
             logging.exception(f"📍  Connection {addr} not found")
         except Exception:
             logging.exception("📍  Error changing connections based on distance")    
-        
-    # async def _change_network_conditions_based_on_distances(self):
-    #     grace_time = self._cm.config.participant["mobility_args"]["grace_time_mobility"]
-    #     if self._verbose: logging.info(f"Waiting {grace_time}s to start applying network conditions based on distances between devices")
-    #     await asyncio.sleep(grace_time)
-        
-    #     while self._running:
-    #         await asyncio.sleep(self._refresh_interval)
-    #         if self._verbose: logging.info("Refresh | conditions based on distances...")
-    #         current_connections = await self._cm.get_addrs_current_connections()
-    #         try:
-    #             for addr in current_connections:
-    #                 distance = self._cm.connections[addr].get_neighbor_distance()
-    #                 if distance is None:
-    #                     # If the distance is not found, we skip the node
-    #                     continue
-    #                 conditions = await self._calculate_network_conditions(distance)
-    #                 # Only update the network conditions if they have changed
-    #                 if (addr not in self._current_network_conditions or self._current_network_conditions[addr] != conditions):
-    #                     addr_ip = addr.split(":")[0]
-    #                     self._set_network_condition_for_addr(self._node_interface, addr_ip, conditions["bandwidth"], conditions["delay"])
-    #                     self._set_network_condition_for_multicast(self._node_interface, addr_ip, self.IP_MULTICAST, conditions["bandwidth"], conditions["delay"])
-    #                     async with self._network_conditions_lock:
-    #                         self._current_network_conditions[addr] = conditions
-    #                 else:
-    #                     logging.info("network conditions havent changed since last time")
-    #         except KeyError:
-    #             logging.exception(f"📍  Connection {addr} not found")
-    #         except Exception:
-    #             logging.exception("📍  Error changing connections based on distance")
-        
+           
     async def set_thresholds(self, thresholds : dict):
         async with self._network_conditions_lock:
             self._network_conditions = thresholds

@@ -3,7 +3,7 @@ from enum import Enum
 import asyncio
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
-    from nebula.core.situationalawareness.awareness.samoduleagent import SAModuleAgent
+    from nebula.core.situationalawareness.awareness.sautils.samoduleagent import SAModuleAgent
 
 class SACommandType(Enum):
     CONNECTIVITY = "Connectivity"
@@ -19,9 +19,11 @@ class SACommandAction(Enum):
     DISCARD_UPDATE = "discard_update"
 
 class SACommandPRIO(Enum):
+    CRITICAL = 20
     HIGH = 10
     MEDIUM = 5
-    LOW = 1
+    LOW = 3
+    MAINTENANCE = 1
 
 class SACommandState(Enum):
     PENDING = "pending"
