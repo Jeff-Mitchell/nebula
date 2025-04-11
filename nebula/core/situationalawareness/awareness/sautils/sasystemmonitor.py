@@ -3,8 +3,6 @@ from pynvml import nvmlInit, nvmlShutdown, nvmlDeviceGetCount, nvmlDeviceGetHand
 from nebula.core.utils.locker import Locker
 import asyncio
 import platform
-import subprocess
-import logging
 
 class SystemMonitor:
     _instance = None

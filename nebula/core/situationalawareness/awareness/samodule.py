@@ -10,6 +10,7 @@ from nebula.core.eventmanager import EventManager
 from nebula.core.nebulaevents import RoundEndEvent, AggregationEvent
 from nebula.core.network.communications import CommunicationsManager
 from nebula.core.situationalawareness.awareness.sautils.sasystemmonitor import SystemMonitor
+from nebula.core.situationalawareness.awareness.arbitatrionpolicies.arbitatrionpolicy import factory_arbitatrion_policy
 
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
@@ -48,8 +49,10 @@ class SAModule:
         self._arbitrator_notification = asyncio.Event()
         self._suggestion_buffer = SuggestionBuffer(self._arbitrator_notification, verbose=True)
         self._communciation_manager = CommunicationsManager.get_instance()
-        self._verbose = verbose
         self._sys_monitor = SystemMonitor()
+        self._arbitatrion_policy = factory_arbitatrion_policy("sad", True)
+        self._verbose = verbose
+        
 
     @property
     def nm(self):
@@ -70,6 +73,10 @@ class SAModule:
     @property
     def sb(self):
         return self._suggestion_buffer
+    
+    @property
+    def ab(self):
+        return self._arbitatrion_policy
     
     async def init(self):
         from nebula.core.situationalawareness.awareness.sanetwork.sanetwork import SANetwork
@@ -116,9 +123,6 @@ class SAModule:
                                                             #         ARBITRATION         #
                                                             ###############################
     """
-    
-    async def _tie_breaker(c1: SACommand, c2: SACommand):
-        return True
     
     async def _process_round_end_event(self, ree : RoundEndEvent):
         logging.info("🔄 Arbitration | Round End Event...")
@@ -169,7 +173,7 @@ class SAModule:
                     if cmd.got_higher_priority_than(other.get_prio()):
                         to_remove.append(other)
                     elif cmd.get_prio() == other.get_prio():
-                        if await self._tie_breaker(cmd, other):
+                        if await self.ab.tie_break(cmd, other):
                             to_remove.append(other)
                         else:
                             has_conflict = True

@@ -193,7 +193,7 @@ class SANetwork(SAMComponent):
     async def reconnect_to_federation(self):
         self._restructure_process_lock.acquire()
         await self.cm.clear_restrictions()
-        await asyncio.sleep(120)
+        await asyncio.sleep(120) #TODO remove
         # If we got some refs, try to reconnect to them
         if len(self.np.get_nodes_known()) > 0:
             if self._verbose: logging.info("Reconnecting | Addrs availables")
@@ -269,7 +269,7 @@ class SANetworkAgent(SAModuleAgent):
                 SACommandAction.MAINTAIN_CONNECTIONS,
                 self, 
                 "",
-                SACommandPRIO.HIGH,
+                SACommandPRIO.MEDIUM,
                 False,
                 function,
                 None
@@ -282,7 +282,7 @@ class SANetworkAgent(SAModuleAgent):
                 SACommandAction.SEARCH_CONNECTIONS,
                 self, 
                 "",
-                SACommandPRIO.HIGH,
+                SACommandPRIO.MEDIUM,
                 True,
                 function,
                 *args

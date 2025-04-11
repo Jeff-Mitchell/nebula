@@ -17,7 +17,7 @@ class QDSTrainingPolicy(TrainingPolicy):
     SIMILARITY_THRESHOLD = 0.73
     INACTIVE_THRESHOLD = 3
     GRACE_ROUNDS = 0
-    CHECK_COOLDOWN = 1
+    CHECK_COOLDOWN = 10000
 
     def __init__(self, config : dict):
         self._addr = config["addr"]
@@ -118,6 +118,7 @@ class QDSTrainingPolicy(TrainingPolicy):
                 sorted_redundant_nodes = sorted(redundant_nodes, key=lambda x: x[1])
                 n_discarded = math.ceil((len(redundant_nodes)/2))
                 discard_nodes = sorted_redundant_nodes[:n_discarded]
+                discard_nodes = [node for (node,_) in discard_nodes]
                 if self._verbose: logging.info(f"Discarded redundant nodes: {discard_nodes}")
                 result = result.union(discard_nodes)
         else:
