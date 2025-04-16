@@ -111,6 +111,18 @@ message LinkMessage {
     string addrs = 2;
 }
 
+message ReputationMessage {
+    enum Action {
+      SHARE_REPUTATION = 0;     // Message to tell reputation state to a node
+      START_TRIAL = 1;          // Message to start a trial 
+      SUBMIT_VERDICT = 2;       // Message to send back the verdict for a trial
+    }
+    Action action = 1;
+    string reputation = 2;
+    string defendant = 3;
+    string verdict = 4;
+}
+
 // Response transmits the outcome of a requested operation, including any errors.
 message ResponseMessage {
   string response = 1;      // Outcome of the requested operation.

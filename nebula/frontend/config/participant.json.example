@@ -63,7 +63,6 @@
     "mobility": false,
     "mobility_type": "topology",
     "topology_type": "",
-    "push_strategy": "slow",
     "radius_federation": 1000,
     "scheme_mobility": "random",
     "round_frequency": 1,
@@ -146,6 +145,16 @@
     "propagate_model_interval": 0,
     "propagation_early_stop": 3,
     "history_size": 20
+  },
+  "situational_awareness": {
+    "sa_components": {
+      "sanetwork": true
+    },
+    "sanetwork": {
+      "strict_topology": true
+    }
+    "arbitatrion_policy": "sap",
+    "model_handler": "std"
   },
   "misc_args": {
     "grace_time_connection": 10,

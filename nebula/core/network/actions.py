@@ -44,6 +44,11 @@ class OfferAction(Enum):
 class LinkAction(Enum):
     CONNECT_TO = nebula_pb2.LinkMessage.Action.CONNECT_TO
     DISCONNECT_FROM = nebula_pb2.LinkMessage.Action.DISCONNECT_FROM
+    
+class ReputationAction(Enum):
+    SHARE_REPUTATION = nebula_pb2.LinkMessage.Action.SHARE_REPUTATION     
+    START_TRIAL = nebula_pb2.LinkMessage.Action.START_TRIAL          
+    SUBMIT_VERDICT = nebula_pb2.LinkMessage.Action.SUBMIT_VERDICT
 
 
 ACTION_CLASSES = {
@@ -54,6 +59,7 @@ ACTION_CLASSES = {
     "discover": DiscoverAction,
     "offer": OfferAction,
     "link": LinkAction,
+    "reputation": ReputationAction,
 }
 
 

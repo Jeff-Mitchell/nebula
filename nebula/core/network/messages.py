@@ -63,7 +63,13 @@ class MessagesManager:
                     "weight": 1,
                 },
             },
-            "reputation": {"parameters": ["reputation"], "defaults": {}},
+            "reputation": {
+                "parameters": ["action", "reputation", "defendant", "verdict"], 
+                "defaults": {
+                    "defendant": "",
+                    "verdict": ""
+                }
+            },
             "discover": {"parameters": ["action"], "defaults": {}},
             "link": {"parameters": ["action", "addrs"], "defaults": {}},
             # Add additional message types here

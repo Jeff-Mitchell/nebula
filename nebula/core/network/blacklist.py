@@ -2,6 +2,8 @@ import asyncio
 import logging
 import time
 from nebula.core.utils.locker import Locker
+from nebula.core.eventmanager import EventManager
+from nebula.core.nebulaevents import NodeBlacklistedEvent
 
 BLACKLIST_EXPIRATION_TIME = 240
 RECENTLY_DISCONNECTED_EXPIRE_TIME = 60
@@ -44,6 +46,8 @@ class BlackList:
             self._running = True
             asyncio.create_task(self._start_blacklist_cleaner())
         await self._blacklisted_nodes_lock.release_async()
+        nbe = NodeBlacklistedEvent(addr, blacklisted=True)
+        asyncio.create_task(EventManager.get_instance().publish_node_event(nbe))
              
     async def get_blacklist(self) -> set:
         bl = None
@@ -117,6 +121,8 @@ class BlackList:
         self._recently_disconnected.add(addr)
         self._recently_disconnected_lock.release_async()
         asyncio.create_task(self._remove_recently_disc(addr))
+        nbe = NodeBlacklistedEvent(addr)
+        asyncio.create_task(EventManager.get_instance().publish_node_event(nbe))
         
     async def clear_recently_disconected(self):
         self._recently_disconnected_lock.acquire_async()

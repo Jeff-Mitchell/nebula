@@ -159,6 +159,20 @@ class UpdateNeighborEvent(NodeEvent):
     
     def is_joining_federation(self):
         return self._joining_federation
+   
+class NodeBlacklistedEvent(NodeEvent):
+    def __init__(self, node_addr, blacklisted: bool = False):
+        self._node_addr = node_addr
+        self._blacklisted = blacklisted
+        
+    def __str__(self):
+        return f"Node addr: {self._node_addr} | Blacklisted: {self._blacklisted} | Recently disconnected: {not self._blacklisted}"
+    
+    async def get_event_data(self) -> tuple[str, bool]:
+        return (self._node_addr, self._blacklisted)
+    
+    async def is_concurrent(self):
+        return True  
     
 class NodeFoundEvent(NodeEvent):
     def __init__(self, node_addr):
