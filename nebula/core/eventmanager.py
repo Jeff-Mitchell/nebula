@@ -1,13 +1,10 @@
 import asyncio
 import inspect
 import logging
-from collections import defaultdict
-from functools import wraps
-from abc import ABC, abstractmethod
 from nebula.core.network.messages import MessageEvent
 from nebula.core.utils.locker import Locker
 from nebula.core.nebulaevents import AddonEvent, NodeEvent
-from typing import Callable
+from typing import Callable, Union
 
 class EventManager:
     _instance = None
@@ -31,6 +28,8 @@ class EventManager:
         self._addons_event_lock = Locker("addons_event_lock", async_lock=True)
         self._node_events_subs: dict[type, list] = {}
         self._node_events_lock = Locker("node_events_lock", async_lock=True)
+        self._global_message_subscribers: list[Callable] = []
+        self._global_message_subscribers_lock = Locker("global_message_subscribers_lock", async_lock=True)
         self._verbose = verbose
         self._initialized = True  # Marca que ya se inicializó
 
@@ -41,8 +40,14 @@ class EventManager:
             EventManager(verbose=verbose)
         return EventManager._instance
 
-    async def subscribe(self, event_type: tuple[str, str], callback: Callable):
-        """Register a callback for a specific event type."""
+    async def subscribe(self, event_type: Union[tuple[str, str], None], callback: Callable):
+        """Register a callback for a message event."""
+        if not event_type:
+                async with self._global_message_subscribers_lock:
+                    self._global_message_subscribers.append(callback)
+                    logging.info(f"EventManager | Subscribed callback for all message events: {event_type}")
+                    return
+                
         async with self._message_events_lock:
             if event_type not in self._subscribers:
                 self._subscribers[event_type] = []
@@ -66,6 +71,20 @@ class EventManager:
                     await callback(message_event.source, message_event.message)
                 else:
                     callback(message_event.source, message_event.message)   
+            except Exception as e:
+                logging.exception(f"EventManager | Error in callback for event {event_type}: {e}")
+        
+        # Global callbacks (callbacks for all message events)        
+        async with self._global_message_subscribers_lock:
+            global_callbacks = self._global_message_subscribers.copy()
+        
+        for global_cb in global_callbacks:
+            try:
+                if self._verbose: logging.info(f"EventManager | Triggering callback for event: {event_type}, from source: {message_event.source}")
+                if asyncio.iscoroutinefunction(callback) or inspect.iscoroutine(callback):
+                    await global_cb(message_event.source, message_event.message)
+                else:
+                    global_cb(message_event.source, message_event.message)   
             except Exception as e:
                 logging.exception(f"EventManager | Error in callback for event {event_type}: {e}")
                  

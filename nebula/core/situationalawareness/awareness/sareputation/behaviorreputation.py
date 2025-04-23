@@ -5,7 +5,13 @@ from collections import defaultdict
 from nebula.core.eventmanager import EventManager
 from nebula.core.nebulaevents import UpdateReceivedEvent, AggregationEvent, RoundStartEvent, UpdateNeighborEvent, NodeBlacklistedEvent
 import time
+from enum import Enum
 import asyncio
+
+class ThreatCategory(Enum):
+    FLOODING = "flooding"
+    INACTIVITY = "inactivity"
+    BAD_BEHAVIOR = "bad behavior"
 
 class TimeStamp():
         def __init__(self, time_received = None, time_since_last_event = None):
@@ -39,6 +45,7 @@ class TimeStamp():
 class BehaviorReputation():
     MAX_HISTORIC_SIZE = 10
     SCORE_THRESHOLD = 0.5       # Threshold to detect posible malicious nodes
+    MAX_MESSAGES_PER_ROUND = 15 # Maximun number os messages allowed for each node
     INACTIVE_THRESHOLD = 3
     W_UPDATE_FREQ = 0.25        # Update frequency weight
     W_UPDATE_LATENCY = 0.15     # update latency weight
@@ -48,23 +55,26 @@ class BehaviorReputation():
     def __init__(self, config):
         self._addr = config["addr"]
         self._verbose = config["verbose"]
-        self._nodes : dict[str, tuple[deque, int, deque[TimeStamp],  deque[TimeStamp]]] = {}
+        self._nodes : dict[str, tuple[deque, int, deque[TimeStamp],  deque[TimeStamp]]] = {}                                # Updates time registration
         self._nodes_lock = Locker(name="nodes_lock", async_lock=True)
-        self._historical_blacklist_activity: dict[str, tuple[int,int]] = defaultdict(tuple)
+        self._historical_blacklist_activity: dict[str, tuple[int,int]] = defaultdict(tuple)                                 # Blacklist activity 
         self._historical_blacklist_activity_lock = Locker(name="historical_blacklist_activity_lock", async_lock=True)
-        self._historical_behavior_scores: dict[str, deque[int]] = defaultdict(deque)
+        self._historical_behavior_scores: dict[str, deque[int]] = defaultdict(deque)                                        # Scores registration
+        self._messages_received_per_round: dict[str, int] = defaultdict(int)
+        self._messages_received_per_round_lock = Locker(name="messages_received_per_round_lock", async_lock=True)
         self._internal_rounds_done = -1
         self._last_aggregation_time = None
         self._suspicious_nodes = set()
+        self._suspicious_nodes_lock = Locker(name="suspicious_nodes_lock", async_lock=True)
         
     @property
     def hba(self):
-        """historical_blacklist_activity"""
+        """historical blacklist activity"""
         return self._historical_blacklist_activity
     
     @property
     def hbs(self):
-        """historical_behavior_scores"""
+        """historical behavior scores"""
         return self._historical_behavior_scores
     
     @property
@@ -72,7 +82,7 @@ class BehaviorReputation():
         return self._historical_blacklist_activity_lock    
         
     def __str__(self):
-        return "BehaviorReputation"
+        return "Behavior Reputation"
 
     async def init(self, config):
         async with self._nodes_lock:
@@ -96,6 +106,7 @@ class BehaviorReputation():
         await EventManager.get_instance().subscribe_node_event(AggregationEvent, self._process_aggregation_event)
         await EventManager.get_instance().subscribe_node_event(UpdateNeighborEvent, self._update_neighbors)
         await EventManager.get_instance().subscribe_node_event(NodeBlacklistedEvent, self._process_node_blacklisted_event)
+        await EventManager.get_instance().subscribe(None, self._process_messages_received)
 
     async def _get_nodes(self):
         async with self._nodes_lock:
@@ -113,6 +124,9 @@ class BehaviorReputation():
             (_, start_time) = await rse.get_event_data()
             self._last_aggregation_time = start_time
         self._internal_rounds_done += 1
+
+        async with self._messages_received_per_round_lock:
+            self._messages_received_per_round.clear()
 
     async def _process_aggregation_event(self, are: AggregationEvent):
         self._last_aggregation_time = time.time()
@@ -177,6 +191,16 @@ class BehaviorReputation():
             else:
                 times_rd += 1
             self.hba[node_addr] = (times_bl, times_rd)
+
+    async def _process_messages_received(self, source, message):
+        async with self._messages_received_per_round_lock:
+            n_messages = self._messages_received_per_round[source]
+            n_messages += 1
+            if n_messages >= self.MAX_MESSAGES_PER_ROUND:
+                async with self._suspicious_nodes_lock:
+                    self._suspicious_nodes.union({(source, ThreatCategory.FLOODING)})
+            self._messages_received_per_round[source] = n_messages
+            
 
     async def _evaluate(self):
         if self._verbose: logging.info("Evaluating Behavior Reputation, generating score...")
@@ -248,7 +272,7 @@ class BehaviorReputation():
         
         self._update_behavior_scores(scores)
         
-        # Order nodes
+        # Final Step
         sorted_nodes = sorted(scores.items(), key=lambda x: x[1], reverse=True)
         nodes_below_th = [x for x in sorted_nodes if x[1] < self.SCORE_THRESHOLD]
 
@@ -259,7 +283,8 @@ class BehaviorReputation():
         if self._verbose: logging.info(f"Nodes below threshold: {nodes_below_th}")
         
         # Update suspicious nodes
-        self._suspicious_nodes.union({n for n in nodes_below_th}) 
+        async with self._suspicious_nodes_lock:
+            self._suspicious_nodes.union({(n, ThreatCategory.BAD_BEHAVIOR) for n in nodes_below_th}) 
                                        
     
     
