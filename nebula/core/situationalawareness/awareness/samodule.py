@@ -2,10 +2,11 @@ from abc import abstractmethod, ABC
 import asyncio
 import logging
 from nebula.addons.functions import print_msg_box
+import importlib.util
+import os
 from nebula.core.situationalawareness.awareness.suggestionbuffer import SuggestionBuffer
 from nebula.core.situationalawareness.awareness.sautils.sacommand import SACommand
 from nebula.core.utils.locker import Locker
-from nebula.core.nebulaevents import RoundEndEvent
 from nebula.core.eventmanager import EventManager
 from nebula.core.nebulaevents import RoundEndEvent, AggregationEvent
 from nebula.core.network.communications import CommunicationsManager
@@ -26,9 +27,11 @@ class SAMComponent(ABC):
 
 
 class SAModule:
+    MODULE_PATH = "nebula/nebula/core/situationalawareness/awareness"
+
     def __init__(
         self,
-        nodemanager,
+        config,
         addr,
         topology,
         verbose = False,
@@ -39,6 +42,7 @@ class SAModule:
             title="Situational Awareness module",
         )
         logging.info("🌐  Initializing SAModule")
+        self._config = config
         self._addr = addr
         self._topology = topology
         self._node_manager: NodeManager = nodemanager
@@ -51,31 +55,26 @@ class SAModule:
         self._communciation_manager = CommunicationsManager.get_instance()
         self._sys_monitor = SystemMonitor()
         self._arbitatrion_policy = factory_arbitatrion_policy("sad", True)
+        self._sa_components: dict[str, SAMComponent] = {}
         self._verbose = verbose
         
-
-    @property
-    def nm(self):
-        return self._node_manager
-
     @property
     def san(self):
+        """Situational Awareness Network"""
         return self._situational_awareness_network
     
-    @property
-    def sat(self):
-        return self._situational_awareness_training
-
     @property
     def cm(self):
         return self._communciation_manager
     
     @property
     def sb(self):
+        """Suggestion Buffer"""
         return self._suggestion_buffer
     
     @property
     def ab(self):
+        """Arbitatrion Policy"""
         return self._arbitatrion_policy
     
     async def init(self):
@@ -84,12 +83,11 @@ class SAModule:
         self._situational_awareness_network = SANetwork(self, self._addr, self._topology, verbose=True)
         self._situational_awareness_training = SATraining(self, self._addr, "qds", "fastreboot", verbose=True)
         await self.san.init()
-        await self.sat.init()
         await EventManager.get_instance().subscribe_node_event(RoundEndEvent, self._process_round_end_event)
         await EventManager.get_instance().subscribe_node_event(AggregationEvent, self._process_aggregation_event)
         
     def is_additional_participant(self):
-        return self.nm.is_additional_participant()
+        return self._config.participant["mobility_args"]["additional_node"]["status"]
 
     """                                                     ###############################
                                                             #    REESTRUCTURE TOPOLOGY    #
@@ -107,14 +105,8 @@ class SAModule:
     def get_nodes_known(self, neighbors_too=False, neighbors_only=False):
         return self.san.get_nodes_known(neighbors_too, neighbors_only)
 
-    async def neighbors_left(self):
-        return await self.san.neighbors_left()
-
     def accept_connection(self, source, joining=False):
         return self.san.accept_connection(source, joining)
-
-    def need_more_neighbors(self):
-        return self.san.need_more_neighbors()
 
     def get_actions(self):
         return self.san.get_actions()
@@ -190,4 +182,56 @@ class SAModule:
 
         logging.info("Arbitatrion finished")
         return valid_commands
+    
+    """                                                     ###############################
+                                                            #    SA COMPONENT LOADING     #
+                                                            ###############################
+    """
+
+    async def loading_sa_components(self):
+        """Dynamically loads the SA Components defined in the JSON configuration."""
+        sa_section = self._config.participant["situational_awareness"]
+        components: dict = sa_section["sa_components"]
+
+        for component_name, is_enabled in components.items():
+            if is_enabled:
+                component_config = sa_section[component_name]
+                class_name = "SA" + component_name[2:].capitalize()  
+                module_path = os.path.join(self.MODULE_PATH, component_name)
+                module_file = os.path.join(module_path, f"{component_name}.py")
+
+                if os.path.exists(module_file):
+                    module = self._load_component(class_name, module_file, component_config)
+                    if module:
+                        self._sa_components[component_name] = module
+                else:
+                    logging.error(f"⚠️ SA Component {component_name} not found on {module_file}")
+
+        await self._initialize_sa_components()
+        await self._set_minimal_requirements()
+
+    async def _load_component(self, class_name, component_file, config):
+        """Loads a SA Component dynamically and initializes it with its configuration."""
+        spec = importlib.util.spec_from_file_location(class_name, component_file)
+        if spec and spec.loader:
+            component = importlib.util.module_from_spec(spec)
+            spec.loader.exec_module(component)
+            if hasattr(component, class_name):                     # Verify if class exists
+                return getattr(component, class_name)(config)      # Create and instance using component config
+            else:
+                logging.error(f"⚠️ Cannot create {class_name} SA Component, class not found on {component_file}")
+        return None
+
+    async def _initialize_sa_components(self):
+        if self._sa_components:
+            for sacomp in self._sa_components.values():
+                await sacomp.init()
+
+    async def _set_minimal_requirements(self):
+        if self._sa_components:
+            self._situational_awareness_network = self._sa_components["sanetwork"]
+        else:
+            raise ValueError("SA Network not found")
+
+
 

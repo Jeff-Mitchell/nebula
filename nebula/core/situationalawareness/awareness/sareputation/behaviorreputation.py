@@ -8,7 +8,7 @@ import time
 from enum import Enum
 import asyncio
 
-class ThreatCategory(Enum):
+class ThreatCategoryBehavior(Enum):
     FLOODING = "flooding"
     INACTIVITY = "inactivity"
     BAD_BEHAVIOR = "bad behavior"
@@ -46,6 +46,7 @@ class BehaviorReputation():
     MAX_HISTORIC_SIZE = 10
     SCORE_THRESHOLD = 0.5       # Threshold to detect posible malicious nodes
     MAX_MESSAGES_PER_ROUND = 15 # Maximun number os messages allowed for each node
+    MAX_INACTIVITY_ALLOWED = 3  # Max number of consecutive inactive rounds
     INACTIVE_THRESHOLD = 3
     W_UPDATE_FREQ = 0.25        # Update frequency weight
     W_UPDATE_LATENCY = 0.15     # update latency weight
@@ -55,6 +56,10 @@ class BehaviorReputation():
     def __init__(self, config):
         self._addr = config["addr"]
         self._verbose = config["verbose"]
+        # historic      - register of updates per round
+        # inactivity    - consecutive rounds inactivity
+        # t_between_upd - time between updates
+        # t_last_agg    - time waited since last aggregation until receive update
         self._nodes : dict[str, tuple[deque, int, deque[TimeStamp],  deque[TimeStamp]]] = {}                                # Updates time registration
         self._nodes_lock = Locker(name="nodes_lock", async_lock=True)
         self._historical_blacklist_activity: dict[str, tuple[int,int]] = defaultdict(tuple)                                 # Blacklist activity 
@@ -107,6 +112,17 @@ class BehaviorReputation():
         await EventManager.get_instance().subscribe_node_event(UpdateNeighborEvent, self._update_neighbors)
         await EventManager.get_instance().subscribe_node_event(NodeBlacklistedEvent, self._process_node_blacklisted_event)
         await EventManager.get_instance().subscribe(None, self._process_messages_received)
+
+    async def get_behavior_scores(self, historical=False):
+        if historical:
+            return self.hbs.copy()
+        else:
+            last_scores = {node: scores[-1] for node,scores in self.hbs.items()}
+            return last_scores
+
+    async def get_suspicious_nodes(self):
+        async with self._suspicious_nodes_lock:
+            return self._suspicious_nodes.copy()
 
     async def _get_nodes(self):
         async with self._nodes_lock:
@@ -198,10 +214,9 @@ class BehaviorReputation():
             n_messages += 1
             if n_messages >= self.MAX_MESSAGES_PER_ROUND:
                 async with self._suspicious_nodes_lock:
-                    self._suspicious_nodes.union({(source, ThreatCategory.FLOODING)})
+                    self._suspicious_nodes.union({(source, ThreatCategoryBehavior.FLOODING)})
             self._messages_received_per_round[source] = n_messages
             
-
     async def _evaluate(self):
         if self._verbose: logging.info("Evaluating Behavior Reputation, generating score...")
 
@@ -245,6 +260,14 @@ class BehaviorReputation():
         scores = {}
 
         for node, (history, missed_count, time_between_updts_historic, last_wait_times) in nodes.items():
+
+            # Check inactivity beyond max tolerance
+            if missed_count >= self.MAX_INACTIVITY_ALLOWED:
+                async with self._suspicious_nodes_lock:
+                    self._suspicious_nodes.union(((node, ThreatCategoryBehavior.INACTIVITY)))
+                    scores[node] = 0.0
+                    continue
+
             # 1. Normalized frequency
             updates_received = max((x[1] for x in history if x[0] == self._internal_rounds_done), default=0)
             F_updt_freq = updates_received / max_updates if max_updates > 0 else 0
@@ -284,7 +307,7 @@ class BehaviorReputation():
         
         # Update suspicious nodes
         async with self._suspicious_nodes_lock:
-            self._suspicious_nodes.union({(n, ThreatCategory.BAD_BEHAVIOR) for n in nodes_below_th}) 
+            self._suspicious_nodes.union({(n, ThreatCategoryBehavior.BAD_BEHAVIOR) for n in nodes_below_th}) 
                                        
     
     

@@ -19,6 +19,8 @@ RESTRUCTURE_COOLDOWN = 5
 
 
 class NodeManager:
+    OFFER_TIMEOUT = 5
+
     def __init__(
         self,
         aditional_participant,
@@ -45,13 +47,11 @@ class NodeManager:
         self.pending_confirmation_from_nodes = set()
         self.pending_confirmation_from_nodes_lock = Locker(name="pending_confirmation_from_nodes_lock", async_lock=True)
         self.accept_candidates_lock = Locker(name="accept_candidates_lock")
-        self.recieve_offer_timer = 5
+        self.recieve_offer_timer = self.OFFER_TIMEOUT
         self.discarded_offers_addr_lock = Locker(name="discarded_offers_addr_lock")
         self.discarded_offers_addr = []
-
-        self._desc_done = False #TODO remove
         
-        self._situational_awareness_module = SAModule(self, self.engine.addr, topology, True)
+        self._situational_awareness_module = SAModule(self, self.config, self.engine.addr, topology, True)
         self._verbose = verbose
 
     @property
@@ -72,6 +72,7 @@ class NodeManager:
 
     @property
     def sam(self):
+        """Situational Awareness Module"""
         return self._situational_awareness_module
 
     def is_additional_participant(self):
@@ -227,7 +228,6 @@ class NodeManager:
         connections_stablished = await self.cm.stablish_connection_to_federation(msg_type, addrs_known)
 
         # wait offer
-        #TODO actualizar con la informacion de latencias
         if self._verbose: logging.info(f"Connections stablish after finding federation: {connections_stablished}")
         if connections_stablished:
             if self._verbose: logging.info(f"Waiting: {self.recieve_offer_timer}s to receive offers from federation")
@@ -252,14 +252,12 @@ class NodeManager:
                     await self.cm.send_message(addr, msg)
                     await asyncio.sleep(1)
             except asyncio.CancelledError:
-                await self.update_neighbors(addr, remove=True)
+                upe = UpdateNeighborEvent(addr, removed=True)
+                asyncio.create_task(EventManager.get_instance().publish_node_event(upe))
                 if self._verbose: logging.info("Error during stablishment")
             self.accept_candidates_lock.release()
             self.late_connection_process_lock.release()
             self.candidate_selector.remove_candidates()
-            # if not self._desc_done: #TODO remove
-            #     self._desc_done = True
-            #     asyncio.create_task(self.sam.san.stop_connections_with_federation())
         # if no candidates, repeat process
         else:
             if self._verbose: logging.info("❗️  No Candidates found...")

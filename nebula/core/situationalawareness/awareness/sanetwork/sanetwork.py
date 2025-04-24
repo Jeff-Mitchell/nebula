@@ -49,6 +49,7 @@ class SANetwork(SAMComponent):
         
     @property
     def sam(self):
+        """SA Module"""
         return self._sam    
         
     @property
@@ -57,10 +58,12 @@ class SANetwork(SAMComponent):
         
     @property    
     def np(self):
+        """Neighbor Policy"""
         return self._neighbor_policy
     
     @property
     def sana(self):
+        """SA Network Agent"""
         return self._sa_network_agent
     
     async def init(self):
@@ -146,8 +149,7 @@ class SANetwork(SAMComponent):
         addr, geoloc = await beacon_recieved_event.get_event_data()
         latitude, longitude = geoloc
         nfe = NodeFoundEvent(addr)
-        asyncio.create_task(EventManager.get_instance().publish_node_event(nfe))
-        #logging.info(f"Beacon received SANetwork, source: {addr}, geolocalization: {latitude},{longitude}")        
+        asyncio.create_task(EventManager.get_instance().publish_node_event(nfe))       
         
     """                                                     ###############################
                                                             #    REESTRUCTURE TOPOLOGY    #
@@ -171,7 +173,6 @@ class SANetwork(SAMComponent):
         if not self._restructure_process_lock.locked():
             if not await self.neighbors_left():
                 if self._verbose: logging.info("No Neighbors left | reconnecting with Federation")
-                #await self.reconnect_to_federation()
                 await self.sana.create_and_suggest_action(SACommandAction.RECONNECT, self.reconnect_to_federation, None)
             elif self.np.need_more_neighbors() and self._restructure_available():
                 if self._verbose: logging.info("Insufficient Robustness | Upgrading robustness | Searching for more connections")
@@ -183,7 +184,6 @@ class SANetwork(SAMComponent):
                 else:
                     pass
                 await self.sana.create_and_suggest_action(SACommandAction.SEARCH_CONNECTIONS, self.upgrade_connection_robustness, possible_neighbors)
-                    # asyncio.create_task(self.upgrade_connection_robustness(possible_neighbors))
             else:
                  if self._verbose: logging.info("Sufficient Robustness | no actions required")
                  await self.sana.create_and_suggest_action(SACommandAction.MAINTAIN_CONNECTIONS)
@@ -193,7 +193,6 @@ class SANetwork(SAMComponent):
     async def reconnect_to_federation(self):
         self._restructure_process_lock.acquire()
         await self.cm.clear_restrictions()
-        await asyncio.sleep(120) #TODO remove
         # If we got some refs, try to reconnect to them
         if len(self.np.get_nodes_known()) > 0:
             if self._verbose: logging.info("Reconnecting | Addrs availables")

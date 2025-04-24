@@ -151,8 +151,10 @@
       "sanetwork": true
     },
     "sanetwork": {
-      "strict_topology": true
-    }
+      "addr": "",
+      "strict_topology": true,
+      "verbose": true
+    },
     "arbitatrion_policy": "sap",
     "model_handler": "std"
   },

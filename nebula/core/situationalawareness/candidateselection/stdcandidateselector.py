@@ -20,6 +20,7 @@ class STDandidateSelector(CandidateSelector):
             Select mean number of neighbors
         """
         self.candidates_lock.acquire()
+        #TODO revisar
         mean_neighbors = sum(n for n, _ in self.candidates) / len(self.candidates) if self.candidates else 0
         cdts = self.candidates[:mean_neighbors]
         self.candidates_lock.release()
