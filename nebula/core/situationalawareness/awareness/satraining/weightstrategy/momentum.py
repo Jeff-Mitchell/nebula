@@ -9,7 +9,7 @@ from nebula.core.utils.helper import cosine_metric
 from nebula.core.utils.locker import Locker
 
 if TYPE_CHECKING:
-    from nebula.core.situationalawareness.nodemanager import NodeManager
+    from nebula.core.situationalawareness.discovery.federationconnector import FederationConnector
 
 SimilarityMetricType = Callable[[OrderedDict, OrderedDict, bool], float | None]
 MappingSimilarityType = Callable[[float, float], Annotated[float, "Value in (0, 1]"]]
@@ -28,7 +28,7 @@ MOMENTUM_LEARNING_STEP = 1
 class Momentum:
     def __init__(
         self,
-        node_manager: "NodeManager",
+        node_manager: "FederationConnector",
         nodes,
         dispersion_penalty=True,
         global_priority=GLOBAL_PRIORITY,

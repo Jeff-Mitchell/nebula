@@ -3,8 +3,9 @@ import logging
 from typing import TYPE_CHECKING
 
 from nebula.addons.functions import print_msg_box
-from nebula.core.situationalawareness.candidateselection.candidateselector import factory_CandidateSelector
-from nebula.core.situationalawareness.modelhandlers.modelhandler import factory_ModelHandler
+from nebula.core.situationalawareness.discovery.candidateselection.candidateselector import factory_CandidateSelector
+from nebula.core.situationalawareness.discovery.modelhandlers.modelhandler import factory_ModelHandler
+from nebula.core.situationalawareness.situationalawareness import ISADiscovery, ISAReasoner
 from nebula.core.situationalawareness.awareness.samodule import SAModule
 from nebula.core.utils.locker import Locker
 from nebula.core.eventmanager import EventManager
@@ -18,7 +19,7 @@ if TYPE_CHECKING:
 RESTRUCTURE_COOLDOWN = 5
 
 
-class NodeManager:
+class FederationConnector(ISADiscovery):
     OFFER_TIMEOUT = 5
 
     def __init__(
@@ -441,7 +442,6 @@ class NodeManager:
         addrs = message.addrs
         for addr in addrs.split():
             await self.cm.disconnect(source, mutual_disconnection=False)
-            await self.update_neighbors(addr, remove=True)
                 
 
 

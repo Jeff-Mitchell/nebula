@@ -12,10 +12,7 @@ from nebula.core.nebulaevents import RoundEndEvent, AggregationEvent
 from nebula.core.network.communications import CommunicationsManager
 from nebula.core.situationalawareness.awareness.sautils.sasystemmonitor import SystemMonitor
 from nebula.core.situationalawareness.awareness.arbitatrionpolicies.arbitatrionpolicy import factory_arbitatrion_policy
-
-from typing import TYPE_CHECKING
-if TYPE_CHECKING:
-    from nebula.core.situationalawareness.nodemanager import NodeManager
+from nebula.core.situationalawareness.situationalawareness import ISAReasoner, ISADiscovery
     
 class SAMComponent(ABC):
     @abstractmethod
@@ -26,7 +23,7 @@ class SAMComponent(ABC):
         raise NotImplementedError
 
 
-class SAModule:
+class SAModule(ISAReasoner):
     MODULE_PATH = "nebula/nebula/core/situationalawareness/awareness"
 
     def __init__(
@@ -45,7 +42,6 @@ class SAModule:
         self._config = config
         self._addr = addr
         self._topology = topology
-        self._node_manager: NodeManager = nodemanager
         self._situational_awareness_network = None
         self._situational_awareness_training = None
         self._restructure_process_lock = Locker(name="restructure_process_lock")

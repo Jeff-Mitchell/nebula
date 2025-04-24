@@ -1,7 +1,7 @@
-from nebula.core.situationalawareness.candidateselection.candidateselector import CandidateSelector
+from nebula.core.situationalawareness.discovery.candidateselection.candidateselector import CandidateSelector
 from nebula.core.utils.locker import Locker
 
-class FCCandidateSelector(CandidateSelector):
+class STDandidateSelector(CandidateSelector):
     
     def __init__(self):
         self.candidates = []
@@ -17,10 +17,12 @@ class FCCandidateSelector(CandidateSelector):
       
     def select_candidates(self):
         """
-            In Fully-Connected topology all candidates should be selected
+            Select mean number of neighbors
         """
         self.candidates_lock.acquire()
-        cdts = self.candidates.copy()
+        #TODO revisar
+        mean_neighbors = sum(n for n, _ in self.candidates) / len(self.candidates) if self.candidates else 0
+        cdts = self.candidates[:mean_neighbors]
         self.candidates_lock.release()
         return cdts
     

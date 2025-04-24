@@ -19,7 +19,8 @@ from nebula.core.nebulaevents import (
     UpdateReceivedEvent,
 )
 from nebula.core.network.communications import CommunicationsManager
-from nebula.core.situationalawareness.nodemanager import NodeManager
+from nebula.core.situationalawareness.discovery.federationconnector import FederationConnector
+from nebula.core.situationalawareness.situationalawareness import SituationalAwareness
 from nebula.core.utils.locker import Locker
 
 logging.getLogger("requests").setLevel(logging.WARNING)
@@ -143,8 +144,6 @@ class Engine:
         self.config.reload_config_file()
 
         self._cm = CommunicationsManager(engine=self)
-        # = CommunicationsManager.get_instance()
-        # Set the communication manager in the model (send messages from there)
 
         self._reporter = Reporter(config=self.config, trainer=self.trainer)
 
@@ -162,7 +161,7 @@ class Engine:
             topology = self.config.participant["mobility_args"]["topology_type"]
             topology = topology.lower()
             model_handler = "std"  # self.config.participant["mobility_args"]["model_handler"]
-            self._node_manager = NodeManager(
+            self._node_manager = FederationConnector(
                 config.participant["mobility_args"]["additional_node"]["status"],
                 topology,
                 model_handler,

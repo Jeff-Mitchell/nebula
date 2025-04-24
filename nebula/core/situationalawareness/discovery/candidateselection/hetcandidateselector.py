@@ -1,4 +1,4 @@
-from nebula.core.situationalawareness.candidateselection.candidateselector import CandidateSelector
+from nebula.core.situationalawareness.discovery.candidateselection.candidateselector import CandidateSelector
 from nebula.core.utils.locker import Locker
 
 class HETCandidateSelector(CandidateSelector):

@@ -1,8 +1,8 @@
-from nebula.core.situationalawareness.candidateselection.candidateselector import CandidateSelector
+from nebula.core.situationalawareness.discovery.candidateselection.candidateselector import CandidateSelector
 from nebula.core.utils.locker import Locker
 
-class STDandidateSelector(CandidateSelector):
-    
+class RINGCandidateSelector(CandidateSelector):
+
     def __init__(self):
         self.candidates = []
         self.candidates_lock = Locker(name="candidates_lock")
@@ -11,18 +11,17 @@ class STDandidateSelector(CandidateSelector):
         pass    
     
     def add_candidate(self, candidate):
+        """
+            To avoid topology problems select 1st candidate found
+        """
         self.candidates_lock.acquire()
-        self.candidates.append(candidate)
+        if len(self.candidates) == 0:
+            self.candidates.append(candidate)
         self.candidates_lock.release()
       
     def select_candidates(self):
-        """
-            Select mean number of neighbors
-        """
         self.candidates_lock.acquire()
-        #TODO revisar
-        mean_neighbors = sum(n for n, _ in self.candidates) / len(self.candidates) if self.candidates else 0
-        cdts = self.candidates[:mean_neighbors]
+        cdts = self.candidates.copy()
         self.candidates_lock.release()
         return cdts
     

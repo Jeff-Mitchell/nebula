@@ -206,7 +206,6 @@ class SANetwork(SAMComponent):
 
     async def upgrade_connection_robustness(self, possible_neighbors):
         self._restructure_process_lock.acquire()
-        # addrs_to_connect = self.neighbor_policy.get_nodes_known(neighbors_too=False)
         # If we got some refs, try to connect to them
         if possible_neighbors and len(possible_neighbors) > 0:
             if self._verbose: logging.info(f"Reestructuring | Addrs availables | addr list: {possible_neighbors}")

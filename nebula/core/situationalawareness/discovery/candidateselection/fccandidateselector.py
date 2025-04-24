@@ -1,8 +1,8 @@
-from nebula.core.situationalawareness.candidateselection.candidateselector import CandidateSelector
+from nebula.core.situationalawareness.discovery.candidateselection.candidateselector import CandidateSelector
 from nebula.core.utils.locker import Locker
 
-class RINGCandidateSelector(CandidateSelector):
-
+class FCCandidateSelector(CandidateSelector):
+    
     def __init__(self):
         self.candidates = []
         self.candidates_lock = Locker(name="candidates_lock")
@@ -11,15 +11,14 @@ class RINGCandidateSelector(CandidateSelector):
         pass    
     
     def add_candidate(self, candidate):
-        """
-            To avoid topology problems select 1st candidate found
-        """
         self.candidates_lock.acquire()
-        if len(self.candidates) == 0:
-            self.candidates.append(candidate)
+        self.candidates.append(candidate)
         self.candidates_lock.release()
       
     def select_candidates(self):
+        """
+            In Fully-Connected topology all candidates should be selected
+        """
         self.candidates_lock.acquire()
         cdts = self.candidates.copy()
         self.candidates_lock.release()

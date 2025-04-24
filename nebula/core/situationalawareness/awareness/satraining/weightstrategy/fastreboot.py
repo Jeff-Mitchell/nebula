@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING
 from nebula.core.utils.locker import Locker
 
 if TYPE_CHECKING:
-    from nebula.core.situationalawareness.nodemanager import NodeManager
+    from nebula.core.situationalawareness.discovery.federationconnector import FederationConnector
 
 VANILLA_LEARNING_RATE = 1e-3
 FR_LEARNING_RATE = 1e-3
@@ -15,7 +15,7 @@ DEFAULT_WEIGHT_MODIFIER = 3
 class FastReboot:
     def __init__(
         self,
-        node_manager: "NodeManager",
+        node_manager: "FederationConnector",
         max_rounds_application=MAX_ROUNDS,  # Max rounds to be applied FastReboot
         weight_modifier=DEFAULT_WEIGHT_MODIFIER,
         default_learning_rate=VANILLA_LEARNING_RATE,  # Stable value for learning rate

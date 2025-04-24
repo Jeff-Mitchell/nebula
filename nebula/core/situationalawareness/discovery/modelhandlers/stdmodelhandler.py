@@ -1,4 +1,4 @@
-from nebula.core.situationalawareness.modelhandlers.modelhandler import ModelHandler
+from nebula.core.situationalawareness.discovery.modelhandlers.modelhandler import ModelHandler
 from nebula.core.utils.locker import Locker
 
 

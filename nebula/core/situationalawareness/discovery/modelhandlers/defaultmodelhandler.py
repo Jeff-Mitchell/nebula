@@ -1,6 +1,6 @@
-from nebula.core.situationalawareness.modelhandlers.modelhandler import ModelHandler
+from nebula.core.situationalawareness.discovery.modelhandlers.modelhandler import ModelHandler
 from nebula.core.utils.locker import Locker
-from nebula.core.situationalawareness.nodemanager import NodeManager
+from nebula.core.situationalawareness.discovery.federationconnector import FederationConnector
 import logging
 
 class DefaultModelHandler(ModelHandler):
@@ -12,7 +12,7 @@ class DefaultModelHandler(ModelHandler):
         self.epochs = 0
         self.model_lock = Locker(name="model_lock")
         self.params_lock = Locker(name="param_lock")
-        self._nm : NodeManager = None
+        self._nm : FederationConnector = None
         
     def set_config(self, config):
         """
@@ -20,7 +20,7 @@ class DefaultModelHandler(ModelHandler):
             config[0] -> total rounds
             config[1] -> current round
             config[2] -> epochs
-            config[3] -> NodeManager
+            config[3] -> FederationConnector
         """
         self.params_lock.acquire()
         self.rounds = config[0]
