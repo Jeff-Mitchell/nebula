@@ -19,7 +19,6 @@ from nebula.core.nebulaevents import (
     UpdateReceivedEvent,
 )
 from nebula.core.network.communications import CommunicationsManager
-from nebula.core.situationalawareness.discovery.federationconnector import FederationConnector
 from nebula.core.situationalawareness.situationalawareness import SituationalAwareness
 from nebula.core.utils.locker import Locker
 
@@ -153,23 +152,10 @@ class Engine:
         self.trainning_in_progress_lock = Locker(name="trainning_in_progress_lock", async_lock=True)
 
         event_manager = EventManager.get_instance(verbose=False)
-
-        # Mobility setup
-        self._node_manager = None
-        self.mobility = self.config.participant["mobility_args"]["mobility"]
-        if self.mobility == True:
-            topology = self.config.participant["mobility_args"]["topology_type"]
-            topology = topology.lower()
-            model_handler = "std"  # self.config.participant["mobility_args"]["model_handler"]
-            self._node_manager = FederationConnector(
-                config.participant["mobility_args"]["additional_node"]["status"],
-                topology,
-                model_handler,
-                engine=self,
-                verbose=True
-            )
-
         self._addon_manager = AddondManager(self, self.config)
+        
+        # Additional Components
+        self._situational_awareness = SituationalAwareness(self.config)
 
     @property
     def cm(self):
@@ -189,10 +175,10 @@ class Engine:
     @property
     def trainer(self):
         return self._trainer
-
+    
     @property
-    def nm(self):
-        return self._node_manager
+    def sa(self):
+        return self._situational_awareness
 
     def get_addr(self):
         return self.addr
@@ -386,9 +372,9 @@ class Engine:
 
     async def _aditional_node_start(self):
         logging.info(f"Aditional node | {self.addr} | going to stablish connection with federation")
-        await self.nm.start_late_connection_process()
+        await self.sa.start_late_connection_process()
         # continue ..
-        # asyncio.create_task(self.nm.stop_not_selected_connections())
+        # asyncio.create_task(self.sa.stop_not_selected_connections())
         logging.info("Creating trainer service to start the federation process..")
         asyncio.create_task(self._start_learning_late())
 
@@ -414,7 +400,7 @@ class Engine:
     async def _start_learning_late(self):
         await self.learning_cycle_lock.acquire_async()
         try:
-            model_serialized, rounds, round, _epochs = await self.nm.get_trainning_info()
+            model_serialized, rounds, round, _epochs = await self.sa.get_trainning_info()
             self.total_rounds = rounds
             epochs = _epochs
             await self.get_round_lock().acquire_async()
@@ -470,8 +456,8 @@ class Engine:
         
     async def deploy_components(self):
         await self.aggregator.init()
-        if self.mobility:
-            await self.nm.set_configs()
+        if self.config.participant["mobility_args"]["mobility"]:
+            await self.sa.init()
         await self._reporter.start()
         await self._addon_manager.deploy_additional_services()    
 

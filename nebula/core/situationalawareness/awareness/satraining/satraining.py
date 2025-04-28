@@ -2,11 +2,11 @@ import asyncio
 import logging
 from nebula.core.utils.locker import Locker
 from nebula.core.situationalawareness.awareness.satraining.trainingpolicy.trainingpolicy import factory_training_policy
-from nebula.core.situationalawareness.awareness.samodule import SAMComponent
+from nebula.core.situationalawareness.awareness.sareasoner import SAMComponent
 from nebula.addons.functions import print_msg_box
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
-    from nebula.core.situationalawareness.awareness.samodule import SAModule, SAMComponent
+    from nebula.core.situationalawareness.awareness.sareasoner import SAReasoner, SAMComponent
     from nebula.core.eventmanager import EventManager
     
 RESTRUCTURE_COOLDOWN = 5    
@@ -14,7 +14,7 @@ RESTRUCTURE_COOLDOWN = 5
 class SATraining(SAMComponent):
     def __init__(
         self,
-        sam: "SAModule",
+        sam: "SAReasoner",
         addr,
         training_policy,
         weight_strategies,

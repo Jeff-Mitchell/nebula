@@ -23,7 +23,7 @@ class SAMComponent(ABC):
         raise NotImplementedError
 
 
-class SAModule(ISAReasoner):
+class SAReasoner(ISAReasoner):
     MODULE_PATH = "nebula/nebula/core/situationalawareness/awareness"
 
     def __init__(
@@ -34,11 +34,11 @@ class SAModule(ISAReasoner):
         verbose = False,
     ):
         print_msg_box(
-            msg=f"Starting Situational Awareness module...",
+            msg=f"Starting Situational Awareness Reasoner module...",
             indent=2,
-            title="Situational Awareness module",
+            title="SA Reasoner",
         )
-        logging.info("🌐  Initializing SAModule")
+        logging.info("🌐  Initializing SAReasoner")
         self._config = config
         self._addr = addr
         self._topology = topology
@@ -50,8 +50,9 @@ class SAModule(ISAReasoner):
         self._suggestion_buffer = SuggestionBuffer(self._arbitrator_notification, verbose=True)
         self._communciation_manager = CommunicationsManager.get_instance()
         self._sys_monitor = SystemMonitor()
-        self._arbitatrion_policy = factory_arbitatrion_policy("sad", True)
+        self._arbitatrion_policy = factory_arbitatrion_policy("sap", True)
         self._sa_components: dict[str, SAMComponent] = {}
+        self._sa_discovery: ISADiscovery = None
         self._verbose = verbose
         
     @property
@@ -73,11 +74,18 @@ class SAModule(ISAReasoner):
         """Arbitatrion Policy"""
         return self._arbitatrion_policy
     
-    async def init(self):
+    @property
+    def sad(self):
+        """SA Discovery"""
+        return self._sa_discovery
+    
+    async def init(self, sa_discovery: ISADiscovery):
+        #await self.loading_sa_components()
         from nebula.core.situationalawareness.awareness.sanetwork.sanetwork import SANetwork
-        from nebula.core.situationalawareness.awareness.satraining.satraining import SATraining
+        #from nebula.core.situationalawareness.awareness.satraining.satraining import SATraining
         self._situational_awareness_network = SANetwork(self, self._addr, self._topology, verbose=True)
-        self._situational_awareness_training = SATraining(self, self._addr, "qds", "fastreboot", verbose=True)
+        #self._situational_awareness_training = SATraining(self, self._addr, "qds", "fastreboot", verbose=True)
+        self._sa_discovery = sa_discovery
         await self.san.init()
         await EventManager.get_instance().subscribe_node_event(RoundEndEvent, self._process_round_end_event)
         await EventManager.get_instance().subscribe_node_event(AggregationEvent, self._process_aggregation_event)
@@ -114,8 +122,8 @@ class SAModule(ISAReasoner):
     
     async def _process_round_end_event(self, ree : RoundEndEvent):
         logging.info("🔄 Arbitration | Round End Event...")
-        asyncio.create_task(self.san.sa_component_actions())
-        asyncio.create_task(self.sat.sa_component_actions())
+        for sa_comp in self._sa_components.values():
+            asyncio.create_task(sa_comp.sa_component_actions())
         valid_commands = await self._arbitatrion_suggestions(RoundEndEvent)
 
         # Execute SACommand selected

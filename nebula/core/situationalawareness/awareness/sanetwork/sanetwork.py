@@ -8,14 +8,14 @@ from nebula.core.nebulaevents import BeaconRecievedEvent
 from nebula.core.eventmanager import EventManager
 from nebula.core.nebulaevents import NodeFoundEvent, UpdateNeighborEvent, ExperimentFinishEvent, RoundEndEvent
 from nebula.core.network.communications import CommunicationsManager
-from nebula.core.situationalawareness.awareness.samodule import SAMComponent
+from nebula.core.situationalawareness.awareness.sareasoner import SAMComponent
 from nebula.core.situationalawareness.awareness.sautils.samoduleagent import SAModuleAgent
 from nebula.core.situationalawareness.awareness.sautils.sacommand import SACommand, SACommandAction, SACommandPRIO, SACommandState, factory_sa_command
 from nebula.core.situationalawareness.awareness.suggestionbuffer import SuggestionBuffer
 
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
-    from nebula.core.situationalawareness.awareness.samodule import SAModule
+    from nebula.core.situationalawareness.awareness.sareasoner import SAReasoner
     
 RESTRUCTURE_COOLDOWN = 5
 
@@ -25,7 +25,7 @@ class SANetwork(SAMComponent):
     
     def __init__(
         self,
-        sam: "SAModule",
+        sar: "SAReasoner",
         addr, 
         topology, 
         strict_topology=True,
@@ -36,7 +36,7 @@ class SANetwork(SAMComponent):
             indent=2,
             title="Network SA module",
         )
-        self._sam = sam
+        self._sar = sar
         self._addr = addr
         self._topology = topology
         self._strict_topology = strict_topology
@@ -48,9 +48,9 @@ class SANetwork(SAMComponent):
         self._sa_network_agent = SANetworkAgent(self)
         
     @property
-    def sam(self):
-        """SA Module"""
-        return self._sam    
+    def sar(self):
+        """SA Reasoner"""
+        return self._sar    
         
     @property
     def cm(self):
@@ -67,7 +67,7 @@ class SANetwork(SAMComponent):
         return self._sa_network_agent
     
     async def init(self):
-        if not self.sam.is_additional_participant():
+        if not self.sar.is_additional_participant():
             logging.info("Deploying External Connection Service")
             await self.cm.start_external_connection_service()
             await EventManager.get_instance().subscribe_node_event(BeaconRecievedEvent, self.beacon_received)
@@ -196,12 +196,12 @@ class SANetwork(SAMComponent):
         # If we got some refs, try to reconnect to them
         if len(self.np.get_nodes_known()) > 0:
             if self._verbose: logging.info("Reconnecting | Addrs availables")
-            await self.sam.nm.start_late_connection_process(
+            await self.sar.sad.start_late_connection_process(
                 connected=False, msg_type="discover_nodes", addrs_known=self.np.get_nodes_known()
             )
         else:
             if self._verbose: logging.info("Reconnecting | NO Addrs availables")
-            await self.sam.nm.start_late_connection_process(connected=False, msg_type="discover_nodes")
+            await self.sar.sad.start_late_connection_process(connected=False, msg_type="discover_nodes")
         self._restructure_process_lock.release()
 
     async def upgrade_connection_robustness(self, possible_neighbors):
@@ -209,12 +209,12 @@ class SANetwork(SAMComponent):
         # If we got some refs, try to connect to them
         if possible_neighbors and len(possible_neighbors) > 0:
             if self._verbose: logging.info(f"Reestructuring | Addrs availables | addr list: {possible_neighbors}")
-            await self.sam.nm.start_late_connection_process(
+            await self.sar.sad.start_late_connection_process(
                 connected=True, msg_type="discover_nodes", addrs_known=possible_neighbors
             )
         else:
             if self._verbose: logging.info("Reestructuring | NO Addrs availables")
-            await self.sam.nm.start_late_connection_process(connected=True, msg_type="discover_nodes")
+            await self.sar.sad.start_late_connection_process(connected=True, msg_type="discover_nodes")
         self._restructure_process_lock.release()
 
     async def stop_connections_with_federation(self):

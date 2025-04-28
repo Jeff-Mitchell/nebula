@@ -6,7 +6,7 @@ from nebula.addons.functions import print_msg_box
 from nebula.core.situationalawareness.discovery.candidateselection.candidateselector import factory_CandidateSelector
 from nebula.core.situationalawareness.discovery.modelhandlers.modelhandler import factory_ModelHandler
 from nebula.core.situationalawareness.situationalawareness import ISADiscovery, ISAReasoner
-from nebula.core.situationalawareness.awareness.samodule import SAModule
+from nebula.core.situationalawareness.awareness.sareasoner import SAReasoner
 from nebula.core.utils.locker import Locker
 from nebula.core.eventmanager import EventManager
 from nebula.core.nebulaevents import UpdateNeighborEvent, NodeFoundEvent
@@ -33,9 +33,9 @@ class FederationConnector(ISADiscovery):
         self._aditional_participant = aditional_participant
         self.topology = topology
         print_msg_box(
-            msg=f"Starting NodeManager module...", indent=2, title="NodeManager module"
+            msg=f"Starting FederationConnector module...", indent=2, title="FederationConnector module"
         )
-        logging.info("🌐  Initializing Node Manager")
+        logging.info("🌐  Initializing Federation Connector")
         self._engine = engine
         self._cm = None
         self.config = engine.get_config()
@@ -52,7 +52,7 @@ class FederationConnector(ISADiscovery):
         self.discarded_offers_addr_lock = Locker(name="discarded_offers_addr_lock")
         self.discarded_offers_addr = []
         
-        self._situational_awareness_module = SAModule(self, self.config, self.engine.addr, topology, True)
+        self._sa_reasoner: ISAReasoner = None
         self._verbose = verbose
 
     @property
@@ -72,14 +72,14 @@ class FederationConnector(ISADiscovery):
         return self._model_handler
 
     @property
-    def sam(self):
+    def sar(self):
         """Situational Awareness Module"""
-        return self._situational_awareness_module
+        return self._sa_reasoner
 
     def is_additional_participant(self):
         return self._aditional_participant
 
-    async def set_configs(self):
+    async def init(self, sa_reasoner: ISAReasoner):
         """
         model_handler config:
             - self total rounds
@@ -91,9 +91,9 @@ class FederationConnector(ISADiscovery):
             - self weight distance
             - self weight hetereogeneity
         """
-        logging.info("Building NodeManager configurations...")
+        logging.info("Building Federation Connector configurations...")
+        self._sa_reasoner = sa_reasoner
         await self.register_message_events_callbacks()
-        await self.sam.init()
         await EventManager.get_instance().subscribe_node_event(UpdateNeighborEvent, self.update_neighbors)
         logging.info("Building candidate selector configuration..")
         self.candidate_selector.set_config([0, 0.5, 0.5])
@@ -105,11 +105,8 @@ class FederationConnector(ISADiscovery):
                 ##############################
     """
 
-    def get_restructure_process_lock(self):
-        return self.sam.get_restructure_process_lock()
-
     def accept_connection(self, source, joining=False):
-        return self.sam.accept_connection(source, joining)
+        return self.sar.accept_connection(source, joining)
     
     def still_waiting_for_candidates(self):
         return not self.accept_candidates_lock.locked() and self.late_connection_process_lock.locked()
@@ -117,7 +114,7 @@ class FederationConnector(ISADiscovery):
     async def add_pending_connection_confirmation(self, addr):
         await self._update_neighbors_lock.acquire_async()
         await self.pending_confirmation_from_nodes_lock.acquire_async()
-        if addr not in self.sam.get_nodes_known(neighbors_only=True):
+        if addr not in self.sar.get_nodes_known(neighbors_only=True):
             logging.info(f" Addition | pending connection confirmation from: {addr}")
             self.pending_confirmation_from_nodes.add(addr)
         await self.pending_confirmation_from_nodes_lock.release_async()
@@ -152,7 +149,7 @@ class FederationConnector(ISADiscovery):
         self.discarded_offers_addr_lock.release()
 
     def get_actions(self):
-        return self.sam.get_actions()
+        return self.sar.get_actions()
 
     async def register_late_neighbor(self, addr, joinning_federation=False):
         if self._verbose: logging.info(f"Registering | late neighbor: {addr}, joining: {joinning_federation}")
@@ -172,7 +169,7 @@ class FederationConnector(ISADiscovery):
         await EventManager.get_instance().publish_node_event(nfe)
 
     def get_nodes_known(self, neighbors_too=False):
-        return self.sam.get_nodes_known(neighbors_too)
+        return self.sar.get_nodes_known(neighbors_too)
 
     def accept_model_offer(self, source, decoded_model, rounds, round, epochs, n_neighbors, loss):
         if not self.accept_candidates_lock.locked():
@@ -419,7 +416,7 @@ class FederationConnector(ISADiscovery):
                 logging.info(f"❗️ Error proccesing offer model from {source}")
         else:
             logging.info(
-                f"❗️ handfle_offer_message | NOT accepting offers | restructure: {self.get_restructure_process_lock().locked()} | waiting candidates: {self.still_waiting_for_candidates()}"
+                f"❗️ handfle_offer_message | NOT accepting offers | waiting candidates: {self.still_waiting_for_candidates()}"
             )
             self.add_to_discarded_offers(source)
 

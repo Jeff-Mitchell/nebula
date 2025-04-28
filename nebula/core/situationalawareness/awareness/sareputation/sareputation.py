@@ -1,4 +1,4 @@
-from nebula.core.situationalawareness.awareness.samodule import SAMComponent
+from nebula.core.situationalawareness.awareness.sareasoner import SAMComponent
 from enum import Enum
 
 class ReputationCategory(Enum): # Reputational thresholds
