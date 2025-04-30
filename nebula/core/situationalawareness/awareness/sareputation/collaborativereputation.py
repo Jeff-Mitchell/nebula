@@ -1,0 +1,3 @@
+
+class CollaborativeReputation():
+    pass

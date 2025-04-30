@@ -6,12 +6,8 @@ from nebula.core.eventmanager import EventManager
 from nebula.core.nebulaevents import UpdateReceivedEvent, AggregationEvent, RoundStartEvent, UpdateNeighborEvent, NodeBlacklistedEvent
 import time
 from enum import Enum
+from nebula.core.situationalawareness.awareness.sareputation.sareputation import ThreatCategory
 import asyncio
-
-class ThreatCategoryBehavior(Enum):
-    FLOODING = "flooding"
-    INACTIVITY = "inactivity"
-    BAD_BEHAVIOR = "bad behavior"
 
 class TimeStamp():
         def __init__(self, time_received = None, time_since_last_event = None):
@@ -89,9 +85,9 @@ class BehaviorReputation():
     def __str__(self):
         return "Behavior Reputation"
 
-    async def init(self, config):
+    async def init(self, neighbor_List):
         async with self._nodes_lock:
-            nodes = config["nodes"]
+            nodes = neighbor_List
             self._nodes = {
                 node_id: (
                     deque(maxlen=self.MAX_HISTORIC_SIZE),   # Updates per round,
@@ -113,7 +109,7 @@ class BehaviorReputation():
         await EventManager.get_instance().subscribe_node_event(NodeBlacklistedEvent, self._process_node_blacklisted_event)
         await EventManager.get_instance().subscribe(None, self._process_messages_received)
 
-    async def get_behavior_scores(self, historical=False):
+    async def get_scores(self, historical=False):
         if historical:
             return self.hbs.copy()
         else:
@@ -144,10 +140,10 @@ class BehaviorReputation():
         async with self._messages_received_per_round_lock:
             self._messages_received_per_round.clear()
 
-    async def _process_aggregation_event(self, are: AggregationEvent):
+    async def _process_aggregation_event(self, age: AggregationEvent):
         self._last_aggregation_time = time.time()
         if self._verbose: logging.info("Processing aggregation event")
-        (_, expected_nodes, missing_nodes) = await are.get_event_data()
+        (_, expected_nodes, missing_nodes) = await age.get_event_data()
 
         async with self._nodes_lock:
             for node in expected_nodes:
@@ -217,7 +213,7 @@ class BehaviorReputation():
                     self._suspicious_nodes.union({(source, ThreatCategoryBehavior.FLOODING)})
             self._messages_received_per_round[source] = n_messages
             
-    async def _evaluate(self):
+    async def evaluate(self):
         if self._verbose: logging.info("Evaluating Behavior Reputation, generating score...")
 
         nodes = await self._get_nodes()

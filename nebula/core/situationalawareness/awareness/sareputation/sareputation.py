@@ -1,6 +1,12 @@
 from nebula.core.situationalawareness.awareness.sareasoner import SAMComponent
 from enum import Enum
 
+class ThreatCategory(Enum):
+    FLOODING = "flooding"
+    INACTIVITY = "inactivity"
+    BAD_BEHAVIOR = "bad behavior"
+    MODEL_POISSONING = "model poissoning"
+
 class ReputationCategory(Enum): # Reputational thresholds
     HIGH_TRUSTED = 0.9
     TRUSTED = 0.8

@@ -43,7 +43,8 @@ class SituationalAwareness():
             self._config, 
             self._config.participant["network_args"]["addr"], 
             topology, 
-            verbose=True)
+            verbose=True
+        )
     
     @property
     def fedcon(self):
