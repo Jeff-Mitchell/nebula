@@ -101,6 +101,7 @@ class Mobility:
                            `run_mobility` operation.
         """
         await EventManager.get_instance().subscribe_addonevent(GPSEvent, self.update_nodes_distances)
+        await EventManager.get_instance().subscribe_addonevent(GPSEvent, self.update_nodes_distances)
         task = asyncio.create_task(self.run_mobility())
         return task
 
@@ -273,12 +274,13 @@ class Mobility:
             latitude = float(self.config.participant["mobility_args"]["latitude"])
             longitude = float(self.config.participant["mobility_args"]["longitude"])
             if True:
+            if True:
                 # Get neighbor closer to me
                 async with self._nodes_distances_lock:
                     sorted_list = sorted(self._nodes_distances.items(), key=lambda item: item[1][0])
                     # Transformamos la lista para obtener solo dirección y coordenadas
                     result = [(addr, dist, coords) for addr, (dist, coords) in sorted_list]
-                    
+
                 selected_neighbor = result[0] if result else None
                 if selected_neighbor:
                     #logging.info(f"📍  Selected neighbor: {selected_neighbor}")
@@ -287,6 +289,7 @@ class Mobility:
                         # If the distance is too big, we move towards the neighbor
                         if self._verbose: logging.info(f"Moving towards nearest neighbor: {addr}")
                         await self.change_geo_location_nearest_neighbor_strategy(
+                            dist,
                             dist,
                             latitude,
                             longitude,
@@ -302,5 +305,3 @@ class Mobility:
         else:
             logging.error(f"📍  Mobility type {self.mobility_type} not implemented")
             return
-
-

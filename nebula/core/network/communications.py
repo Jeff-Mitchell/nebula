@@ -1,7 +1,6 @@
 import asyncio
 import collections
 import logging
-import sys
 from typing import TYPE_CHECKING
 
 import requests
@@ -32,18 +31,18 @@ class CommunicationsManager:
             if cls._instance is None:
                 cls._instance = super().__new__(cls)
         return cls._instance
-    
+
     @classmethod
     def get_instance(cls):
         """Obtain CommunicationsManager instance"""
         if cls._instance is None:
             raise ValueError("CommunicationsManager has not been initialized yet.")
         return cls._instance
-    
+
     def __init__(self, engine: "Engine"):
-        if hasattr(self, '_initialized') and self._initialized:
+        if hasattr(self, "_initialized") and self._initialized:
             return  # Avoid reinicialization
-        
+
         logging.info("🌐  Initializing Communications Manager")
         self._engine = engine
         self.addr = engine.get_addr()
@@ -158,7 +157,6 @@ class CommunicationsManager:
         current_connections = await self.get_addrs_current_connections()
         logging.info(f"Connections verified: {current_connections}")
         await self.deploy_additional_services()
-        
 
     """                                                     ##############################
                                                             #    PROCESSING MESSAGES     #
@@ -170,6 +168,7 @@ class CommunicationsManager:
             await self.mm.process_message(data, addr_from)
 
     async def forward_message(self, data, addr_from):
+        logging.info("Forwarding message... ")
         logging.info("Forwarding message... ")
         await self.forwarder.forward(data, addr_from=addr_from)
 
@@ -329,7 +328,7 @@ class CommunicationsManager:
                 connection_addr = f"{addr[0]}:{connected_node_port}"
                 direct = await reader.readline()
                 direct = direct.decode("utf-8").strip()
-                direct = True if direct == "True" else False
+                direct = direct == "True"
                 logging.info(
                     f"🔗  [incoming] Connection from {addr} - {connection_addr} [id {connected_node_id} | port {connected_node_port} | direct {direct}] (incoming)"
                 )
@@ -466,9 +465,7 @@ class CommunicationsManager:
 
     def verify_connections(self, neighbors):
         # Return True if all neighbors are connected
-        if all(neighbor in self.connections for neighbor in neighbors):
-            return True
-        return False
+        return bool(all(neighbor in self.connections for neighbor in neighbors))
 
     async def network_wait(self):
         await self.stop_network_engine.wait()
@@ -485,7 +482,7 @@ class CommunicationsManager:
         try:
             await self.receive_messages_lock.acquire_async()
             if hash_message in self.received_messages_hashes:
-                # logging.info(f"❗️  handle_incoming_message | Ignoring message already received.")
+                logging.info("❗️  handle_incoming_message | Ignoring message already received.")
                 return False
             self.received_messages_hashes.append(hash_message)
             if len(self.received_messages_hashes) % 10000 == 0:
@@ -530,7 +527,7 @@ class CommunicationsManager:
                     logging.exception(f"❗️  Cannot send model to {dest_addr}: {e!s}")
                     await self.disconnect(dest_addr, mutual_disconnection=False)
 
-    # async def send_model(self, dest_addr, round, serialized_model, weight=1):        
+    # async def send_model(self, dest_addr, round, serialized_model, weight=1):
     #     async with self.semaphore_send_model:
     #         try:
     #             conn = self.connections.get(dest_addr)
@@ -703,7 +700,7 @@ class CommunicationsManager:
 
     async def connect(self, addr, direct=True):
         await self.get_connections_lock().acquire_async()
-        duplicated = addr in self.connections.keys()
+        duplicated = addr in self.connections
         await self.get_connections_lock().release_async()
         if duplicated:
             if direct:  # Upcoming direct connection

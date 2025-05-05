@@ -1,6 +1,6 @@
 import asyncio
-import sys
 import logging
+import sys
 from abc import ABC, abstractmethod
 from collections import deque
 from typing import TYPE_CHECKING, Any
@@ -12,7 +12,8 @@ if TYPE_CHECKING:
     from nebula.core.aggregation.aggregator import Aggregator
     from nebula.core.engine import Engine
     from nebula.core.training.lightning import Lightning
-    
+
+
 class PropagationStrategy(ABC):
     @abstractmethod
     def is_node_eligible(self, node: str) -> bool:
@@ -69,6 +70,7 @@ class Propagator:
     def cm(self):
         if not self._cm:
             from nebula.core.network.communications import CommunicationsManager
+
             self._cm = CommunicationsManager.get_instance()
             return self._cm
         else:
@@ -171,15 +173,14 @@ class Propagator:
         message = self.cm.create_message("model", "", round_number, parameters, weight)
         for neighbor_addr in eligible_neighbors:
             logging.info(
-                    f"Sending model to {neighbor_addr} with round {self.get_round()}: weight={weight} | size={sys.getsizeof(serialized_model) / (1024** 2) if serialized_model is not None else 0} MB"
-                )
+                f"Sending model to {neighbor_addr} with round {self.get_round()}: weight={weight} | size={sys.getsizeof(serialized_model) / (1024** 2) if serialized_model is not None else 0} MB"
+            )
             asyncio.create_task(self.cm.send_message(neighbor_addr, message, is_compressed=True))
-            #asyncio.create_task(self.cm.send_model(neighbor_addr, round_number, serialized_model, weight))
-            
+            # asyncio.create_task(self.cm.send_model(neighbor_addr, round_number, serialized_model, weight))
 
         await asyncio.sleep(self.interval)
         return True
-    
+
     async def get_model_information(self, dest_addr, strategy_id: str, init=False):
         if not init:
             if strategy_id not in self.strategies:
@@ -188,7 +189,7 @@ class Propagator:
             if self.get_round() is None:
                 logging.info("Propagation halted: round is not set.")
                 return None
-        
+
         strategy = self.strategies[strategy_id]
         logging.info(f"Preparing model information with strategy to make an offer: {strategy_id}")
 
@@ -200,6 +201,5 @@ class Propagator:
                 model_params if isinstance(model_params, bytes) else self.trainer.serialize_model(model_params)
             )
             return (serialized_model, rounds, self.get_round())
-                
+
         return None
-    

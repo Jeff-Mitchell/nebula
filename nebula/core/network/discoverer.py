@@ -1,6 +1,8 @@
 import asyncio
 import logging
+
 from nebula.addons.functions import print_msg_box
+
 
 class Discoverer:
     def __init__(self, addr, config):
@@ -16,6 +18,7 @@ class Discoverer:
     def cm(self):
         if not self._cm:
             from nebula.core.network.communications import CommunicationsManager
+
             self._cm = CommunicationsManager.get_instance()
             return self._cm
         else:
@@ -33,11 +36,6 @@ class Discoverer:
             if len(self.cm.connections) > 0:
                 latitude = self.config.participant["mobility_args"]["latitude"]
                 longitude = self.config.participant["mobility_args"]["longitude"]
-                # message = self.cm.mm.generate_discovery_message(
-                #    action=nebula_pb2.DiscoveryMessage.Action.DISCOVER,
-                #    latitude=latitude,
-                #    longitude=longitude,
-                # )
                 message = self.cm.create_message("discovery", "discover", latitude=latitude, longitude=longitude)
                 try:
                     logging.debug("🔍  Sending discovery message to neighbors...")

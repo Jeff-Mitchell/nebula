@@ -44,10 +44,11 @@ class OfferAction(Enum):
 class LinkAction(Enum):
     CONNECT_TO = nebula_pb2.LinkMessage.Action.CONNECT_TO
     DISCONNECT_FROM = nebula_pb2.LinkMessage.Action.DISCONNECT_FROM
-    
+
+
 class ReputationAction(Enum):
-    SHARE_REPUTATION = nebula_pb2.LinkMessage.Action.SHARE_REPUTATION     
-    START_TRIAL = nebula_pb2.LinkMessage.Action.START_TRIAL          
+    SHARE_REPUTATION = nebula_pb2.LinkMessage.Action.SHARE_REPUTATION
+    START_TRIAL = nebula_pb2.LinkMessage.Action.START_TRIAL
     SUBMIT_VERDICT = nebula_pb2.LinkMessage.Action.SUBMIT_VERDICT
 
 
@@ -64,15 +65,15 @@ ACTION_CLASSES = {
 
 
 def get_action_name_from_value(message_type: str, action_value: int) -> str:
-    # Obtener el Enum correspondiente al tipo de mensaje
+    # Get the Enum corresponding to the message type
     enum_class = ACTION_CLASSES.get(message_type)
     if not enum_class:
         raise ValueError(f"Unknown message type: {message_type}")
 
-    # Buscar el nombre de la acción a partir del valor
+    # Find the name of the action from the value
     for action in enum_class:
         if action.value == action_value:
-            return action.name.lower()  # Convertimos a lowercase para mantener el formato "late_connect"
+            return action.name.lower()  # Convert to lowercase to maintain the format "late_connect"
 
     raise ValueError(f"Unknown action value {action_value} for message type {message_type}")
 

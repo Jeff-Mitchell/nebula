@@ -1,5 +1,8 @@
+import copy
 import os
+import pickle
 from abc import ABC, abstractmethod
+from types import SimpleNamespace
 from typing import Any
 
 import h5py
@@ -8,10 +11,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 import seaborn as sns
 from sklearn.manifold import TSNE
-from torch.utils.data import Dataset
 from sklearn.model_selection import train_test_split
-from types import SimpleNamespace
-import copy
+from torch.utils.data import Dataset
 
 matplotlib.use("Agg")
 plt.switch_backend("Agg")
@@ -40,48 +41,40 @@ class NebulaPartitionHandler(Dataset, ABC):
         self,
         file_path: str,
         prefix: str = "train",
-        mode: str = "memory",
+        config: dict[str, Any] | None = None,
+        empty: bool = False,
     ):
         self.file_path = file_path
         self.prefix = prefix
-        self.mode = mode
+        self.config = config
+        self.empty = empty
         self.transform = None
         self.target_transform = None
         self.file = None
 
         self.data = None
         self.targets = None
-        self.data_shape = None
         self.num_classes = None
         self.length = None
 
-        if self.mode == "memory":
-            self.load_data()
-        elif self.mode == "lazy":
-            self.load_data_lazy()
-        else:
-            raise ValueError(f"Mode {self.mode} not supported")
+        self.load_data()
 
     def load_data(self):
+        if self.empty:
+            logging_training.info(
+                f"[NebulaPartitionHandler] No data loaded for {self.prefix} partition. Empty dataset."
+            )
+            return
         with h5py.File(self.file_path, "r") as f:
-            dset = f[f"{self.prefix}_data"]
-            self.data = np.array(dset)
-            self.targets = np.array(f[f"{self.prefix}_targets"])
-            self.data_shape = dset.attrs.get("data_shape", dset.shape[1:])
-            self.num_classes = dset.attrs.get("num_classes", 0)
+            prefix = (
+                "test" if self.prefix == "local_test" else self.prefix
+            )  # Local test uses the test prefix (same data but different split)
+            self.data = self.load_partition(f, f"{prefix}_data")
+            self.targets = np.array(f[f"{prefix}_targets"])
+            self.num_classes = f[f"{prefix}_data"].attrs.get("num_classes", 0)
             self.length = len(self.data)
         logging_training.info(
-            f"[NebulaPartitionHandler - Memory] [{self.prefix}] Loaded {self.length} samples from {self.file_path} with shape {self.data_shape} and {self.num_classes} classes."
-        )
-
-    def load_data_lazy(self):
-        self.file = h5py.File(self.file_path, "r", swmr=True)
-        dset = self.file[f"{self.prefix}_data"]
-        self.length = dset.shape[0]
-        self.data_shape = dset.attrs.get("data_shape", dset.shape[1:])
-        self.num_classes = dset.attrs.get("num_classes", 0)
-        logging_training.info(
-            f"[NebulaPartitionHandler - Lazy] [{self.prefix}] Lazy loaded {self.length} samples from {self.file_path} with shape {self.data_shape} and {self.num_classes} classes."
+            f"[NebulaPartitionHandler] [{self.prefix}] Loaded {self.length} samples from {self.file_path} and {self.num_classes} classes."
         )
 
     def close(self):
@@ -96,24 +89,77 @@ class NebulaPartitionHandler(Dataset, ABC):
     def __len__(self):
         return self.length
 
-    def __del__(self):
-        if self.file is not None:
-            self.file.close()
-
     def __getitem__(self, idx):
-        if self.mode == "memory":
-            data = self.data[idx]
-            target = self.targets[idx]
-        else:
-            try:
-                data = self.file[f"{self.prefix}_data"][idx]
-                target = self.file[f"{self.prefix}_targets"][idx]
-            except Exception as e:
-                raise RuntimeError(
-                    f"[NebulaPartitionHandler] Error reading index {idx} from file {self.file_path}: {e}"
-                )
-
+        data = self.data[idx]
+        # Persist the modified targets (if any) during the training process
+        target = self.targets[idx] if hasattr(self, "targets") and self.targets is not None else None
         return data, target
+
+    def set_data(self, data, targets, data_opt=None, targets_opt=None):
+        """
+        Set the data and targets for the dataset.
+        """
+        try:
+            # Input validation
+            if data is None or targets is None:
+                raise ValueError("Primary data and targets cannot be None")
+
+            if len(data) != len(targets):
+                raise ValueError(f"Data and targets length mismatch: {len(data)} vs {len(targets)}")
+
+            if data_opt is None or targets_opt is None:
+                self.data = data
+                self.targets = targets
+                self.length = len(data)
+                logging_training.info(f"[NebulaPartitionHandler] Set data with {self.length} samples.")
+                return
+
+            if len(data_opt) != len(targets_opt):
+                raise ValueError(f"Optional data and targets length mismatch: {len(data_opt)} vs {len(targets_opt)}")
+
+            main_count = int(len(data) * 0.8)
+            opt_count = min(len(data_opt), int(len(data) * (1 - 0.8)))
+            if isinstance(data, np.ndarray):
+                self.data = np.concatenate((data[:main_count], data_opt[:opt_count]))
+            else:
+                self.data = data[:main_count] + data_opt[:opt_count]
+
+            if isinstance(targets, np.ndarray):
+                self.targets = np.concatenate((targets[:main_count], targets_opt[:opt_count]))
+            else:
+                self.targets = targets[:main_count] + targets_opt[:opt_count]
+            self.length = len(self.data)
+
+            indices = np.arange(self.length)
+            np.random.shuffle(indices)
+            if isinstance(self.data, np.ndarray):
+                self.data = self.data[indices]
+            else:
+                self.data = [self.data[i] for i in indices]
+            if isinstance(self.targets, np.ndarray):
+                self.targets = self.targets[indices]
+            else:
+                self.targets = [self.targets[i] for i in indices]
+
+        except Exception as e:
+            logging_training.exception(f"Error setting data: {e}")
+
+    def load_partition(self, file, name):
+        item = file[name]
+        if isinstance(item, h5py.Dataset):
+            typ = item.attrs.get("__type__", None)
+            if typ == "pickle":
+                logging_training.info(f"Loading pickled object from {name}")
+                return pickle.loads(item[()].tobytes())
+            elif typ == "pickle_bytes":
+                logging_training.info(f"Loading compressed pickled bytes object from {name}")
+                return pickle.loads(item[()])
+            else:
+                logging_training.warning(f"[NebulaPartitionHandler] Unknown type encountered: {typ} for item {name}")
+                return item[()]
+        else:
+            logging_training.warning(f"[NebulaPartitionHandler] Unknown item encountered: {item} for item {name}")
+            return item[()]
 
 
 class NebulaPartition:
@@ -121,19 +167,17 @@ class NebulaPartition:
     A class to handle the partitioning of datasets for federated learning.
     """
 
-    def __init__(self, handler: NebulaPartitionHandler, mode: str, config: dict[str, Any]):
+    def __init__(self, handler: NebulaPartitionHandler, config: dict[str, Any] | None = None):
         self.handler = handler
-        self.mode = mode
-        self.config = config
-
-        if self.mode not in ["lazy", "memory"]:
-            raise ValueError(f"Mode {self.mode} not supported")
+        self.config = config if config is not None else {}
 
         self.train_set = None
         self.train_indices = None
 
         self.test_set = None
         self.test_indices = None
+
+        self.local_test_set = None
         self.local_test_indices = None
 
         enable_deterministic(seed=self.config.participant["scenario_args"]["random_seed"])
@@ -192,6 +236,15 @@ class NebulaPartition:
         """
         test_labels = self.get_test_labels()
         train_labels = self.get_train_labels()
+
+        if test_labels is None or train_labels is None:
+            logging_training.warning("Either test_labels or train_labels is None in set_local_test_indices")
+            return []
+
+        if self.test_set is None:
+            logging_training.warning("test_set is None in set_local_test_indices")
+            return []
+
         return [idx for idx in range(len(self.test_set)) if test_labels[idx] in train_labels]
 
     def log_partition(self):
@@ -223,14 +276,17 @@ class NebulaPartition:
             train_partition_file = os.path.join(path, f"participant_{p}_train.h5")
             wait_for_file(train_partition_file)
             logging_training.info(f"Loading train data from {train_partition_file}")
-            self.train_set = self.handler(train_partition_file, "train", mode=self.mode)
+            self.train_set = self.handler(train_partition_file, "train", config=self.config)
             self.train_indices = list(range(len(self.train_set)))
 
             test_partition_file = os.path.join(path, "global_test.h5")
             wait_for_file(test_partition_file)
             logging_training.info(f"Loading test data from {test_partition_file}")
-            self.test_set = self.handler(test_partition_file, "test", mode=self.mode)
+            self.test_set = self.handler(test_partition_file, "test", config=self.config)
             self.test_indices = list(range(len(self.test_set)))
+
+            self.local_test_set = self.handler(test_partition_file, "local_test", config=self.config, empty=True)
+            self.local_test_set.set_data(self.test_set.data, self.test_set.targets)
             self.local_test_indices = self.set_local_test_indices()
 
             logging_training.info(f"Successfully loaded partition data for participant {p}.")
@@ -249,10 +305,10 @@ class NebulaDataset:
         iid="IID",
         partition="dirichlet",
         partition_parameter=0.5,
-        nsplits_percentages = [1.0],
-        nsplits_iid = ["Non-IID"],
-        npartitions = ["dirichlet"],
-        npartitions_parameter =[0.1],
+        nsplits_percentages=[1.0],
+        nsplits_iid=["Non-IID"],
+        npartitions=["dirichlet"],
+        npartitions_parameter=[0.1],
         seed=42,
         config_dir=None,
     ):
@@ -315,16 +371,18 @@ class NebulaDataset:
             f"Partitioning data for {self.__class__.__name__} | Partitions: {self.partitions_number} | IID: {self.iid} | Partition: {self.partition} | Partition parameter: {self.partition_parameter}"
         )
 
-        #self.iid = "a" #TODO REMOVE modificar para q sea string y no boolean el input del front
+        # self.iid = "a" #TODO REMOVE modificar para q sea string y no boolean el input del front
         logging.info(f"Scenario with data distribution: {self.iid}")
         if self.iid == "IID":
             self.train_indices_map = self.generate_iid_map(self.train_set)
         elif self.iid == "Non-IID":
-            self.train_indices_map = self.generate_non_iid_map(self.train_set, partition=self.partition, partition_parameter=self.partition_parameter)
+            self.train_indices_map = self.generate_non_iid_map(
+                self.train_set, partition=self.partition, partition_parameter=self.partition_parameter
+            )
         else:
             self.train_indices_map = self.generate_hybrid_map()
-                
-        self.iid = False #TODO REMOVE
+
+        self.iid = False  # TODO REMOVE
         self.test_indices_map = self.get_test_indices_map()
         self.local_test_indices_map = self.get_local_test_indices_map()
 
@@ -366,11 +424,39 @@ class NebulaDataset:
                 train_labels = np.array([self.train_set.targets[idx] for idx in self.train_indices_map[participant_id]])
                 indices = np.where(np.isin(test_targets, train_labels))[0].tolist()
                 local_test_indices_map[participant_id] = indices
-                #logging.info(f"Participant {participant_id} | Local test indices: {indices}")
             return local_test_indices_map
         except Exception as e:
             logging.exception(f"Error in get_local_test_indices_map: {e}")
-            raise Exception(f"Error in get_local_test_indices_map: {e}")
+            raise
+
+    def save_partition(self, obj, file, name):
+        try:
+            logging.info(f"Saving pickled object of type {type(obj)}")
+            pickled = pickle.dumps(obj)
+
+            size_in_mb = len(pickled) / (1024 * 1024)
+            logging.info(f"Pickled object size: {size_in_mb:.2f} MB")
+
+            if size_in_mb > 10:
+                logging.info(f"Large object detected ({size_in_mb:.2f} MB). Using chunked storage with compression.")
+                data = np.frombuffer(pickled, dtype=np.uint8)
+                chunk_size = min(4 * 1024 * 1024, len(data) // 10)
+                chunk_length = max(1, chunk_size // data.itemsize)
+                ds = file.create_dataset(
+                    name,
+                    data=data,
+                    chunks=(chunk_length,),
+                    compression="lzf",
+                    shuffle=True,
+                )
+                ds.attrs["__type__"] = "pickle_bytes"
+            else:
+                ds = file.create_dataset(name, data=np.void(pickled))
+                ds.attrs["__type__"] = "pickle"
+            logging.info(f"Saved pickled object of type {type(obj)} to {name}")
+        except Exception as e:
+            logging.exception(f"Error saving object to HDF5: {e}")
+            raise
 
     def save_partitions(self):
         """
@@ -394,11 +480,11 @@ class NebulaDataset:
             # Save global test data
             file_name = os.path.join(path, "global_test.h5")
             with h5py.File(file_name, "w") as f:
-                test_data = np.array(self.test_set.data)
+                indices = list(range(len(self.test_set)))
+                test_data = [self.test_set[i] for i in indices]
+                self.save_partition(test_data, f, "test_data")
+                f["test_data"].attrs["num_classes"] = self.num_classes
                 test_targets = np.array(self.test_set.targets)
-                dset = f.create_dataset("test_data", data=test_data, compression="gzip")
-                dset.attrs["data_shape"] = test_data.shape[1:]  # Save the shape of the data
-                dset.attrs["num_classes"] = self.num_classes  # Save the number of classes
                 f.create_dataset("test_targets", data=test_targets, compression="gzip")
 
             for participant in range(self.partitions_number):
@@ -406,13 +492,12 @@ class NebulaDataset:
                 with h5py.File(file_name, "w") as f:
                     logging.info(f"Saving training data for participant {participant} in {file_name}")
                     indices = self.train_indices_map[participant]
-                    train_data = np.array([self.train_set.data[i] for i in indices])
+                    train_data = [self.train_set[i] for i in indices]
+                    self.save_partition(train_data, f, "train_data")
+                    f["train_data"].attrs["num_classes"] = self.num_classes
                     train_targets = np.array([self.train_set.targets[i] for i in indices])
-                    dset = f.create_dataset("train_data", data=train_data, compression="gzip")
-                    dset.attrs["data_shape"] = train_data.shape[1:]  # Save the shape of the data
-                    dset.attrs["num_classes"] = self.num_classes  # Save the number of classes
                     f.create_dataset("train_targets", data=train_targets, compression="gzip")
-                    logging.info(f"Partition saved for participant {participant} with {train_data.shape[0]} samples.")
+                    logging.info(f"Partition saved for participant {participant}.")
 
             logging.info("Successfully saved all partition files.")
 
@@ -452,45 +537,51 @@ class NebulaDataset:
                 break
         data = np.array(data)
         targets = np.array(targets)
-        self._targets_reales = targets.copy() #TODO remove
+        self._targets_reales = targets.copy()  # TODO remove
         logging.info(f"number of samples on dataset: {len(data)}, targets: {targets}")
 
         remaining_size = 1.0
         subsets = []
         subset_to_split, targets_to_split = copy.deepcopy(data), copy.deepcopy(targets)
-                     
+
         participants = [i for i in range(self.partitions_number)]
         num_participants = len(participants)
         grouped_participants = []
-        start_idx = 0 
-        
-        or_indices = np.arange(len(data))
-                
-        # Inicializar las estructuras que se dividirán en cada iteración
-        subset_to_split, targets_to_split, indices_to_split = copy.deepcopy(data), copy.deepcopy(targets), copy.deepcopy(or_indices)
+        start_idx = 0
 
-        for i, size in enumerate(self._nsplits_percentages[:-1]):   # Last one doesn't require split
+        or_indices = np.arange(len(data))
+
+        # Inicializar las estructuras que se dividirán en cada iteración
+        subset_to_split, targets_to_split, indices_to_split = (
+            copy.deepcopy(data),
+            copy.deepcopy(targets),
+            copy.deepcopy(or_indices),
+        )
+
+        for i, size in enumerate(self._nsplits_percentages[:-1]):  # Last one doesn't require split
             relative_size = size / remaining_size  # Tamaño relativo respecto al conjunto restante
             logging.info(f"size: {size}, relative size: {relative_size}, remaining size: {remaining_size}")
-            
+
             # Dividir manteniendo referencias originales
             x_s1, x_s2, y_s1, y_s2, idx_s1, idx_s2 = train_test_split(
-                subset_to_split, targets_to_split, indices_to_split,  
-                test_size=(1 - relative_size), 
-                stratify=targets_to_split, 
-                random_state=42
+                subset_to_split,
+                targets_to_split,
+                indices_to_split,
+                test_size=(1 - relative_size),
+                stratify=targets_to_split,
+                random_state=42,
             )
-            
+
             # Guardar los datos y etiquetas originales asociados a los índices seleccionados
             original_X_s1, original_y_s1 = data[idx_s1], targets[idx_s1]
-                   
-            logging.info(f"Subset {i+1}: {len(original_X_s1)} samples")
+
+            logging.info(f"Subset {i + 1}: {len(original_X_s1)} samples")
 
             # Guardar subset con referencia a los datos originales
-            subsets.append((original_X_s1, original_y_s1, idx_s1))  
+            subsets.append((original_X_s1, original_y_s1, idx_s1))
 
             num_in_group = round(size * num_participants)
-            grouped_participants.append(participants[start_idx:start_idx + num_in_group])
+            grouped_participants.append(participants[start_idx : start_idx + num_in_group])
 
             # Actualizar para la siguiente iteración
             subset_to_split, targets_to_split, indices_to_split = data[idx_s2], targets[idx_s2], idx_s2
@@ -501,35 +592,57 @@ class NebulaDataset:
         original_X_s2, original_y_s2 = data[indices_to_split], targets[indices_to_split]
         subsets.append((original_X_s2, original_y_s2, indices_to_split))
         grouped_participants.append(participants[start_idx:])
-                
+
         for i, (_, ysubset, _) in enumerate(subsets):
-            logging.info(f"Subset {i+1} - {np.bincount(ysubset)}")
-              
-        general_map = {}    
+            logging.info(f"Subset {i + 1} - {np.bincount(ysubset)}")
+
+        general_map = {}
         for i, subset in enumerate(subsets):
             data_mapped = dict()
             real_indexes = subset[2]
             subset_real_data = data[real_indexes]
             subset_real_targets = targets[real_indexes]
-                    
-            dataset_wrapped = SimpleNamespace(data=subset_real_data, targets=subset_real_targets, real_indexes=real_indexes)
-            
+
+            dataset_wrapped = SimpleNamespace(
+                data=subset_real_data, targets=subset_real_targets, real_indexes=real_indexes
+            )
+
             if self._nsplits_iid[i] == "IID":
-                logging.info(f"Generating dataset subset IID for participants: {grouped_participants[i]}, num_clients: {len(grouped_participants[i])}")
-                subset_map = self.generate_iid_map(dataset_wrapped, self._npartitions[i], self._npartitions_parameter[i], num_clients=len(grouped_participants[i]))       
-                for j, real_id in enumerate(grouped_participants[i]): # Mapping subset map generated to real clients IDs
+                logging.info(
+                    f"Generating dataset subset IID for participants: {grouped_participants[i]}, num_clients: {len(grouped_participants[i])}"
+                )
+                subset_map = self.generate_iid_map(
+                    dataset_wrapped,
+                    self._npartitions[i],
+                    self._npartitions_parameter[i],
+                    num_clients=len(grouped_participants[i]),
+                )
+                for j, real_id in enumerate(
+                    grouped_participants[i]
+                ):  # Mapping subset map generated to real clients IDs
                     data_mapped[real_id] = subset_map[j]
-                    
+
             else:
-                logging.info(f"Generating dataset subset Non-IID for participants: {grouped_participants[i]}, num_clients: {len(grouped_participants[i])}")
-                subset_map = self.generate_non_iid_map(dataset_wrapped, self._npartitions[i], self._npartitions_parameter[i], num_clients=len(grouped_participants[i]))  
-                for j, real_id in enumerate(grouped_participants[i]): # Mapping subset map generated to real clients IDs
+                logging.info(
+                    f"Generating dataset subset Non-IID for participants: {grouped_participants[i]}, num_clients: {len(grouped_participants[i])}"
+                )
+                subset_map = self.generate_non_iid_map(
+                    dataset_wrapped,
+                    self._npartitions[i],
+                    self._npartitions_parameter[i],
+                    num_clients=len(grouped_participants[i]),
+                )
+                for j, real_id in enumerate(
+                    grouped_participants[i]
+                ):  # Mapping subset map generated to real clients IDs
                     data_mapped[real_id] = subset_map[j]
-            
+
             general_map.update(data_mapped)
         for id, indexes in general_map.items():
-            logging.info(f" Participant id: {id}, num samples: {len(indexes)}, targets: {np.bincount(targets[indexes])}")
-        return general_map        
+            logging.info(
+                f" Participant id: {id}, num samples: {len(indexes)}, targets: {np.bincount(targets[indexes])}"
+            )
+        return general_map
 
     def plot_data_distribution(self, phase, dataset, partitions_map):
         """
@@ -651,17 +764,19 @@ class NebulaDataset:
         """
         num_clients = self.partitions_number if not n_clients else n_clients
         logging.info(f"Generating Dirichlet Partitioning, alpha: {alpha}, num_clients: {num_clients}")
-        
+
         # Extract targets and unique labels.
         if not n_clients:
             y_data = self._get_targets(dataset)
             unique_labels = np.unique(y_data)
         else:
-            if verbose: logging.info("Extracting dataset partition targets...")
+            if verbose:
+                logging.info("Extracting dataset partition targets...")
             # For hybrid dataset scenarios
             y_data = dataset.targets
             unique_labels = np.unique(y_data)
-        if verbose: logging.info(f"Unique labels in dataset: {unique_labels}")
+        if verbose:
+            logging.info(f"Unique labels in dataset: {unique_labels}")
 
         # For each class, get a shuffled list of indices.
         class_indices = {}
@@ -674,7 +789,7 @@ class NebulaDataset:
                 idx = np.where(self._targets_reales[ri] == label)[0]
                 idx = ri[idx]
                 # logging.info(f"attempting: {self._targets_reales[idx]}")
-                
+
             base_rng.shuffle(idx)
             class_indices[label] = idx
 
@@ -683,7 +798,8 @@ class NebulaDataset:
 
         def allocate_for_label(label_idx: np.ndarray, rng: np.random.Generator, n_clients) -> np.ndarray:
             num_label_samples = len(label_idx)
-            if verbose: logging.info(f"number of samples allocating {num_label_samples}")
+            if verbose:
+                logging.info(f"number of samples allocating {num_label_samples}")
             if balanced:
                 proportions = np.full(n_clients, 1.0 / n_clients)
             else:
@@ -694,7 +810,8 @@ class NebulaDataset:
                 extra_indices = rng.choice(n_clients, size=remainder, replace=False)
                 for idx in extra_indices:
                     sample_counts[idx] += 1
-            if verbose: logging.info(f"Samples allocated per client: {sample_counts}")
+            if verbose:
+                logging.info(f"Samples allocated per client: {sample_counts}")
             return sample_counts
 
         for iteration in range(1, max_iter + 1):
@@ -702,13 +819,17 @@ class NebulaDataset:
             temp_indices_per_partition = [[] for _ in range(num_clients)]
             for label in unique_labels:
                 label_idx = class_indices[label]
-                if verbose: logging.info(f"Calculating samples distribution for label: {label}")
+                if verbose:
+                    logging.info(f"Calculating samples distribution for label: {label}")
                 counts = allocate_for_label(label_idx, rng, num_clients)
                 start = 0
                 for client_idx, count in enumerate(counts):
                     end = start + count
                     temp_indices_per_partition[client_idx].extend(label_idx[start:end])
-                    if verbose: logging.info(f"Counting check: {np.bincount(self._targets_reales[temp_indices_per_partition[client_idx]])}")
+                    if verbose:
+                        logging.info(
+                            f"Counting check: {np.bincount(self._targets_reales[temp_indices_per_partition[client_idx]])}"
+                        )
                     start = end
 
             client_sizes = [len(indices) for indices in temp_indices_per_partition]
@@ -726,7 +847,7 @@ class NebulaDataset:
             )
 
         initial_partition = {i: indices for i, indices in enumerate(indices_per_partition)}
-        final_partition = initial_partition #self.postprocess_partition(initial_partition, y_data)
+        final_partition = initial_partition  # self.postprocess_partition(initial_partition, y_data)
         return final_partition
 
     @staticmethod
@@ -888,7 +1009,7 @@ class NebulaDataset:
         for label in range(self.num_classes):
             if not n_clients:
                 label_indices = np.where(labels == label)[0]
-            else:   # For hybrid dataset scenarios
+            else:  # For hybrid dataset scenarios
                 ri = dataset.real_indexes
                 label_indices = np.where(self._targets_reales[ri] == label)[0]
                 label_indices = ri[label_indices]
@@ -965,7 +1086,7 @@ class NebulaDataset:
             # Get the indices of the same label samples
             if not n_clients:
                 label_indices = np.where(labels == label)[0]
-            else:   # For hybrid dataset scenarios
+            else:  # For hybrid dataset scenarios
                 ri = dataset.real_indexes
                 label_indices = np.where(self._targets_reales[ri] == label)[0]
                 label_indices = ri[label_indices]
@@ -986,12 +1107,6 @@ class NebulaDataset:
         """
         Partition a dataset into multiple subsets with a specified level of non-IID-ness.
 
-        This function divides a dataset into a specified number of subsets (federated
-        clients), where each subset has a different class distribution. The class
-        distribution in each subset is determined by a specified percentage, making the
-        partition suitable for simulating non-IID (non-Independently and Identically
-        Distributed) data scenarios in federated learning.
-
         Args:
             dataset (torch.utils.data.Dataset): The dataset to partition. It should have
                                                 'data' and 'targets' attributes.
@@ -1003,11 +1118,6 @@ class NebulaDataset:
         Returns:
             dict: A dictionary where keys are subset indices (ranging from 0 to partitions_number-1)
                 and values are lists of indices corresponding to the samples in each subset.
-
-        The function ensures that the number of classes in each subset varies based on the selected
-        percentage. The partitioning process involves iterating over each class, shuffling the
-        indices of that class, and then splitting them according to the calculated subset sizes.
-        The function also prints the class distribution in each subset for reference.
 
         Example usage:
             federated_data = percentage_partition(my_dataset, percentage=20)
@@ -1027,7 +1137,7 @@ class NebulaDataset:
         if not n_clients:
             class_indices = {i: np.where(y_train == i)[0] for i in range(num_classes)}
         else:
-            #TODO adapt, bad right now
+            # TODO adapt, bad right now
             ri = dataset.real_indexes
             class_indices = {i: "" for i in range(num_classes)}
 
@@ -1169,20 +1279,23 @@ class NebulaDataset:
         plt.savefig(path_to_save, dpi=300, bbox_inches="tight")
         plt.close()
 
+
 def factory_nebuladataset(dataset, **config) -> NebulaDataset:
     from nebula.core.datasets.cifar10.cifar10 import CIFAR10Dataset
     from nebula.core.datasets.cifar100.cifar100 import CIFAR100Dataset
     from nebula.core.datasets.emnist.emnist import EMNISTDataset
     from nebula.core.datasets.fashionmnist.fashionmnist import FashionMNISTDataset
     from nebula.core.datasets.mnist.mnist import MNISTDataset
+
     options = {
-        "MNIST": MNISTDataset,  
-        "FashionMNIST": FashionMNISTDataset,   
-        "EMNIST": EMNISTDataset,   
-        "CIFAR10": CIFAR10Dataset, 
-        "CIFAR100": CIFAR100Dataset,  
-    } 
-    
-    cs = options.get(dataset, None)
-    if not cs: raise ValueError(f"Dataset {dataset} not supported")
+        "MNIST": MNISTDataset,
+        "FashionMNIST": FashionMNISTDataset,
+        "EMNIST": EMNISTDataset,
+        "CIFAR10": CIFAR10Dataset,
+        "CIFAR100": CIFAR100Dataset,
+    }
+
+    cs = options.get(dataset)
+    if not cs:
+        raise ValueError(f"Dataset {dataset} not supported")
     return cs(**config)

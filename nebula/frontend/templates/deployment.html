@@ -157,9 +157,6 @@
                                 <input type="checkbox" id="mod-neuroninversion" value='GLLNeuronInversionAttack' style="margin-right: 10px;">GLL Neuron Inversion
                             </label>
                             <label>
-                                <input type="checkbox" id="mod-noiseinjection" value='NoiseInjectionAttack' style="margin-right: 10px;">Noise Injection
-                            </label>
-                            <label>
                                 <input type="checkbox" id="mod-swappingweights" value='SwappingWeightsAttack' style="margin-right: 10px;">Swapping Weights
                             </label>
                             <label>
@@ -313,7 +310,7 @@
                             <i id="iidHelpIcon" class="fa fa-info-circle" style="cursor: pointer;"></i>
                         </small>
                     </div>
-                    <h5 class="step-title">Partition Methods</h5>
+                    <h5 class="step-title">Partition methods</h5>
                     <div class="form-check form-check-inline">
                         <select class="form-control" id="partitionSelect" name="partition"
                             style="display: inline; width: 50%">
@@ -501,7 +498,6 @@
                             <option>Sample Poisoning</option>
                             <option>Model Poisoning</option>
                             <option>GLL Neuron Inversion</option>
-                            <option>Noise Injection</option>
                             <option>Swapping Weights</option>
                             <option>Delayer</option>
                             <option>Flooding</option>
@@ -559,12 +555,6 @@
                                 placeholder="target changed label" min="0" value="7"
                                 style="display: inline; width: 20%">
                         </div>
-                        <h5 id="strength-title" class="step-title" style="display: none;">Noise strength</h5>
-                        <div class="form-check form-check-inline" id="strength-container" style="display: none;">
-                            <input type="number" class="form-control" id="strength"
-                                placeholder="Noise strength" value="10000"
-                                style="display: inline; width: 20%">
-                        </div>
                         <h5 id="layer_idx-title" class="step-title" style="display: none;">Layer</h5>
                         <div class="form-check form-check-inline" id="layer_idx-container" style="display: none;">
                             <input type="number" class="form-control" id="layer_idx"
@@ -598,7 +588,7 @@
                         <h5 id="start-attack-title" class="step-title" style="display: none;">Starting round</h5>
                         <div class="form-check form-check-inline" id="start-attack-container" style="display: none;">
                             <input type="number" class="form-control" id="start-attack"
-                                placeholder="Starting round" min="1" value="1"
+                                placeholder="Starting round" min="0" value="1"
                                 style="display: inline; width: 80%">
                         </div>
                         <h5 id="stop-attack-title" class="step-title" style="display: none;">Stopping round</h5>
@@ -615,51 +605,60 @@
                         </div>
                     </div>
                 </div>
-                <!-- Advanced Defense -->
-                <div class="form-group row container-shadow tiny grey">
+               <!-- Advanced Defense -->
+               <div class="form-group row container-shadow tiny grey">
                     <h5 class="step-number">Defense <i class="fa fa-wrench"></i>
-                        <input type="checkbox" id="defense-lock" onchange="lock('without-reputation-btn', 'with-reputation-btn', 'dynamic-topology-btn', 'dynamic-aggregation-btn', 'targetAggregationSelect', checked)" style="display: none;">
+                        <input type="checkbox" id="defense-lock" onchange="lock('reputationSwitch', 'initial-reputation', 'weighting-factor', 'model-similarity', 'num-messages', 'model-arrival-latency', 'fraction-parameters-changed', checked)" style="display: none;">
                         <label for="defense-lock" class="icon-container" style="float: right;">
                             <i class="fa fa-lock"></i>
                         </label>
                     </h5>
-                    <h5 class="step-title">Reputation System</h5>
-                    <div class="form-check form-check-inline">
-                        <input class="form-check-input" type="radio" name="reputationSystem" id="without-reputation-btn"
-                            checked>
-                        <label class="form-check-label" for="without-reputation-btn">Disable
-                            Reputation</label>
+                    <h5 class="step-title">Enable/Disable Reputation</h5>
+                    <div class="form-check form-switch" style="margin-left: 23px;">
+                        <input class="form-check-input" type="checkbox" id="reputationSwitch" style="display: inline; width: 80px; height: 30px;">
                     </div>
-                    <div class="form-check form-check-inline">
-                        <input class="form-check-input" type="radio" name="reputationSystem" id="with-reputation-btn">
-                        <label class="form-check-label" for="with-reputation-btn">Enable Reputation</label>
+                    <div id="reputation-settings" style="margin-top: 10px; display:none;">
+                        <h5 class="step-title">Reputation Initialization</h5>
+                        <input class="form-control" type="number" id="initial-reputation" name="initialReputation" step="0.01" style="display: inline; width: 80%" value="0.6" min="0.1" max="1">
+                        <small id="reputationInitializationHelp" class="form-text text-muted">
+                            <i id="reputationInitializationHelpIcon" class="fa fa-info-circle" style="cursor: pointer;"></i>
+                        </small>
                     </div>
-                    <div id="mtd-strategy" style="display: none; margin-left: 10px">
-                        <div class="form-check form-check-inline">
-                            <input class="form-check-input" type="checkbox" name="dynamicTopology"
-                                id="dynamic-topology-btn">
-                            <label class="form-check-label" for="dynamic-topology-btn">Dynamic
-                                Topology</label>
-
+                    <div id="weighting-settings" style="margin-top: 10px; display:none;">
+                        <h5 class="step-title">Weighting Factor</h5>
+                        <select class="form-control" id="weighting-factor" name="weightingFactor" style="display: inline; width: 80%">
+                            <option value="dynamic" selected>Dynamic</option>
+                            <option value="static">Static</option>
+                        </select>
+                        <small id="weightingFactorHelp" class="form-text text-muted">
+                            <i id="weightingFactorHelpIcon" class="fa fa-info-circle" style="cursor: pointer;"></i>
+                        </small>
+                    </div>
+                    <div id="reputation-metrics" style="display:none;">
+                        <h5 class="step-title">Reputation Metrics</h5>
+                        <p>Model-based metrics</p>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="model-similarity" name="modelSimilarity">
+                            <label class="form-check-label" for="model-similarity">Model Similarity</label>
+                            <input class="form-control weight-input" type="number" id="weight-model-similarity" name="weightModelSimilarity" step="0.01" value="0" placeholder="Weight to model similarity" style="display: none; width: 30%; margin-top:2px;">
                         </div>
-                        <div class="form-check form-check-inline">
-                            <input class="form-check-input" type="checkbox" name="dynamicAggregation"
-                                id="dynamic-aggregation-btn">
-                            <label class="form-check-label" for="dynamic-aggregation-btn">Dynamic
-                                Aggregation</label>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="fraction-parameters-changed" name="fractionParametersChanged" >
+                            <label class="form-check-label" for="fraction-parameters-changed">Fraction Parameters Changed</label>
+                            <input class="form-control weight-input" type="number" id="weight-fraction-parameters-changed" name="weightFractionParametersChanged" step="0.01" value="0" placeholder="Weight to fraction paremeters changed" style="display: none; width: 30%; margin-top:2px;">
                         </div>
-                        <div id="target-aggregation" style="display: none; margin-left: 20px">
-                            <h5 class="step-title">Target Aggregation Algorithm</h5>
-                            <div class="form-check form-check-inline">
-                                <select class="form-control" id="targetAggregationSelect" name="targetAggregation"
-                                    style="display: inline; width: 20%">
-                                    <option selected>Krum</option>
-                                    <option>FedAvg</option>
-                                    <option>TrimmedMean</option>
-                                    <option>Median</option>
-                                </select>
-                            </div>
+                        <p>Communication-based metrics</p>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="num-messages" name="numMessages">
+                            <label class="form-check-label" for="num-messages">Number of Messages</label>
+                            <input class="form-control weight-input" type="number" id="weight-num-messages" name="weightNumMessages" step="0.01" value="0" placeholder="Weight to number of messages" style="display: none; width: 30%; margin-top:2px;">
                         </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="model-arrival-latency" name="modelArrivalLatency">
+                            <label class="form-check-label" for="model-arrival-latency">Model Arrival Latency</label>
+                            <input class="form-control weight-input" type="number" id="weight-model-arrival-latency" name="weightModelArrivalLatency" step="0.01" value="0" placeholder="Weight to model arrival latency" style="display: none; width: 30%; margin-top:2px;">
+                        </div>
+                        <p id="weight-warning" style="color: red; display: none;">Total weight must not exceed 1.</p>
                     </div>
                 </div>
                 <!-- Mobility -->
@@ -1139,7 +1138,6 @@
             data["attack_params"].targeted = document.getElementById("targeted").checked;
             data["attack_params"].target_label = document.getElementById("target_label").value;
             data["attack_params"].target_changed_label = document.getElementById("target_changed_label").value;
-            data["attack_params"].strength = document.getElementById("strength").value;
             data["attack_params"].layer_idx = document.getElementById("layer_idx").value;
             data["attack_params"].delay = document.getElementById("delay").value;
             data["attack_params"].round_start_attack = document.getElementById("start-attack").value
@@ -1149,10 +1147,19 @@
             data["attack_params"].selection_interval = document.getElementById("selection-interval").value
             data["attack_params"].flooding_factor = document.getElementById("flooding-factor").value
             // Step 13
-            data["with_reputation"] = document.getElementById("with-reputation-btn").checked ? true : false
-            data["is_dynamic_topology"] = document.getElementById("dynamic-topology-btn").checked ? true : false
-            data["is_dynamic_aggregation"] = document.getElementById("dynamic-aggregation-btn").checked ? true : false
-            data["target_aggregation"] = document.getElementById("dynamic-aggregation-btn").checked ? document.getElementById("targetAggregationSelect").value : false
+            data["with_reputation"] = document.getElementById("reputationSwitch").checked
+            data["reputation_metrics"] = {
+                "model_similarity": document.getElementById("model-similarity").checked,
+                "num_messages": document.getElementById("num-messages").checked,
+                "model_arrival_latency": document.getElementById("model-arrival-latency").checked,
+                "fraction_parameters_changed": document.getElementById("fraction-parameters-changed").checked
+            }
+            data["initial_reputation"] = document.getElementById("initial-reputation").value
+            data["weighting_factor"] = document.getElementById("weighting-factor").value
+            data["weight_model_arrival_latency"] = document.getElementById("weight-model-arrival-latency").value
+            data["weight_model_similarity"] = document.getElementById("weight-model-similarity").value
+            data["weight_num_messages"] = document.getElementById("weight-num-messages").value
+            data["weight_fraction_params_changed"] = document.getElementById("weight-fraction-parameters-changed").value
             // Step 14
             data["random_geo"] = document.getElementById("random-geo-btn").checked ? true : false
             data["latitude"] = parseFloat(document.getElementById("latitude").value)
@@ -1257,7 +1264,6 @@
                 document.getElementById("targeted").checked = data.attack_params.targeted;
                 document.getElementById("target_label").value = data.attack_params.target_label;
                 document.getElementById("target_changed_label").value = data.attack_params.target_changed_label;
-                document.getElementById("strength").value = data.attack_params.strength;
                 document.getElementById("layer_idx").value = data.attack_params.layer_idx;
                 document.getElementById("delay").value = data.attack_params.delay;
                 document.getElementById("start-attack").value = data.attack_params.round_start_attack;
@@ -1280,13 +1286,25 @@
                     selectElement.dispatchEvent(new Event('change'));
                 }
                 // Step 12
-                document.getElementById("with-reputation-btn").checked = data["with_reputation"];
-                if (data["with_reputation"]) {
-                    document.getElementById("mtd-strategy").style.display = "block";
+                var selectElement = document.getElementById("reputationSwitch");
+                selectElement.checked = data["with_reputation"];
+                if (selectElement.checked) {
+                    selectElement.dispatchEvent(new Event('change'));
+                    Object.entries(data.reputation_metrics).forEach(([key, value]) => {
+                        const elementId = key.replace(/_/g, "-");
+                        const element = document.getElementById(elementId);
+                        if (element) {
+                            element.checked = value;
+                        }
+                    });
+                    document.getElementById("initial-reputation").value = data["initial_reputation"];
+                    document.getElementById("weighting-factor").value = data["weighting_factor"];
+                    document.getElementById("weighting-factor").dispatchEvent(new Event('change'));
+                    document.getElementById("weight-model-arrival-latency").value = data["weight_model_arrival_latency"];
+                    document.getElementById("weight-model-similarity").value = data["weight_model_similarity"];
+                    document.getElementById("weight-num-messages").value = data["weight_num_messages"];
+                    document.getElementById("weight-fraction-parameters-changed").value = data["weight_fraction_params_changed"];
                 }
-                document.getElementById("dynamic-topology-btn").checked = data["is_dynamic_topology"];
-                document.getElementById("dynamic-aggregation-btn").checked = data["is_dynamic_aggregation"];
-                document.getElementById("targetAggregationSelect").value = data["target_aggregation"];
                 // Step 13
                 document.getElementById("random-geo-btn").checked = data["random_geo"];
                 document.getElementById("latitude").value = data["latitude"];
@@ -1446,9 +1464,17 @@
             '                    <li>Manual: Select malicious nodes in the graph</li>\n' +
             '                </ul>'
 
+        contentProcessHelp = '<ul>\n' +
+            '                    <li>Processes: Deploy the nodes of the federation using processes</li>\n' +
+            '                </ul>';
+
+        contentDockerHelp = '<ul>\n' +
+            '                    <li>Docker: Deploy the nodes of the federation using docker containers</li>\n' +
+            '                </ul>';
+
         var popoverTriggerEl = document.getElementById("topologyCustomIcon");
         var popover = new bootstrap.Popover(popoverTriggerEl, {
-            title: "Network topology",
+            title: "Topology generation",
             content: contentTopologyCustomHelp,
             trigger: "hover",
             placement: "right",
@@ -1459,7 +1485,7 @@
 
         var popoverTriggerEl = document.getElementById("topologyPredefinedIcon");
         var popover = new bootstrap.Popover(popoverTriggerEl, {
-            title: "Network topology",
+            title: "Topology generation",
             content: contentTopologyPredefinedHelp,
             trigger: "hover",
             placement: "right",
@@ -1470,7 +1496,7 @@
 
         var popoverTriggerEl = document.getElementById("architectureHelpIcon");
         var popover = new bootstrap.Popover(popoverTriggerEl, {
-            title: "Federation architecture",
+            title: "Federation approach",
             content: contentArchitectureHelp,
             trigger: "hover",
             placement: "right",
@@ -1481,7 +1507,7 @@
 
         var popoverTriggerEl = document.getElementById("datasetHelpIcon");
         var popover = new bootstrap.Popover(popoverTriggerEl, {
-            title: "Dataset",
+            title: "Federated dataset",
             content: contentDatasetHelp,
             trigger: "hover",
             placement: "right",
@@ -1492,7 +1518,7 @@
 
         var popoverTriggerEl = document.getElementById("iidHelpIcon");
         var popover = new bootstrap.Popover(popoverTriggerEl, {
-            title: "IID",
+            title: "Dataset type",
             content: contentIIDHelp,
             trigger: "hover",
             placement: "right",
@@ -1503,7 +1529,7 @@
 
         var popoverTriggerEl = document.getElementById("partitionMethodsHelpIcon");
         var popover = new bootstrap.Popover(popoverTriggerEl, {
-            title: 'Partition Methods',
+            title: 'Partition methods',
             content: contentPartitionMethodsHelp,
             trigger: 'hover',
             placement: 'right',
@@ -1514,7 +1540,7 @@
 
         var popoverTriggerEl = document.getElementById("parameterSettingHelpIcon");
         var popover = new bootstrap.Popover(popoverTriggerEl, {
-            title: 'IID',
+            title: 'Parameter setting',
             html: true,
             placement: 'right',
             content: contentParameterSettingHelp,
@@ -1545,15 +1571,71 @@
             delay: { show: 500, hide: 100 },
         });
 
-        // When click processHelpIcon, redirect to the documentation page
-        var processIcon = document.getElementById("processHelpIcon");
-        processIcon.addEventListener("click", function () {
-            window.open("#", "_blank");
+        var popoverTriggerEl = document.getElementById("processHelpIcon");
+        var popover = new bootstrap.Popover(popoverTriggerEl, {
+            title: "Deployment type",
+            content: contentProcessHelp,
+            trigger: "hover",
+            placement: "right",
+            html: true,
+            container: "body",
+            delay: { show: 500, hide: 100 },
         });
 
-        var dockerIcon = document.getElementById("dockerHelpIcon");
-        dockerIcon.addEventListener("click", function () {
-            window.open("#", "_blank");
+        var popoverTriggerEl = document.getElementById("dockerHelpIcon");
+        var popover = new bootstrap.Popover(popoverTriggerEl, {
+            title: "Deployment type",
+            content: contentDockerHelp,
+            trigger: "hover",
+            placement: "right",
+            html: true,
+            container: "body",
+            delay: { show: 500, hide: 100 },
+        });
+
+        var reputationInitialization = document.getElementById("reputationInitializationHelpIcon");
+        var popover = new bootstrap.Popover(reputationInitialization, {
+            title: "Reputation Initialization",
+            content: "Initial reputation value for all participants",
+            trigger: "hover",
+            placement: "right",
+            html: true,
+            container: "body",
+            delay: { show: 500, hide: 100 },
+        });
+
+        var reputationWeighting = document.getElementById("weightingFactorHelpIcon");
+        var popover = new bootstrap.Popover(reputationWeighting, {
+            title: "Reputation Weighting",
+            content: "Use dynamic or static weighting factor for reputation",
+            trigger: "hover",
+            placement: "right",
+            html: true,
+            container: "body",
+            delay: { show: 500, hide: 100 },
+        });
+
+
+        var reputationInitialization = document.getElementById("reputationInitializationHelpIcon");
+        var popover = new bootstrap.Popover(reputationInitialization, {
+            title: "Reputation Initialization",
+            content: "Initial reputation value for all participants",
+            trigger: "hover",
+            placement: "right",
+            html: true,
+            container: "body",
+            delay: { show: 500, hide: 100 },
+        });
+
+        var reputationWeighting = document.getElementById("weightingFactorHelpIcon");
+        var popover = new bootstrap.Popover(reputationWeighting, {
+            title: "Reputation Weighting",
+            content: "Use dynamic or static weighting factor for reputation",
+            trigger: "hover",
+            placement: "right",
+            html: true,
+            container: "body",
+            delay: { show: 500, hide: 100 },
         });
     </script>
 
@@ -1844,11 +1926,8 @@
             // Step 12
             if(!document.getElementById("defense-lock").checked){
                 document.getElementById("without-reputation-btn").checked = true;
-                document.getElementById("dynamic-aggregation-btn").checked = false;
-                document.getElementById("targetAggregationSelect").value = "Krum";
                 $('#dynamic-aggregation-btn').change();
                 document.getElementById("without-reputation-btn").click();
-                document.getElementById("dynamic-topology-btn").checked = false;
             }
             // Step 13
             if(!document.getElementById("mobility-lock").checked){
@@ -2420,32 +2499,51 @@
     </script>
 
     <script>
-        // Generate defense with reputation system configs
-        // When click on "with-reputation-btn" check input, dife "mtd-strategy"
-
-        mtdStrategyDiv = document.getElementById("mtd-strategy")
-        withoutReputationBtn = document.getElementById("without-reputation-btn");
-        withoutReputationBtn.addEventListener("click", function () {
-            mtdStrategyDiv.style.display = "none";
-        });
-        // When click on "with-reputation-btn" check input, display "predefined-topology"
-
-        withReputationBtn = document.getElementById("with-reputation-btn");
-        withReputationBtn.addEventListener("click", function () {
-            mtdStrategyDiv.style.display = "block";
-        });
-
-        // When click on "with-reputation-btn" check input, display "predefined-topology"
-        targetAggregation = document.getElementById("target-aggregation")
-        targetAggregationSelect = document.getElementById("dynamic-aggregation-btn");
-        targetAggregationSelect.addEventListener("change", function () {
-            if (this.checked) {
-                targetAggregation.style.display = "block";
-            } else {
-                targetAggregation.style.display = "none";
+        document.getElementById("reputationSwitch").addEventListener("change", function (){
+            if(this.checked){
+                document.getElementById("reputation-metrics").style.display = "block";
+                document.getElementById("reputation-settings").style.display = "block";
+                document.getElementById("weighting-settings").style.display = "block";
+            } else{
+                document.getElementById("reputation-metrics").style.display = "none";
+                document.getElementById("reputation-settings").style.display = "none";
+                document.getElementById("weighting-settings").style.display = "none";
             }
         });
 
+        document.getElementById("initial-reputation").addEventListener("blur", function () {
+            let min = parseFloat(this.min);
+            let max = parseFloat(this.max);
+            let value = parseFloat(this.value);
+
+            if (value < min) {
+                this.value = min;
+            } else if (value > max) {
+                this.value = max;
+            }
+        });
+
+        document.getElementById("weighting-factor").addEventListener("change", function () {
+            let showWeights = this.value === "static";
+            document.querySelectorAll(".weight-input").forEach(input => {
+                input.style.display = showWeights ? "inline-block" : "none";
+            });
+        });
+
+        function validateWeights() {
+            let totalWeight = 0;
+            document.querySelectorAll(".weight-input").forEach(input => {
+                let checkbox = input.previousElementSibling.previousElementSibling;
+                if (checkbox.checked && input.style.display !== "none" && input.value) {
+                    totalWeight += parseFloat(input.value);
+                }
+            });
+            document.getElementById("weight-warning").style.display = totalWeight > 1 ? "block" : "none";
+        }
+
+        document.querySelectorAll(".weight-input").forEach(input => {
+            input.addEventListener("input", validateWeights);
+        });
     </script>
 
     <script>
@@ -2651,17 +2749,12 @@
 
     <script>
         // Update attacks configuration
-
-        var manualMalicious = false
-
         document.getElementById("malicious-nodes-select").addEventListener("change", function(){
             if(this.value == "Manual"){
                 document.getElementById("poisoned-node-percent").value = 0;
                 document.getElementById("poisoned-node-percent").disabled = true;
-                manualMalicious = true;
             }else{
                 document.getElementById("poisoned-node-percent").disabled = false;
-                manualMalicious = false;
             }
         });
 
@@ -2705,12 +2798,8 @@
                 document.getElementById("poisoned-noise-percent-container").style.display = "none";
                 document.getElementById("noise-type-title").style.display = "none";
                 document.getElementById("noise-type-container").style.display = "none";
-                document.getElementById("targeted").checked = false;
-                document.getElementById("targeted").dispatchEvent(new Event('change'));
                 document.getElementById("targeted-title").style.display = "none";
                 document.getElementById("targeted-container").style.display = "none";
-                document.getElementById("strength-title").style.display = "none";
-                document.getElementById("strength-container").style.display = "none";
                 document.getElementById("layer_idx-title").style.display = "none";
                 document.getElementById("layer_idx-container").style.display = "none";
                 document.getElementById("delay-title").style.display = "none";
@@ -2742,8 +2831,6 @@
                 document.getElementById("targeted").dispatchEvent(new Event('change'));
                 document.getElementById("targeted-title").style.display = "block";
                 document.getElementById("targeted-container").style.display = "block";
-                document.getElementById("strength-title").style.display = "none";
-                document.getElementById("strength-container").style.display = "none";
                 document.getElementById("layer_idx-title").style.display = "none";
                 document.getElementById("layer_idx-container").style.display = "none";
                 document.getElementById("delay-title").style.display = "none";
@@ -2775,8 +2862,6 @@
                 document.getElementById("targeted").dispatchEvent(new Event('change'));
                 document.getElementById("targeted-title").style.display = "block";
                 document.getElementById("targeted-container").style.display = "block";
-                document.getElementById("strength-title").style.display = "none";
-                document.getElementById("strength-container").style.display = "none";
                 document.getElementById("layer_idx-title").style.display = "none";
                 document.getElementById("layer_idx-container").style.display = "none";
                 document.getElementById("delay-title").style.display = "none";
@@ -2804,12 +2889,8 @@
                 document.getElementById("noise_type").value = "Gaussian";
                 document.getElementById("noise-type-title").style.display = "block";
                 document.getElementById("noise-type-container").style.display = "block";
-                document.getElementById("targeted").checked = false;
-                document.getElementById("targeted").dispatchEvent(new Event('change'));
                 document.getElementById("targeted-title").style.display = "none";
                 document.getElementById("targeted-container").style.display = "none";
-                document.getElementById("strength-title").style.display = "none";
-                document.getElementById("strength-container").style.display = "none";
                 document.getElementById("layer_idx-title").style.display = "none";
                 document.getElementById("layer_idx-container").style.display = "none";
                 document.getElementById("delay-title").style.display = "none";
@@ -2842,42 +2923,6 @@
                 document.getElementById("target_label-container").style.display = "none";
                 document.getElementById("target_changed_label-title").style.display = "none";
                 document.getElementById("target_changed_label-container").style.display = "none";
-                document.getElementById("strength-title").style.display = "none";
-                document.getElementById("strength-container").style.display = "none";
-                document.getElementById("layer_idx-title").style.display = "none";
-                document.getElementById("layer_idx-container").style.display = "none";
-                document.getElementById("delay-title").style.display = "none";
-                document.getElementById("delay-container").style.display = "none";
-                document.getElementById("start-attack-title").style.display = "block";
-                document.getElementById("start-attack-container").style.display = "block";
-                document.getElementById("stop-attack-title").style.display = "block";
-                document.getElementById("stop-attack-container").style.display = "block";
-                document.getElementById("attack-interval-title").style.display = "block";
-                document.getElementById("attack-interval-container").style.display = "block";
-                document.getElementById("target-percentage-title").style.display = "none";
-                document.getElementById("target-percentage-container").style.display = "none";
-                document.getElementById("selection-interval-title").style.display = "none";
-                document.getElementById("selection-interval-container").style.display = "none";
-                document.getElementById("flooding-factor-title").style.display = "none";
-                document.getElementById("flooding-factor-container").style.display = "none";
-            }
-            else if(this.value == "Noise Injection"){
-                document.getElementById("poisoned-node-title").style.display = "block";
-                document.getElementById("poisoned-node-percent-container").style.display = "block";
-                document.getElementById("poisoned-sample-title").style.display = "none";
-                document.getElementById("poisoned-sample-percent-container").style.display = "none";
-                document.getElementById("poisoned-noise-title").style.display = "none";
-                document.getElementById("poisoned-noise-percent-container").style.display = "none";
-                document.getElementById("noise-type-title").style.display = "none";
-                document.getElementById("noise-type-container").style.display = "none";
-                document.getElementById("targeted-title").style.display = "none";
-                document.getElementById("targeted-container").style.display = "none";
-                document.getElementById("target_label-title").style.display = "none";
-                document.getElementById("target_label-container").style.display = "none";
-                document.getElementById("target_changed_label-title").style.display = "none";
-                document.getElementById("target_changed_label-container").style.display = "none";
-                document.getElementById("strength-title").style.display = "block";
-                document.getElementById("strength-container").style.display = "block";
                 document.getElementById("layer_idx-title").style.display = "none";
                 document.getElementById("layer_idx-container").style.display = "none";
                 document.getElementById("delay-title").style.display = "none";
@@ -2910,8 +2955,6 @@
                 document.getElementById("target_label-container").style.display = "none";
                 document.getElementById("target_changed_label-title").style.display = "none";
                 document.getElementById("target_changed_label-container").style.display = "none";
-                document.getElementById("strength-title").style.display = "none";
-                document.getElementById("strength-container").style.display = "none";
                 document.getElementById("layer_idx-title").style.display = "block";
                 document.getElementById("layer_idx-container").style.display = "block";
                 document.getElementById("delay-title").style.display = "none";
@@ -2944,8 +2987,6 @@
                 document.getElementById("target_label-container").style.display = "none";
                 document.getElementById("target_changed_label-title").style.display = "none";
                 document.getElementById("target_changed_label-container").style.display = "none";
-                document.getElementById("strength-title").style.display = "none";
-                document.getElementById("strength-container").style.display = "none";
                 document.getElementById("layer_idx-title").style.display = "none";
                 document.getElementById("layer_idx-container").style.display = "none";
                 document.getElementById("delay-title").style.display = "block";
@@ -2978,8 +3019,6 @@
                 document.getElementById("target_label-container").style.display = "none";
                 document.getElementById("target_changed_label-title").style.display = "none";
                 document.getElementById("target_changed_label-container").style.display = "none";
-                document.getElementById("strength-title").style.display = "none";
-                document.getElementById("strength-container").style.display = "none";
                 document.getElementById("layer_idx-title").style.display = "none";
                 document.getElementById("layer_idx-container").style.display = "none";
                 document.getElementById("delay-title").style.display = "none";
@@ -3459,21 +3498,14 @@
                 const changeMalicious = document.createElement("a");
                 changeMalicious.innerHTML = "<i class=\"fa fa-exclamation-triangle\" aria-hidden=\"true\"></i> Change malicious";
                 changeMalicious.style.display = "block";
-                if(!manualMalicious){
-                    changeMalicious.style.opacity = "0.5";
-                    changeMalicious.style.cursor = "not-allowed";
-                }
-                else{
-                    changeMalicious.style.cursor = "pointer";
-                }
                 changeMalicious.style.padding = "5px";
                 changeMalicious.style.borderRadius = "5px";
                 changeMalicious.style.marginBottom = "5px";
                 changeMalicious.classList.add("dropdown-item");
                 changeMalicious.addEventListener("click", function () {
-                    if(!manualMalicious){
-                        return;
-                    }
+                    document.getElementById("malicious-nodes-select").value = "Manual"
+                    document.getElementById("malicious-nodes-select").dispatchEvent(new Event('change'));
+
                     console.log("Change malicious");
                     node.malicious = !node.malicious;
                     updateGraph();

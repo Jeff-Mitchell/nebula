@@ -1,11 +1,11 @@
 import hashlib
 import logging
 import traceback
-from typing import TYPE_CHECKING
 
 from nebula.core.nebulaevents import MessageEvent
 from nebula.core.network.actions import factory_message_action, get_action_name_from_value, get_actions_names
 from nebula.core.pb import nebula_pb2
+
 
 class MessagesManager:
     def __init__(self, addr, config):
@@ -19,6 +19,7 @@ class MessagesManager:
     def cm(self):
         if not self._cm:
             from nebula.core.network.communications import CommunicationsManager
+
             self._cm = CommunicationsManager.get_instance()
             return self._cm
         else:
@@ -64,11 +65,8 @@ class MessagesManager:
                 },
             },
             "reputation": {
-                "parameters": ["action", "reputation", "defendant", "verdict"], 
-                "defaults": {
-                    "defendant": "",
-                    "verdict": ""
-                }
+                "parameters": ["action", "reputation", "defendant", "verdict"],
+                "defaults": {"defendant": "", "verdict": ""},
             },
             "discover": {"parameters": ["action"], "defaults": {}},
             "link": {"parameters": ["action", "addrs"], "defaults": {}},
@@ -77,8 +75,8 @@ class MessagesManager:
 
     def get_messages_events(self):
         message_events = {}
-        for message_name in self._message_templates.keys():
-            if message_name != "model" and message_name != "reputation":
+        for message_name in self._message_templates:
+            if message_name != "model":
                 message_events[message_name] = get_actions_names(message_name)
         return message_events
 
@@ -121,7 +119,6 @@ class MessagesManager:
                     if message_type == "model_message":
                         await self.cm.handle_model_message(source, message_data)
                     else:
-                        # await self.cm.handle_message(source, message_type, message_data)
                         me = MessageEvent(
                             (msg_name, get_action_name_from_value(msg_name, message_data.action)), source, message_data
                         )
@@ -129,7 +126,6 @@ class MessagesManager:
             # Rest of messages
             else:
                 if await self.cm.include_received_message_hash(hashlib.md5(data).hexdigest()):
-                    # await self.cm.handle_message(source, message_type, message_data)
                     me = MessageEvent(
                         (msg_name, get_action_name_from_value(msg_name, message_data.action)), source, message_data
                     )

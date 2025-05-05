@@ -196,9 +196,17 @@ class NebulaModel(pl.LightningModule, ABC):
         # Communication manager for sending messages from the model (e.g., prototypes, gradients)
         # Model parameters are sent by default using network.propagator
         self.communication_manager = None
-        
+
         self._current_loss = -1
         self._optimizer = None
+
+    def set_communication_manager(self, communication_manager):
+        self.communication_manager = communication_manager
+
+    def get_communication_manager(self):
+        if self.communication_manager is None:
+            raise ValueError("Communication manager not set.")
+        return self.communication_manager
 
     @abstractmethod
     def forward(self, x):
@@ -217,22 +225,22 @@ class NebulaModel(pl.LightningModule, ABC):
         loss = self.criterion(y_pred, y)
         self.process_metrics(phase, y_pred, y, loss)
 
-        self._current_loss=loss
+        self._current_loss = loss
         return loss
 
     def get_loss(self):
         return self._current_loss
-    
+
     def modify_learning_rate(self, new_lr):
         logging.info(f"Modifiying | learning rate, new value: {new_lr}")
         self.learning_rate = new_lr
         for param_group in self._optimizer.param_groups:
-            param_group['lr'] = new_lr
-    
+            param_group["lr"] = new_lr
+
     def show_current_learning_rate(self):
         for param_group in self._optimizer.param_groups:
             logging.info(f"Showing | Learning rate current value: {param_group['lr']}")
-                
+
     def set_updated_round(self, round):
         self.round = round
         self.global_number = {

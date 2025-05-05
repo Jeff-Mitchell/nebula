@@ -1,8 +1,11 @@
 from abc import ABC, abstractmethod
+
 from nebula.core.nebulaevents import UpdateNeighborEvent, UpdateReceivedEvent
 
+
 class UpdateHandlerException(Exception):
-    pass 
+    pass
+
 
 class UpdateHandler(ABC):
     """
@@ -13,7 +16,7 @@ class UpdateHandler(ABC):
     """
 
     @abstractmethod
-    async def init(self, config : dict):
+    async def init(self, config: dict):
         raise NotImplementedError
 
     @abstractmethod
@@ -29,9 +32,9 @@ class UpdateHandler(ABC):
             federation_nodes (set): A set of node identifiers expected to provide updates.
         """
         raise NotImplementedError
-    
+
     @abstractmethod
-    async def storage_update(self, updt_received_event : UpdateReceivedEvent):
+    async def storage_update(self, updt_received_event: UpdateReceivedEvent):
         """
         Stores an update from a source in the update storage.
 
@@ -46,7 +49,7 @@ class UpdateHandler(ABC):
             local (boolean): Local update
         """
         raise NotImplementedError
-    
+
     @abstractmethod
     async def get_round_updates(self) -> dict[str, tuple[object, float]]:
         """
@@ -60,9 +63,9 @@ class UpdateHandler(ABC):
                   representing the latest updates received from each source.
         """
         raise NotImplementedError
-    
+
     @abstractmethod
-    async def notify_federation_update(self, updt_nei_event : UpdateNeighborEvent):
+    async def notify_federation_update(self, updt_nei_event: UpdateNeighborEvent):
         """
         Notifies the system of a change in the federation regarding a specific source.
 
@@ -74,8 +77,8 @@ class UpdateHandler(ABC):
             remove (bool, optional): Whether to remove the source from the federation. Defaults to `False`.
         """
         raise NotImplementedError
-    
-    @abstractmethod    
+
+    @abstractmethod
     async def get_round_missing_nodes(self) -> set[str]:
         """
         Identifies sources that have not yet provided updates in the current round.
@@ -84,15 +87,15 @@ class UpdateHandler(ABC):
             set: A set of source identifiers that are expected to send updates but have not yet been received.
         """
         raise NotImplementedError
-    
-    @abstractmethod    
+
+    @abstractmethod
     async def notify_if_all_updates_received(self):
         """
         Notifies the system when all expected updates for the current round have been received.
         """
         raise NotImplementedError
-    
-    @abstractmethod    
+
+    @abstractmethod
     async def stop_notifying_updates(self):
         """
         Stops notifications related to update reception.
@@ -101,23 +104,18 @@ class UpdateHandler(ABC):
         if the aggregation process is halted.
         """
         raise NotImplementedError
-      
+
+
 def factory_update_handler(updt_handler, aggregator, addr) -> UpdateHandler:
-    from nebula.core.aggregation.updatehandlers.dflupdatehandler import DFLUpdateHandler
     from nebula.core.aggregation.updatehandlers.cflupdatehandler import CFLUpdateHandler
+    from nebula.core.aggregation.updatehandlers.dflupdatehandler import DFLUpdateHandler
     from nebula.core.aggregation.updatehandlers.sdflupdatehandler import SFDLUpdateHandler
-    
-    UPDATE_HANDLERS = {
-        "DFL": DFLUpdateHandler,
-        "CFL": CFLUpdateHandler,
-        "SDFL": SFDLUpdateHandler
-    }
-    
-    update_handler = UPDATE_HANDLERS.get(updt_handler, None)
-    
+
+    UPDATE_HANDLERS = {"DFL": DFLUpdateHandler, "CFL": CFLUpdateHandler, "SDFL": SFDLUpdateHandler}
+
+    update_handler = UPDATE_HANDLERS.get(updt_handler)
+
     if update_handler:
         return update_handler(aggregator, addr)
     else:
-         raise UpdateHandlerException(f"Update Handler {updt_handler} not found")    
-    
-    
+        raise UpdateHandlerException(f"Update Handler {updt_handler} not found")

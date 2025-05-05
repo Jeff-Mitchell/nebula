@@ -1,18 +1,20 @@
 import asyncio
 import logging
 from abc import ABC, abstractmethod
-from functools import partial
-from nebula.core.utils.locker import Locker
+from typing import TYPE_CHECKING
+
 from nebula.core.aggregation.updatehandlers.updatehandler import factory_update_handler
 from nebula.core.eventmanager import EventManager
 from nebula.core.nebulaevents import AggregationEvent
+from nebula.core.utils.locker import Locker
 
-from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from nebula.core.engine import Engine
 
+
 class AggregatorException(Exception):
     pass
+
 
 def create_target_aggregator(config, engine):
     from nebula.core.aggregation.fedavg import FedAvg
@@ -45,7 +47,7 @@ class Aggregator(ABC):
         self._pending_models_to_aggregate_lock = Locker(name="pending_models_to_aggregate_lock", async_lock=True)
         self._aggregation_done_lock = Locker(name="aggregation_done_lock", async_lock=True)
         self._aggregation_waiting_skip = asyncio.Event()
-        
+
         scenario = self.config.participant["scenario_args"]["federation"]
         self._update_storage = factory_update_handler(scenario, self, self._addr)
 
@@ -54,7 +56,7 @@ class Aggregator(ABC):
 
     def __repr__(self):
         return self.__str__()
-  
+
     @property
     def us(self):
         return self._update_storage
@@ -64,7 +66,7 @@ class Aggregator(ABC):
         if len(models) == 0:
             logging.error("Trying to aggregate models when there are no models")
             return None
-        
+
     async def init(self):
         await self.us.init(self.config)
 
@@ -122,21 +124,17 @@ class Aggregator(ABC):
             logging.info(f"🔄  get_aggregation | Aggregation incomplete, missing models from: {missing_nodes}")
         else:
             logging.info("🔄  get_aggregation | All models accounted for, proceeding with aggregation.")
-              
+
         agg_event = AggregationEvent(updates, self._federation_nodes, missing_nodes)
         await EventManager.get_instance().publish_node_event(agg_event)
         aggregated_result = self.run_aggregation(updates)
         return aggregated_result
 
-
     def print_model_size(self, model):
-        total_params = 0
         total_memory = 0
 
         for _, param in model.items():
             num_params = param.numel()
-            total_params += num_params
-
             memory_usage = param.element_size() * num_params
             total_memory += memory_usage
 
@@ -145,6 +143,7 @@ class Aggregator(ABC):
 
     async def notify_all_updates_received(self):
         self._aggregation_waiting_skip.set()
+
 
 def create_aggregator(config, engine) -> Aggregator:
     from nebula.core.aggregation.blockchainReputation import BlockchainReputation

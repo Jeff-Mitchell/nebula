@@ -27,7 +27,6 @@ from nebula.core.engine import AggregatorNode, IdleNode, MaliciousNode, ServerNo
 from nebula.core.models.cifar10.cnn import CIFAR10ModelCNN
 from nebula.core.models.cifar10.cnnV2 import CIFAR10ModelCNN_V2
 from nebula.core.models.cifar10.cnnV3 import CIFAR10ModelCNN_V3
-from nebula.core.models.cifar10.dualagg import DualAggModel
 from nebula.core.models.cifar10.fastermobilenet import FasterMobileNet
 from nebula.core.models.cifar10.resnet import CIFAR10ModelResNet
 from nebula.core.models.cifar10.simplemobilenet import SimpleMobileNetV1
@@ -48,6 +47,31 @@ from nebula.core.training.siamese import Siamese
 
 
 async def main(config):
+    """
+    Main function to start the NEBULA node.
+
+    This function initiates the NEBULA core component deployed on each federation participant.
+    It configures the node using the provided configuration object, setting up dataset partitions,
+    selecting and initializing the appropriate model and data handler, and establishing training
+    mechanisms. Additionally, it adjusts specific node parameters (such as indices and timing intervals)
+    based on the participant's configuration, and deploys the node's network communications for
+    federated learning.
+
+    Parameters:
+        config (Config): Configuration object containing settings for:
+            - scenario (including federation and deployment parameters),
+            - model selection and its corresponding hyperparameters,
+            - dataset and data partitioning,
+            - training strategy and related arguments,
+            - device roles and security flags.
+
+    Raises:
+        ValueError: If an unsupported model, dataset, or device role is specified.
+        NotImplementedError: If an unsupported training strategy (e.g., "scikit") is requested.
+
+    Returns:
+        Coroutine that initializes and starts the NEBULA node.
+    """
     n_nodes = config.participant["scenario_args"]["n_nodes"]
     model_name = config.participant["model_args"]["model"]
     idx = config.participant["device_args"]["idx"]
@@ -122,7 +146,7 @@ async def main(config):
     else:
         raise ValueError(f"Dataset {dataset_name} not supported")
 
-    dataset = NebulaPartition(handler=handler, mode="memory", config=config)
+    dataset = NebulaPartition(handler=handler, config=config)
     dataset.load_partition()
     dataset.log_partition()
 
@@ -131,6 +155,7 @@ async def main(config):
         train_set_indices=dataset.train_indices,
         test_set=dataset.test_set,
         test_set_indices=dataset.test_indices,
+        local_test_set=dataset.local_test_set,
         local_test_set_indices=dataset.local_test_indices,
         num_workers=num_workers,
         batch_size=batch_size,
@@ -142,12 +167,8 @@ async def main(config):
         trainer = Lightning
     elif trainer_str == "scikit":
         raise NotImplementedError
-    elif trainer_str == "siamese" and dataset_name == "CIFAR10":
+    elif trainer_str == "siamese":
         trainer = Siamese
-        model = DualAggModel()
-        config.participant["model_args"]["model"] = "DualAggModel"
-        config.participant["data_args"]["dataset"] = "CIFAR10"
-        config.participant["aggregator_args"]["algorithm"] = "DualHistAgg"
     else:
         raise ValueError(f"Trainer {trainer_str} not supported")
 

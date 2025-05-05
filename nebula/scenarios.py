@@ -16,18 +16,18 @@ import tensorboard_reducer as tbr
 from nebula.addons.blockchain.blockchain_deployer import BlockchainDeployer
 from nebula.addons.topologymanager import TopologyManager
 from nebula.config.config import Config
-from nebula.core.datasets.cifar10.cifar10 import CIFAR10Dataset
-from nebula.core.datasets.cifar100.cifar100 import CIFAR100Dataset
-from nebula.core.datasets.emnist.emnist import EMNISTDataset
-from nebula.core.datasets.fashionmnist.fashionmnist import FashionMNISTDataset
-from nebula.core.datasets.mnist.mnist import MNISTDataset
+from nebula.core.datasets.nebuladataset import factory_nebuladataset
 from nebula.core.utils.certificate import generate_ca_certificate, generate_certificate
 from nebula.utils import DockerUtils, FileUtils
-from nebula.core.datasets.nebuladataset import factory_nebuladataset
 
 
 # Definition of a scenario
 class Scenario:
+    """
+    Class to define a scenario for the NEBULA platform.
+    It contains all the parameters needed to create a scenario and run it on the platform.
+    """
+
     def __init__(
         self,
         scenario_title,
@@ -59,9 +59,16 @@ class Scenario:
         poisoned_noise_percent,
         attack_params,
         with_reputation,
-        is_dynamic_topology,
-        is_dynamic_aggregation,
-        target_aggregation,
+        reputation_metrics,
+        initial_reputation,
+        weighting_factor,
+        weight_model_arrival_latency,
+        weight_model_similarity,
+        weight_num_messages,
+        weight_fraction_params_changed,
+        # is_dynamic_topology,
+        # is_dynamic_aggregation,
+        # target_aggregation,
         random_geo,
         latitude,
         longitude,
@@ -110,9 +117,17 @@ class Scenario:
             target_label (int): The label to change when `targeted` is True.
             target_changed_label (int): The label to which `target_label` will be changed .
             attack_params (dict) : Attack parameters.
-            is_dynamic_topology (bool): Indicator if topology is dynamic.
-            is_dynamic_aggregation (bool): Indicator if aggregation is dynamic.
-            target_aggregation (str): Target aggregation method.
+            with_reputation (bool): Indicator if reputation is used.
+            reputation_metrics (list): List of reputation metrics.
+            initial_reputation (float): Initial reputation.
+            weighting_factor (str): dymanic or static weighting factor.
+            weight_model_arrival_latency (float): Weight of model arrival latency.
+            weight_model_similarity (float): Weight of model similarity.
+            weight_num_messages (float): Weight of number of messages.
+            weight_fraction_params_changed (float): Weight of fraction of parameters changed.
+            # is_dynamic_topology (bool): Indicator if topology is dynamic.
+            # is_dynamic_aggregation (bool): Indicator if aggregation is dynamic.
+            # target_aggregation (str): Target aggregation method.
             random_geo (bool): Indicator if random geo is used.
             latitude (float): Latitude for mobility.
             longitude (float): Longitude for mobility.
@@ -155,9 +170,16 @@ class Scenario:
         self.poisoned_noise_percent = poisoned_noise_percent
         self.attack_params = attack_params
         self.with_reputation = with_reputation
-        self.is_dynamic_topology = is_dynamic_topology
-        self.is_dynamic_aggregation = is_dynamic_aggregation
-        self.target_aggregation = target_aggregation
+        self.reputation_metrics = reputation_metrics
+        self.initial_reputation = initial_reputation
+        self.weighting_factor = weighting_factor
+        self.weight_model_arrival_latency = weight_model_arrival_latency
+        self.weight_model_similarity = weight_model_similarity
+        self.weight_num_messages = weight_num_messages
+        self.weight_fraction_params_changed = weight_fraction_params_changed
+        # self.is_dynamic_topology = is_dynamic_topology
+        # self.is_dynamic_aggregation = is_dynamic_aggregation
+        # self.target_aggregation = target_aggregation
         self.random_geo = random_geo
         self.latitude = latitude
         self.longitude = longitude
@@ -212,16 +234,19 @@ class Scenario:
         for node in nodes:
             node_att = "No Attack"
             malicious = False
+            with_reputation = self.with_reputation
             attack_sample_percent = 0
             poisoned_ratio = 0
             if (str(nodes[node]["id"]) in attacked_nodes) or (nodes[node]["malicious"]):
                 malicious = True
+                with_reputation = False
                 node_att = attack
                 attack_sample_percent = poisoned_sample_percent / 100
                 poisoned_ratio = poisoned_noise_percent / 100
                 attack_params["poisoned_percent"] = attack_sample_percent
                 attack_params["poisoned_ratio"] = poisoned_ratio
             nodes[node]["malicious"] = malicious
+            nodes[node]["with_reputation"] = with_reputation
             nodes[node]["attacks"] = node_att
             nodes[node]["attack_params"] = attack_params
         return nodes
@@ -365,10 +390,21 @@ class ScenarioManagement:
             participant_config["aggregator_args"]["algorithm"] = self.scenario.agg_algorithm
             participant_config["adversarial_args"]["attacks"] = node_config["attacks"]
             participant_config["adversarial_args"]["attack_params"] = node_config["attack_params"]
-            participant_config["defense_args"]["with_reputation"] = self.scenario.with_reputation
-            participant_config["defense_args"]["is_dynamic_topology"] = self.scenario.is_dynamic_topology
-            participant_config["defense_args"]["is_dynamic_aggregation"] = self.scenario.is_dynamic_aggregation
-            participant_config["defense_args"]["target_aggregation"] = self.scenario.target_aggregation
+            participant_config["defense_args"]["with_reputation"] = node_config["with_reputation"]
+            # participant_config["defense_args"]["is_dynamic_topology"] = self.scenario.is_dynamic_topology
+            # participant_config["defense_args"]["is_dynamic_aggregation"] = self.scenario.is_dynamic_aggregation
+            # participant_config["defense_args"]["target_aggregation"] = self.scenario.target_aggregation
+            participant_config["defense_args"]["reputation_metrics"] = self.scenario.reputation_metrics
+            participant_config["defense_args"]["initial_reputation"] = self.scenario.initial_reputation
+            participant_config["defense_args"]["weighting_factor"] = self.scenario.weighting_factor
+            participant_config["defense_args"]["weight_model_arrival_latency"] = (
+                self.scenario.weight_model_arrival_latency
+            )
+            participant_config["defense_args"]["weight_model_similarity"] = self.scenario.weight_model_similarity
+            participant_config["defense_args"]["weight_num_messages"] = self.scenario.weight_num_messages
+            participant_config["defense_args"]["weight_fraction_params_changed"] = (
+                self.scenario.weight_fraction_params_changed
+            )
             participant_config["mobility_args"]["random_geo"] = self.scenario.random_geo
             participant_config["mobility_args"]["latitude"] = self.scenario.latitude
             participant_config["mobility_args"]["longitude"] = self.scenario.longitude
@@ -525,7 +561,7 @@ class ScenarioManagement:
 
         # Add role to the topology (visualization purposes)
         self.topologymanager.update_nodes(config_participants)
-        self.topologymanager.draw_graph(path=f"{self.log_dir}/{self.scenario_name}/topology.png", plot=False)
+        self.topologymanager.draw_graph(path=f"{self.config_dir}/topology.png", plot=False)
 
         # Include additional participants (if any) as copies of the last participant
         additional_participants_files = []
@@ -580,7 +616,7 @@ class ScenarioManagement:
         dataset = factory_nebuladataset(
             dataset_name,
             num_classes=10,
-            partitions_number=self.n_nodes+additional_nodes,
+            partitions_number=self.n_nodes + additional_nodes,
             iid=self.scenario.iid,
             partition=self.scenario.partition_selection,
             partition_parameter=self.scenario.partition_parameter,
@@ -688,11 +724,11 @@ class ScenarioManagement:
                 "-d",
                 "--build",
             ])
-        except subprocess.CalledProcessError as e:
+        except subprocess.CalledProcessError:
             logging.exception(
                 "Docker Compose failed to start Blockchain, please check if Docker Compose is installed (https://docs.docker.com/compose/install/) and Docker Engine is running."
             )
-            raise e
+            raise
 
     def start_nodes_docker(self):
         logging.info("Starting nodes using Docker Compose...")
@@ -881,10 +917,9 @@ class ScenarioManagement:
             shutil.rmtree(FileUtils.check_path(os.environ["NEBULA_CONFIG_DIR"], scenario_name))
         except FileNotFoundError:
             logging.warning("Files not found, nothing to remove")
-        except Exception as e:
+        except Exception:
             logging.exception("Unknown error while removing files")
-            logging.exception(e)
-            raise e
+            raise
         try:
             shutil.rmtree(FileUtils.check_path(os.environ["NEBULA_LOGS_DIR"], scenario_name))
         except PermissionError:
@@ -904,10 +939,27 @@ class ScenarioManagement:
             )
         except FileNotFoundError:
             logging.warning("Files not found, nothing to remove")
-        except Exception as e:
+        except Exception:
             logging.exception("Unknown error while removing files")
-            logging.exception(e)
-            raise e
+
+            raise
+
+        try:
+            nebula_reputation = os.path.join(
+                os.environ["NEBULA_LOGS_DIR"], "..", "..", "nebula", "core", "reputation", scenario_name
+            )
+            logging.info(f"Removing reputation folder {nebula_reputation}")
+            logging.info(f"nebula_reputation: {nebula_reputation}")
+            if os.path.exists(nebula_reputation):
+                shutil.rmtree(nebula_reputation)
+                # logging.info(f"Reputation folder {nebula_reputation} removed successfully")
+            else:
+                logging.info(f"Reputation folder {nebula_reputation} not found")
+        except FileNotFoundError:
+            logging.warning("Files not found in reputation folder, nothing to remove")
+        except Exception:
+            logging.exception("Unknown error while removing files from reputation folder")
+            raise
 
     def scenario_finished(self, timeout_seconds):
         client = docker.from_env()

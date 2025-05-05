@@ -1,4 +1,4 @@
-UV := uv
+UV := $(HOME)/.local/bin/uv
 PYTHON_VERSION := 3.11
 UV_INSTALL_SCRIPT := https://astral.sh/uv/install.sh
 PATH := $(HOME)/.local/bin:$(PATH)
@@ -20,8 +20,9 @@ check-uv:		## Check and install uv if necessary
 install-python: check-uv	## Install Python with uv
 	@echo "🐍 Installing Python $(PYTHON_VERSION) with uv"
 	@$(UV) python install $(PYTHON_VERSION)
-	@echo "🔧 Configuring Python $(PYTHON_VERSION) as the default Python version"
+	@echo "🐍 Configuring Python $(PYTHON_VERSION) as the default Python version"
 	@$(UV) python pin $(PYTHON_VERSION)
+	@echo "🐍 Python installation complete."
 
 .PHONY: install
 install: install-python		## Install core dependencies
@@ -30,7 +31,7 @@ install: install-python		## Install core dependencies
 	@echo "🔧 Installing pre-commit hooks"
 	@$(UV) run pre-commit install
 	@echo ""
-	@$(MAKE) update
+	@$(MAKE) update-dockers
 	@echo ""
 	@$(MAKE) shell
 
@@ -65,8 +66,8 @@ shell:				## Start a shell in the uv environment
 		echo "🚀 Created by \033[1;34mEnrique Tomás Martínez Beltrán\033[0m <\033[1;34menriquetomas@um.es\033[0m>"; \
 	fi
 
-.PHONY: update
-update:				## Update docker images
+.PHONY: update-dockers
+update-dockers:				## Update docker images
 	@echo "🐳 Updating docker images..."
 	@echo "🐳 Building nebula-frontend docker image. Do you want to continue (overrides existing image)? (y/n)"
 	@read ans; if [ "$${ans:-N}" = y ]; then \
@@ -75,13 +76,22 @@ update:				## Update docker images
 		echo "Skipping nebula-frontend docker build."; \
 	fi
 	@echo ""
-	@echo "🐳 Building nebula-core docker image. Do you want to continue? (overrides existing image)? (y/n)"
+	@echo "🐳 Building nebula-core docker image. Do you want to continue (overrides existing image)? (y/n)"
 	@read ans; if [ "$${ans:-N}" = y ]; then \
 		docker build -t nebula-core .; \
 	else \
 		echo "Skipping nebula-core docker build."; \
 	fi
 	echo "🐳 Docker images updated."
+
+.PHONY: update
+update:				## Update NEBULA code
+	@echo "🔄 Updating NEBULA code..."
+	@echo "🔄 Pulling latest changes from the repository..."
+	@git pull origin main
+	@echo "🔄 Updating submodules..."
+	@git submodule update --init --recursive
+	@echo "🔄 NEBULA code updated."
 
 .PHONY: lock
 lock:				## Update the lock file
@@ -115,7 +125,7 @@ clean-build:			## Clean build artifacts
 
 .PHONY: publish
 publish:			## Publish a release to PyPI
-	@echo "🚀 Publishing...""
+	@echo "🚀 Publishing..."
 	@$(UV) publish --token $(PYPI_TOKEN)
 
 .PHONY: build-and-publish

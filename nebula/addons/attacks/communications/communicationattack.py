@@ -1,5 +1,6 @@
 import logging
 import random
+import random
 import types
 from abc import abstractmethod
 
@@ -8,6 +9,18 @@ from nebula.core.network.communications import CommunicationsManager
 
 
 class CommunicationAttack(Attack):
+    def __init__(
+        self,
+        engine,
+        target_class,
+        target_method,
+        round_start_attack,
+        round_stop_attack,
+        attack_interval,
+        decorator_args=None,
+        selectivity_percentage: int = 100,
+        selection_interval: int = None,
+    ):
     def __init__(
         self,
         engine,
@@ -60,6 +73,8 @@ class CommunicationAttack(Attack):
             self.targets = CommunicationsManager.get_instance().get_addrs_current_connections(only_direct=True)
 
         logging.info(f"Selected {self.selectivity_percentage}% targets from neighbors: {self.targets}")
+        self.last_selection_round += 1
+
         self.last_selection_round += 1
 
     async def _inject_malicious_behaviour(self):

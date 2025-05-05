@@ -169,15 +169,12 @@ class TopologyManager:
             None: The method saves the plot as an image at the specified path.
         """
         g = nx.from_numpy_array(self.topology)
-        # pos = nx.layout.spectral_layout(g)
-        # pos = nx.spring_layout(g, pos=pos, iterations=50)
         pos = nx.spring_layout(g, k=0.15, iterations=20, seed=42)
 
         fig = plt.figure(num="Network topology", dpi=100, figsize=(6, 6), frameon=False)
         ax = fig.add_axes([0, 0, 1, 1])
         ax.set_xlim([-1.3, 1.3])
         ax.set_ylim([-1.3, 1.3])
-        # ax.axis('off')
         labels = {}
         color_map = []
         for k in range(self.n_nodes):
@@ -185,27 +182,12 @@ class TopologyManager:
             color_map.append(self.get_node_color(role))
             labels[k] = f"P{k}\n" + str(self.nodes[k][0]) + ":" + str(self.nodes[k][1])
 
-        # nx.draw_networkx_nodes(g, pos_shadow, node_color='k', alpha=0.5)
         nx.draw_networkx_nodes(g, pos, node_color=color_map, linewidths=2)
         nx.draw_networkx_labels(g, pos, labels, font_size=10, font_weight="bold")
         nx.draw_networkx_edges(g, pos, width=2)
-        # plt.margins(0.0)
 
         self.add_legend([str(node[2]) for node in self.nodes])
-
-        # plt.scatter([], [], c="green", label='Central Server')
-        # plt.scatter([], [], c="orange", label='Aggregator')
-        # plt.scatter([], [], c="#6182bd", label='Trainer')
-        # plt.scatter([], [], c="purple", label='Proxy')
-        # plt.scatter([], [], c="red", label='Idle')
-        # import sys
-        # if path is None:
-        #    if not os.path.exists(f"{sys.path[0]}/logs/{self.scenario_name}"):
-        #        os.makedirs(f"{sys.path[0]}/logs/{self.scenario_name}")
-        #    plt.savefig(f"{sys.path[0]}/logs/{self.scenario_name}/topology.png", dpi=100, bbox_inches="tight", pad_inches=0)
-        # else:
         plt.savefig(f"{path}", dpi=100, bbox_inches="tight", pad_inches=0)
-        # plt.gcf().canvas.draw()
         plt.close()
 
     def generate_topology(self):
@@ -268,23 +250,6 @@ class TopologyManager:
         """
         self.__ring_topology(increase_convergence=increase_convergence)
 
-    def generate_custom_topology(self, topology):
-        """
-        Sets the network topology to a custom topology provided by the user.
-
-        This method allows for the manual configuration of the network topology by directly assigning
-        the `topology` argument to the internal `self.topology` attribute.
-
-        Args:
-            topology (numpy.ndarray): A 2D array representing the custom network topology.
-                                      The array should have dimensions (n_nodes, n_nodes) where `n_nodes`
-                                      is the number of nodes in the network.
-
-        Returns:
-            None: The method modifies the internal `self.topology` to the provided custom topology.
-        """
-        self.topology = topology
-
     def generate_random_topology(self, probability):
         """
         Generates a random topology using Erdos-Renyi model with given probability.
@@ -298,62 +263,6 @@ class TopologyManager:
         random_graph = nx.erdos_renyi_graph(self.n_nodes, probability)
         self.topology = nx.to_numpy_array(random_graph, dtype=np.float32)
         np.fill_diagonal(self.topology, 0)  # No self-loops
-
-    def get_matrix_adjacency_from_neighbors(self, neighbors):
-        """
-        Generates an adjacency matrix from a list of neighbors.
-
-        This method constructs an adjacency matrix for the network based on the provided list of neighbors
-        for each node. A 1 in the matrix at position (i, j) indicates that node i is a neighbor of node j,
-        while a 0 indicates no connection.
-
-        Args:
-            neighbors (list of lists): A list of lists where each sublist contains the indices of the neighbors
-                                       for the corresponding node. The length of the outer list should be equal
-                                       to the number of nodes in the network (`self.n_nodes`).
-
-        Returns:
-            numpy.ndarray: A 2D adjacency matrix of shape (n_nodes, n_nodes), where n_nodes is the total number
-                           of nodes in the network. The matrix contains 1s where there is a connection and 0s
-                           where there is no connection.
-        """
-        matrix_adjacency = np.zeros((self.n_nodes, self.n_nodes), dtype=np.float32)
-        for i in range(self.n_nodes):
-            for j in range(self.n_nodes):
-                if i in neighbors[j]:
-                    matrix_adjacency[i, j] = 1
-        return matrix_adjacency
-
-    def get_topology(self):
-        """
-        Returns the network topology.
-
-        This method retrieves the current topology of the network. The behavior of the method depends on whether
-        the network is symmetric or asymmetric. For both cases in this implementation, it simply returns the
-        `self.topology`.
-
-        Returns:
-            numpy.ndarray: The current topology of the network as a 2D numpy array. The topology represents the
-                           connectivity between nodes, where a value of 1 indicates a connection and 0 indicates
-                           no connection between the nodes.
-        """
-        if self.b_symmetric:
-            return self.topology
-        else:
-            return self.topology
-
-    def get_nodes(self):
-        """
-        Returns the nodes in the network.
-
-        This method retrieves the current list of nodes in the network. Each node is represented by an array of
-        three values (such as coordinates or identifiers) in the `self.nodes` attribute.
-
-        Returns:
-            numpy.ndarray: A 2D numpy array representing the nodes in the network. Each row represents a node,
-                           and the columns may represent different properties (e.g., position, identifier, etc.).
-        """
-        return self.nodes
 
     @staticmethod
     def get_coordinates(random_geo=True):
@@ -410,20 +319,6 @@ class TopologyManager:
             None
         """
         self.nodes = config_participants
-
-    def get_node(self, node_idx):
-        """
-        Retrieves the node information based on the given index.
-
-        This method returns the details of a specific node from the `nodes` attribute using its index.
-
-        Parameters:
-            node_idx (int): The index of the node to retrieve from the `nodes` list.
-
-        Returns:
-            numpy.ndarray: A tuple or array containing the node's information at the given index.
-        """
-        return self.nodes[node_idx]
 
     def get_neighbors_string(self, node_idx):
         """

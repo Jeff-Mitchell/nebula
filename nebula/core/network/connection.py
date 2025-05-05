@@ -10,10 +10,9 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any
 
 import lz4.frame
-from geopy import distance
 
 if TYPE_CHECKING:
-    from nebula.core.network.communications import CommunicationsManager
+    pass
 
 
 @dataclass
@@ -89,13 +88,14 @@ class Connection:
     def __repr__(self):
         return self.__str__()
 
-    def __del__(self):
-        self.stop()
+    async def __del__(self):
+        await self.stop()
 
     @property
     def cm(self):
         if not self._cm:
             from nebula.core.network.communications import CommunicationsManager
+
             self._cm = CommunicationsManager.get_instance()
             return self._cm
         else:
@@ -111,15 +111,13 @@ class Connection:
         return self.federated_round
 
     def get_tunnel_status(self):
-        if self.reader is None or self.writer is None:
-            return False
-        return True
+        return not (self.reader is None or self.writer is None)
 
     def update_round(self, federated_round):
         self.federated_round = federated_round
 
     def get_ready(self):
-        return True if self.federated_round != Connection.DEFAULT_FEDERATED_ROUND else False
+        return self.federated_round != Connection.DEFAULT_FEDERATED_ROUND
 
     def get_direct(self):
         return self.direct
@@ -229,6 +227,8 @@ class Connection:
             logging.exception(f"Error sending data: {e}")
             if self.direct:
                 await self.reconnect()
+            if self.direct:
+                await self.reconnect()
 
     def _prepare_data(self, data: Any, pb: bool, encoding_type: str) -> tuple[bytes, bytes]:
         if pb:
@@ -304,7 +304,7 @@ class Connection:
             logging.exception(f"Error handling incoming message: {e}")
         finally:
             if self.direct:
-                #TODO tal vez una task?
+                # TODO tal vez una task?
                 await self.reconnect()
 
     async def _read_exactly(self, num_bytes: int, max_retries: int = 3) -> bytes:

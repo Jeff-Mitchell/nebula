@@ -10,7 +10,7 @@ import aiohttp
 import psutil
 
 if TYPE_CHECKING:
-    from nebula.core.network.communications import CommunicationsManager
+    pass
 
 
 class Reporter:
@@ -72,6 +72,7 @@ class Reporter:
     def cm(self):
         if not self._cm:
             from nebula.core.network.communications import CommunicationsManager
+
             self._cm = CommunicationsManager.get_instance()
             return self._cm
         else:
@@ -343,8 +344,8 @@ class Reporter:
             "Z-RAM/RAM process (%)": memory_percent_process,
             "Z-RAM/RAM process (MB)": memory_process,
             "Y-Disk/Disk (%)": disk_percent,
-            "X-Network/Network (bytes sent)": round(self.acc_bytes_sent / (1024**2), 3),
-            "X-Network/Network (bytes received)": round(self.acc_bytes_recv / (1024**2), 3),
+            "X-Network/Network (MB sent)": round(self.acc_bytes_sent / (1024**2), 3),
+            "X-Network/Network (MB received)": round(self.acc_bytes_recv / (1024**2), 3),
             "X-Network/Network (packets sent)": self.acc_packets_sent,
             "X-Network/Network (packets received)": self.acc_packets_recv,
             "X-Network/Connections": len(current_connections),

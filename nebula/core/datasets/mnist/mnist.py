@@ -8,8 +8,8 @@ from nebula.core.datasets.nebuladataset import NebulaDataset, NebulaPartitionHan
 
 
 class MNISTPartitionHandler(NebulaPartitionHandler):
-    def __init__(self, file_path, prefix, mode):
-        super().__init__(file_path, prefix, mode)
+    def __init__(self, file_path, prefix, config, empty=False):
+        super().__init__(file_path, prefix, config, empty)
 
         # Custom transform for MNIST
         self.transform = transforms.Compose([
@@ -18,9 +18,17 @@ class MNISTPartitionHandler(NebulaPartitionHandler):
         ])
 
     def __getitem__(self, idx):
-        img, target = super().__getitem__(idx)
+        data, target = super().__getitem__(idx)
 
-        img = Image.fromarray(img, mode="L")
+        # MNIST from torchvision returns a tuple (image, target)
+        if isinstance(data, tuple):
+            img, _ = data
+        else:
+            img = data
+
+        # Only convert if not already a PIL image
+        if not isinstance(img, Image.Image):
+            img = Image.fromarray(img, mode="L")
 
         if self.transform is not None:
             img = self.transform(img)
@@ -87,7 +95,9 @@ class MNISTDataset(NebulaDataset):
         if partition == "balancediid":
             partitions_map = self.balanced_iid_partition(dataset, n_clients=num_clients)
         elif partition == "unbalancediid":
-            partitions_map = self.unbalanced_iid_partition(dataset, imbalance_factor=partition_parameter, n_clients=num_clients)
+            partitions_map = self.unbalanced_iid_partition(
+                dataset, imbalance_factor=partition_parameter, n_clients=num_clients
+            )
         else:
             raise ValueError(f"Partition {partition} is not supported for IID map")
 

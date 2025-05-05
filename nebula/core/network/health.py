@@ -1,7 +1,9 @@
 import asyncio
 import logging
 import time
+
 from nebula.addons.functions import print_msg_box
+
 
 class Health:
     def __init__(self, addr, config):
@@ -18,6 +20,7 @@ class Health:
     def cm(self):
         if not self._cm:
             from nebula.core.network.communications import CommunicationsManager
+
             self._cm = CommunicationsManager.get_instance()
             return self._cm
         else:
@@ -34,9 +37,6 @@ class Health:
             conn.set_active(True)
         while True:
             if len(self.cm.connections) > 0:
-                # message = self.cm.mm.generate_control_message(
-                #    nebula_pb2.ControlMessage.Action.ALIVE, log="Alive message"
-                # )
                 message = self.cm.create_message("control", "alive", log="Alive message")
                 current_connections = list(self.cm.connections.values())
                 for conn in current_connections:
@@ -55,10 +55,9 @@ class Health:
             if len(self.cm.connections) > 0:
                 current_connections = list(self.cm.connections.values())
                 for conn in current_connections:
-                    if conn.get_direct():
-                        if time.time() - conn.get_last_active() > self.timeout:
-                            logging.error(f"⬅️ 🕒  Heartbeat timeout for {conn.get_addr()}...")
-                            await self.cm.disconnect(conn.get_addr(), mutual_disconnection=False)
+                    if conn.get_direct() and time.time() - conn.get_last_active() > self.timeout:
+                        logging.error(f"⬅️ 🕒  Heartbeat timeout for {conn.get_addr()}...")
+                        await self.cm.disconnect(conn.get_addr(), mutual_disconnection=False)
             await asyncio.sleep(self.check_alive_interval)
 
     async def alive(self, source):
