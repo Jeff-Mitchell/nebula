@@ -371,7 +371,6 @@ class NebulaDataset:
             f"Partitioning data for {self.__class__.__name__} | Partitions: {self.partitions_number} | IID: {self.iid} | Partition: {self.partition} | Partition parameter: {self.partition_parameter}"
         )
 
-        # self.iid = "a" #TODO REMOVE modificar para q sea string y no boolean el input del front
         logging.info(f"Scenario with data distribution: {self.iid}")
         if self.iid == "IID":
             self.train_indices_map = self.generate_iid_map(self.train_set)

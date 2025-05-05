@@ -79,7 +79,7 @@ class FederationConnector(ISADiscovery):
     def is_additional_participant(self):
         return self._aditional_participant
 
-    async def init(self, sa_reasoner: ISAReasoner):
+    async def init(self, sa_reasoner):
         """
         model_handler config:
             - self total rounds
@@ -92,7 +92,7 @@ class FederationConnector(ISADiscovery):
             - self weight hetereogeneity
         """
         logging.info("Building Federation Connector configurations...")
-        self._sa_reasoner = sa_reasoner
+        self._sa_reasoner: ISAReasoner = sa_reasoner
         await self.register_message_events_callbacks()
         await EventManager.get_instance().subscribe_node_event(UpdateNeighborEvent, self.update_neighbors)
         logging.info("Building candidate selector configuration..")

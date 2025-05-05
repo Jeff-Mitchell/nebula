@@ -79,13 +79,13 @@ class SAReasoner(ISAReasoner):
         """SA Discovery"""
         return self._sa_discovery
     
-    async def init(self, sa_discovery: ISADiscovery):
+    async def init(self, sa_discovery):
         #await self.loading_sa_components()
         from nebula.core.situationalawareness.awareness.sanetwork.sanetwork import SANetwork
         #from nebula.core.situationalawareness.awareness.satraining.satraining import SATraining
         self._situational_awareness_network = SANetwork(self, self._addr, self._topology, verbose=True)
         #self._situational_awareness_training = SATraining(self, self._addr, "qds", "fastreboot", verbose=True)
-        self._sa_discovery = sa_discovery
+        self._sa_discovery: ISADiscovery = sa_discovery
         await self.san.init()
         await EventManager.get_instance().subscribe_node_event(RoundEndEvent, self._process_round_end_event)
         await EventManager.get_instance().subscribe_node_event(AggregationEvent, self._process_aggregation_event)

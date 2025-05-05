@@ -132,7 +132,7 @@ class BehaviorReputation():
         if self._verbose: logging.info("Processing round start event")
         if not self._last_aggregation_time:
             if self._verbose: logging.info("First round start timing assigment")
-            (_, start_time) = await rse.get_event_data()
+            (_, start_time,_) = await rse.get_event_data()
             self._last_aggregation_time = start_time
         self._internal_rounds_done += 1
 

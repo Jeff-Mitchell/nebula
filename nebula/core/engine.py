@@ -142,7 +142,7 @@ class Engine:
         self._addon_manager = AddondManager(self, self.config)
 
         # Additional Components
-        self._situational_awareness = SituationalAwareness(self.config)
+        self._situational_awareness = SituationalAwareness(self.config, self)
 
     @property
     def cm(self):
@@ -543,9 +543,6 @@ class Engine:
     async def _learning_cycle(self):
         while self.round is not None and self.round < self.total_rounds:
             current_time = time.time()
-            rse = RoundStartEvent(self.round, current_time)
-            await EventManager.get_instance().publish_node_event(rse)
-
             print_msg_box(
                 msg=f"Round {self.round} of {self.total_rounds - 1} started (max. {self.total_rounds} rounds)",
                 indent=2,

@@ -47,9 +47,9 @@ class LinkAction(Enum):
 
 
 class ReputationAction(Enum):
-    SHARE_REPUTATION = nebula_pb2.LinkMessage.Action.SHARE_REPUTATION
-    START_TRIAL = nebula_pb2.LinkMessage.Action.START_TRIAL
-    SUBMIT_VERDICT = nebula_pb2.LinkMessage.Action.SUBMIT_VERDICT
+    SHARE_REPUTATION = nebula_pb2.ReputationMessage.Action.SHARE_REPUTATION
+    START_TRIAL = nebula_pb2.ReputationMessage.Action.START_TRIAL
+    SUBMIT_VERDICT = nebula_pb2.ReputationMessage.Action.SUBMIT_VERDICT
 
 
 ACTION_CLASSES = {

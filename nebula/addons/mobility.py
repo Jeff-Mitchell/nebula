@@ -274,7 +274,6 @@ class Mobility:
             latitude = float(self.config.participant["mobility_args"]["latitude"])
             longitude = float(self.config.participant["mobility_args"]["longitude"])
             if True:
-            if True:
                 # Get neighbor closer to me
                 async with self._nodes_distances_lock:
                     sorted_list = sorted(self._nodes_distances.items(), key=lambda item: item[1][0])
@@ -289,7 +288,6 @@ class Mobility:
                         # If the distance is too big, we move towards the neighbor
                         if self._verbose: logging.info(f"Moving towards nearest neighbor: {addr}")
                         await self.change_geo_location_nearest_neighbor_strategy(
-                            dist,
                             dist,
                             latitude,
                             longitude,
