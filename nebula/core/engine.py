@@ -99,6 +99,7 @@ class Engine:
         self.round = None
         self.total_rounds = None
         self.federation_nodes = set()
+        self._federation_nodes_lock = Locker("federation_nodes_lock", async_lock=True)
         self.initialized = False
         self.log_dir = os.path.join(config.participant["tracking_args"]["log_dir"], self.experiment_name)
 
@@ -156,9 +157,6 @@ class Engine:
     def aggregator(self):
         return self._aggregator
 
-    def get_aggregator_type(self):
-        return type(self.aggregator)
-
     @property
     def trainer(self):
         return self._trainer
@@ -166,6 +164,9 @@ class Engine:
     @property
     def sa(self):
         return self._situational_awareness
+    
+    def get_aggregator_type(self):
+        return type(self.aggregator)
 
     def get_addr(self):
         return self.addr
@@ -173,8 +174,13 @@ class Engine:
     def get_config(self):
         return self.config
 
-    def get_federation_nodes(self):
-        return self.federation_nodes
+    async def get_federation_nodes(self):
+        async with self._federation_nodes_lock:
+            return self.federation_nodes.copy()
+    
+    async def update_federation_nodes(self, federation_nodes):
+        async with self._federation_nodes_lock:
+            self.federation_nodes = federation_nodes
 
     def get_initialization_status(self):
         return self.initialized
@@ -228,7 +234,7 @@ class Engine:
 
     async def model_update_callback(self, source, message):
         logging.info(f"🤖  handle_model_message | Received model update from {source} with round {message.round}")
-        if not self.get_federation_ready_lock().locked() and len(self.get_federation_nodes()) == 0:
+        if not self.get_federation_ready_lock().locked() and len(await self.get_federation_nodes()) == 0:
             logging.info("🤖  handle_model_message | There are no defined federation nodes")
             return
         decoded_model = self.trainer.deserialize_model(message.parameters)
@@ -362,12 +368,11 @@ class Engine:
         logging.info(f"Aditional node | {self.addr} | going to stablish connection with federation")
         await self.sa.start_late_connection_process()
         # continue ..
-        # asyncio.create_task(self.sa.stop_not_selected_connections())
         logging.info("Creating trainer service to start the federation process..")
         asyncio.create_task(self._start_learning_late())
 
     async def update_neighbors(self, removed_neighbor_addr, neighbors, remove=False):
-        self.federation_nodes = neighbors
+        await self.update_federation_nodes(neighbors)
         updt_nei_event = UpdateNeighborEvent(removed_neighbor_addr, remove)
         asyncio.create_task(EventManager.get_instance().publish_node_event(updt_nei_event))
 
@@ -543,8 +548,8 @@ class Engine:
                 title="Round information",
             )
             logging.info(f"Federation nodes: {self.federation_nodes}")
-            self.federation_nodes = await self.cm.get_addrs_current_connections(only_direct=True, myself=True)
-            expected_nodes = self.federation_nodes.copy()
+            await self.update_federation_nodes(await self.cm.get_addrs_current_connections(only_direct=True, myself=True))
+            expected_nodes = await self.get_federation_nodes()
             rse = RoundStartEvent(self.round, current_time, expected_nodes)
             await EventManager.get_instance().publish_node_event(rse)
             self.trainer.on_round_start()
