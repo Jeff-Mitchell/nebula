@@ -192,6 +192,14 @@ class SAReasoner(ISAReasoner):
                                                             #    SA COMPONENT LOADING     #
                                                             ###############################
     """
+    def _to_pascal_case(name: str) -> str:
+        """Converts a snake_case or compact lowercase name into PascalCase with 'SA' prefix."""
+        if name.startswith("sa_"):
+            name = name[3:]  # remove 'sa_' prefix
+        elif name.startswith("sa"):
+            name = name[2:]  # remove 'sa' prefix
+        parts = name.split("_") if "_" in name else [name]
+        return "SA" + ''.join(part.capitalize() for part in parts)
 
     async def loading_sa_components(self):
         """Dynamically loads the SA Components defined in the JSON configuration."""
@@ -201,7 +209,7 @@ class SAReasoner(ISAReasoner):
         for component_name, is_enabled in components.items():
             if is_enabled:
                 component_config = sa_section[component_name]
-                class_name = "SA" + component_name[2:].capitalize()  
+                class_name = self._to_pascal_case(component_name)  # ← función limpia
                 module_path = os.path.join(self.MODULE_PATH, component_name)
                 module_file = os.path.join(module_path, f"{component_name}.py")
 

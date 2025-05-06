@@ -13,11 +13,9 @@ class ArbitatrionPolicy(ABC):
 
 def factory_arbitatrion_policy(arbitatrion_policy, verbose) -> ArbitatrionPolicy:
     from nebula.core.situationalawareness.awareness.arbitatrionpolicies.staticarbitatrionpolicy import SAP
-    from nebula.core.situationalawareness.awareness.arbitatrionpolicies.saarbitatrionpolicy import SAAP
     
     options = {
         "sap": SAP,     # "Static Arbitatrion Policy"                   (SAP) -- default value
-        "saap": SAAP,   # "Situational Awareness Arbitatrion Policy"    (SAAP) 
     } 
     
     cs = options.get(arbitatrion_policy, SAP)
