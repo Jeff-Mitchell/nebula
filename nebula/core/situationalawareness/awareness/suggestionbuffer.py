@@ -60,7 +60,7 @@ class SuggestionBuffer():
     async def set_event_waited(self, event_type):
         """Registers event to be waited"""
         if not self._event_waited:
-            if self._verbose: logging.info(f"Set notification when all suggestions are being received for event: {event_type. __name__}")
+            if self._verbose: logging.info(f"Set notification when all suggestions have being received for event: {event_type. __name__}")
             self._event_waited = event_type
             await self._notify_arbitrator(event_type)
 

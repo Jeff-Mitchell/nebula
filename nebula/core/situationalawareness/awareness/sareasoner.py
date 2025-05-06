@@ -83,12 +83,13 @@ class SAReasoner(ISAReasoner):
         #await self.loading_sa_components()
         from nebula.core.situationalawareness.awareness.sanetwork.sanetwork import SANetwork
         #from nebula.core.situationalawareness.awareness.satraining.satraining import SATraining
-        self._situational_awareness_network = SANetwork(self, self._addr, self._topology, verbose=True)
         #self._situational_awareness_training = SATraining(self, self._addr, "qds", "fastreboot", verbose=True)
         self._sa_discovery: ISADiscovery = sa_discovery
-        await self.san.init()
         await EventManager.get_instance().subscribe_node_event(RoundEndEvent, self._process_round_end_event)
         await EventManager.get_instance().subscribe_node_event(AggregationEvent, self._process_aggregation_event)
+        
+        self._situational_awareness_network = SANetwork(self, self._addr, self._topology, verbose=True)
+        await self.san.init()
         
     def is_additional_participant(self):
         return self._config.participant["mobility_args"]["additional_node"]["status"]

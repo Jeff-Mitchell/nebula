@@ -6,7 +6,6 @@ from nebula.addons.functions import print_msg_box
 from nebula.core.situationalawareness.discovery.candidateselection.candidateselector import factory_CandidateSelector
 from nebula.core.situationalawareness.discovery.modelhandlers.modelhandler import factory_ModelHandler
 from nebula.core.situationalawareness.situationalawareness import ISADiscovery, ISAReasoner
-from nebula.core.situationalawareness.awareness.sareasoner import SAReasoner
 from nebula.core.utils.locker import Locker
 from nebula.core.eventmanager import EventManager
 from nebula.core.nebulaevents import UpdateNeighborEvent, NodeFoundEvent
@@ -95,6 +94,7 @@ class FederationConnector(ISADiscovery):
         self._sa_reasoner: ISAReasoner = sa_reasoner
         await self.register_message_events_callbacks()
         await EventManager.get_instance().subscribe_node_event(UpdateNeighborEvent, self.update_neighbors)
+        
         logging.info("Building candidate selector configuration..")
         self.candidate_selector.set_config([0, 0.5, 0.5])
         # self.engine.trainer.get_loss(), self.config.participant["molibity_args"]["weight_distance"], self.config.participant["molibity_args"]["weight_het"]
@@ -104,7 +104,7 @@ class FederationConnector(ISADiscovery):
                 #        CONNECTIONS         #
                 ##############################
     """
-
+    
     def accept_connection(self, source, joining=False):
         return self.sar.accept_connection(source, joining)
     
@@ -284,6 +284,10 @@ class FederationConnector(ISADiscovery):
 
             if callable(method):
                 await EventManager.get_instance().subscribe((event_type, action), method)
+                
+    async def _connection_disconnect_callback(self, source, message):
+        if await self.waiting_confirmation_from(source):
+            await self.confirmation_received(source, confirmation=False)
 
     async def _connection_late_connect_callback(self, source, message):
         logging.info(f"🔗  handle_connection_message | Trigger | Received late connect message from {source}")
@@ -438,7 +442,7 @@ class FederationConnector(ISADiscovery):
         logging.info(f"🔗  handle_link_message | Trigger | Received disconnect_from message from {source}")
         addrs = message.addrs
         for addr in addrs.split():
-            await self.cm.disconnect(source, mutual_disconnection=False)
+            await asyncio.create_task(self.cm.disconnect(source, mutual_disconnection=False))
                 
 
 

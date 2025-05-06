@@ -302,7 +302,7 @@ class NebulaDataset:
         partitions_number=1,
         batch_size=32,
         num_workers=4,
-        iid="IID",
+        iid=False,
         partition="dirichlet",
         partition_parameter=0.5,
         nsplits_percentages=[1.0],
@@ -371,17 +371,16 @@ class NebulaDataset:
             f"Partitioning data for {self.__class__.__name__} | Partitions: {self.partitions_number} | IID: {self.iid} | Partition: {self.partition} | Partition parameter: {self.partition_parameter}"
         )
 
-        logging.info(f"Scenario with data distribution: {self.iid}")
-        if self.iid == "IID":
+        logging.info(f"Scenario with data distribution IID: {self.iid}")
+        if self.iid:
             self.train_indices_map = self.generate_iid_map(self.train_set)
-        elif self.iid == "Non-IID":
+        else :
             self.train_indices_map = self.generate_non_iid_map(
                 self.train_set, partition=self.partition, partition_parameter=self.partition_parameter
             )
-        else:
-            self.train_indices_map = self.generate_hybrid_map()
+        # else:
+        #     self.train_indices_map = self.generate_hybrid_map()
 
-        self.iid = False  # TODO REMOVE
         self.test_indices_map = self.get_test_indices_map()
         self.local_test_indices_map = self.get_local_test_indices_map()
 

@@ -283,11 +283,6 @@ class Engine:
 
     async def _connection_disconnect_callback(self, source, message):
         logging.info(f"🔗  handle_connection_message | Trigger | Received disconnection message from {source}")
-        if self.mobility:
-            if await self.nm.waiting_confirmation_from(source):
-                await self.nm.confirmation_received(source, confirmation=False)
-            # if source in await self.cm.get_all_addrs_current_connections(only_direct=True):
-            await self.nm.update_neighbors(source, remove=True)
         await self.cm.disconnect(source, mutual_disconnection=False)
 
     async def _federation_federation_ready_callback(self, source, message):
@@ -372,10 +367,9 @@ class Engine:
         asyncio.create_task(self._start_learning_late())
 
     async def update_neighbors(self, removed_neighbor_addr, neighbors, remove=False):
-        if self.mobility:
-            self.federation_nodes = neighbors
-            updt_nei_event = UpdateNeighborEvent(removed_neighbor_addr, remove)
-            asyncio.create_task(EventManager.get_instance().publish_node_event(updt_nei_event))
+        self.federation_nodes = neighbors
+        updt_nei_event = UpdateNeighborEvent(removed_neighbor_addr, remove)
+        asyncio.create_task(EventManager.get_instance().publish_node_event(updt_nei_event))
 
     async def broadcast_models_include(self, age: AggregationEvent):
         logging.info(f"🔄  Broadcasting MODELS_INCLUDED for round {self.get_round()}")

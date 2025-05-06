@@ -88,7 +88,6 @@ class SANetwork(SAMComponent):
         
         await EventManager.get_instance().subscribe_node_event(NodeFoundEvent, self._process_node_found_event)
         await EventManager.get_instance().subscribe_node_event(UpdateNeighborEvent, self._process_update_neighbor_event)
-        await EventManager.get_instance().subscribe_node_event(RoundEndEvent, self._process_round_end_event)
         await self.sana.register_sa_agent()
         
     async def sa_component_actions(self):
@@ -112,9 +111,6 @@ class SANetwork(SAMComponent):
         if self._verbose: logging.info(f"Processing Update Neighbor Event, node addr: {node_addr}, remove: {removed}")
         self.np.update_neighbors(node_addr, removed)   
         
-    async def _process_round_end_event(self, ree: RoundEndEvent):
-        await self._analize_topology_robustness() 
-    
     def meet_node(self, node):
         if node != self._addr:
             self.np.meet_node(node)
