@@ -109,28 +109,23 @@ class FederationConnector(ISADiscovery):
         return not self.accept_candidates_lock.locked() and self.late_connection_process_lock.locked()
 
     async def _add_pending_connection_confirmation(self, addr):
-        await self._update_neighbors_lock.acquire_async()
-        await self.pending_confirmation_from_nodes_lock.acquire_async()
-        if addr not in self.sar.get_nodes_known(neighbors_only=True):
-            logging.info(f" Addition | pending connection confirmation from: {addr}")
-            self.pending_confirmation_from_nodes.add(addr)
-        await self.pending_confirmation_from_nodes_lock.release_async()
-        await self._update_neighbors_lock.release_async()
+        async with self._update_neighbors_lock:
+            async with self.pending_confirmation_from_nodes_lock:
+                if addr not in self.sar.get_nodes_known(neighbors_only=True):
+                    logging.info(f"Addition | pending connection confirmation from: {addr}")
+                    self.pending_confirmation_from_nodes.add(addr)
 
     async def _remove_pending_confirmation_from(self, addr):
-        await self.pending_confirmation_from_nodes_lock.acquire_async()
-        self.pending_confirmation_from_nodes.discard(addr)
-        await self.pending_confirmation_from_nodes_lock.release_async()
+        async with self.pending_confirmation_from_nodes_lock:
+            self.pending_confirmation_from_nodes.discard(addr)
 
     async def _clear_pending_confirmations(self):
-        await self.pending_confirmation_from_nodes_lock.acquire_async()
-        self.pending_confirmation_from_nodes.clear()
-        await self.pending_confirmation_from_nodes_lock.release_async()
+        async with self.pending_confirmation_from_nodes_lock:
+            self.pending_confirmation_from_nodes.clear()
 
     async def _waiting_confirmation_from(self, addr):
-        await self.pending_confirmation_from_nodes_lock.acquire_async()
-        found = addr in self.pending_confirmation_from_nodes
-        await self.pending_confirmation_from_nodes_lock.release_async()
+        async with self.pending_confirmation_from_nodes_lock:
+            found = addr in self.pending_confirmation_from_nodes
         return found
 
     async def _confirmation_received(self, addr, joining=False):
@@ -305,16 +300,25 @@ class FederationConnector(ISADiscovery):
             # Verify conenction is accepted
             conf_msg = self.cm.create_message("connection", "late_connect")
             await self.cm.send_message(source, conf_msg)
-            await self._register_late_neighbor(source, joinning_federation=True)
+
+            # SI ACTUALIZO PRINMERO SE PASA DEL NUMERO DE VECINOS TODO
+            
 
             ct_actions, df_actions = self._get_actions()
+            logging.info("voy a mostrar acciones en respuesta a late connect")
             if len(ct_actions):
+                logging.info("1 acciones")
+                logging.info(f"{ct_actions}")
                 cnt_msg = self.cm.create_message("link", "connect_to", addrs=ct_actions)
                 await self.cm.send_message(source, cnt_msg)
 
             if len(df_actions):
+                logging.info("2 acciones")
+                logging.info(f"{df_actions}")
                 df_msg = self.cm.create_message("link", "disconnect_from", addrs=df_actions)
                 await self.cm.send_message(source, df_msg)
+
+            await self._register_late_neighbor(source, joinning_federation=True)
 
         else:
             logging.info(f"❗️  Late connection NOT accepted | source: {source}")
@@ -344,6 +348,7 @@ class FederationConnector(ISADiscovery):
                 await self.cm.send_message(source, cnt_msg)
 
             if len(df_actions):
+                # TODO el q se tiene q desconectar de mi no es source, es el vecino seleccionado
                 df_msg = self.cm.create_message("link", "disconnect_from", addrs=df_actions)
                 await self.cm.send_message(source, df_msg)
 
@@ -440,7 +445,7 @@ class FederationConnector(ISADiscovery):
         logging.info(f"🔗  handle_link_message | Trigger | Received disconnect_from message from {source}")
         addrs = message.addrs
         for addr in addrs.split():
-            await asyncio.create_task(self.cm.disconnect(source, mutual_disconnection=False))
+            await asyncio.create_task(self.cm.disconnect(addr, mutual_disconnection=False))
                 
 
 

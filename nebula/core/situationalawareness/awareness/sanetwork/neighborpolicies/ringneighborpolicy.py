@@ -29,6 +29,7 @@ class RINGNeighborPolicy(NeighborPolicy):
         """
         logging.info("Initializing Ring Topology Neighbor Policy")
         self.neighbors_lock.acquire()
+        logging.info(f"neighbors: {config[0]}")
         self.neighbors = config[0]
         self.neighbors_lock.release()
         for addr in config[1]:
@@ -41,7 +42,7 @@ class RINGNeighborPolicy(NeighborPolicy):
         """
         ac = False
         self.neighbors_lock.acquire()
-        if not joining:    
+        if joining:    
             ac = not source in self.neighbors
         else:
             ac = not len(self.neighbors) == self.max_neighbors
@@ -63,11 +64,17 @@ class RINGNeighborPolicy(NeighborPolicy):
         self.nodes_known_lock.release()
         
     def get_nodes_known(self, neighbors_too=False, neighbors_only=False):
+        if neighbors_only:
+            self.neighbors_lock.acquire()
+            no = self.neighbors.copy()
+            self.neighbors_lock.release()
+            return no
+        
         self.nodes_known_lock.acquire()
         nk = self.nodes_known.copy()
         if not neighbors_too:
             self.neighbors_lock.acquire()
-            nk = self.nodes_known - self.neighbors 
+            nk = self.nodes_known - self.neighbors
             self.neighbors_lock.release()
         self.nodes_known_lock.release()
         return nk 
@@ -79,14 +86,14 @@ class RINGNeighborPolicy(NeighborPolicy):
                 - Second one represents the same but for disconnect from LinkMessage
         """ 
         self.neighbors_lock.acquire()
-        ct_actions = []
-        df_actions = []
-        if len(self.neighbors) < self.max_neighbors:
+        ct_actions = ""
+        df_actions = ""
+        if len(self.neighbors) <= self.max_neighbors:
             list_neighbors = list(self.neighbors)
             index = random.randint(0, len(list_neighbors)-1)
-            node = list_neighbors[index]
-            ct_actions.append(node)                            # connect to
-            df_actions.append(self.addr)                       # disconnect from
+            node = list_neighbors[index]                          
+            ct_actions = node         # connect to
+            df_actions = self.addr    # disconnect from                     
         self.neighbors_lock.release()
         return [ct_actions, df_actions]
     

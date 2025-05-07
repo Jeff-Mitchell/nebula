@@ -34,7 +34,7 @@ class ISAReasoner(ABC):
 def factory_sa_discovery(sa_discovery, additional, topology, model_handler, engine, verbose) -> ISADiscovery:
     from nebula.core.situationalawareness.discovery.federationconnector import FederationConnector
     DISCOVERY = {
-        "fedcon": FederationConnector,
+        "nebula": FederationConnector,
     }
     sad = DISCOVERY.get(sa_discovery)
     if sad:
@@ -45,7 +45,7 @@ def factory_sa_discovery(sa_discovery, additional, topology, model_handler, engi
 def factory_sa_reasoner(sa_reasoner, config, addr, topology, verbose) -> ISAReasoner:
     from nebula.core.situationalawareness.awareness.sareasoner import SAReasoner
     REASONER = {
-        "nebula_reasoner": SAReasoner,
+        "nebula": SAReasoner,
     }
     sar = REASONER.get(sa_reasoner)
     if sar:
@@ -65,7 +65,7 @@ class SituationalAwareness():
         topology = topology.lower()
         model_handler = "std" 
         self._sad = factory_sa_discovery(
-            "fedcon",
+            "nebula",
             self._config.participant["mobility_args"]["additional_node"]["status"],
             topology,
             model_handler,
@@ -73,7 +73,7 @@ class SituationalAwareness():
             verbose=True
         )
         self._sareasoner = factory_sa_reasoner(
-            "nebula_reasoner",
+            "nebula",
             self._config, 
             self._config.participant["network_args"]["addr"], 
             topology, 

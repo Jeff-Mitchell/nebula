@@ -508,6 +508,7 @@ class CommunicationsManager:
                 await asyncio.sleep(interval)
 
     async def send_message(self, dest_addr, message, is_compressed=False):
+        logging.info(f"Sending message to addr: {dest_addr}")
         if not is_compressed:
             try:
                 conn = self.connections[dest_addr]
@@ -526,38 +527,6 @@ class CommunicationsManager:
                 except Exception as e:
                     logging.exception(f"❗️  Cannot send model to {dest_addr}: {e!s}")
                     await self.disconnect(dest_addr, mutual_disconnection=False)
-
-    # async def send_model(self, dest_addr, round, serialized_model, weight=1):
-    #     async with self.semaphore_send_model:
-    #         try:
-    #             conn = self.connections.get(dest_addr)
-    #             if conn is None:
-    #                 logging.info(f"❗️  Connection with {dest_addr} not found")
-    #                 return
-    #             logging.info(
-    #                 f"Sending model to {dest_addr} with round {round}: weight={weight} | size={sys.getsizeof(serialized_model) / (1024** 2) if serialized_model is not None else 0} MB"
-    #             )
-    #             parameters = serialized_model
-    #             message = self.create_message("model", "", round, parameters, weight)
-    #             await conn.send(data=message, is_compressed=True)
-    #             logging.info(f"Model sent to {dest_addr} with round {round}")
-    #         except Exception as e:
-    #             logging.exception(f"❗️  Cannot send model to {dest_addr}: {e!s}")
-    #             await self.disconnect(dest_addr, mutual_disconnection=False)
-
-    # async def send_offer_model(self, dest_addr, offer_message):
-    #     async with self.semaphore_send_model:
-    #         try:
-    #             conn = self.connections.get(dest_addr)
-    #             if conn is None:
-    #                 logging.info(f"❗️  Connection with {dest_addr} not found")
-    #                 return
-    #             logging.info(f"Sending offer model to {dest_addr}")
-    #             await conn.send(data=offer_message, is_compressed=True)
-    #             logging.info(f"Offer_Model sent to {dest_addr}")
-    #         except Exception as e:
-    #             logging.exception(f"❗️  Cannot send model to {dest_addr}: {e!s}")
-    #             await self.disconnect(dest_addr, mutual_disconnection=False)
 
     async def establish_connection(self, addr, direct=True, reconnect=False):
         logging.info(f"🔗  [outgoing] Establishing connection with {addr} (direct: {direct})")

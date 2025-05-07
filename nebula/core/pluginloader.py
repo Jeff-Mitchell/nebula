@@ -55,7 +55,7 @@ Example for "reputation":
 -----------------------------------------------------
 File: /nebula/nebula/core/reputation/reputation.py
 
-from nebula.nebula.core.plugin_loader import NebulaPlugin
+from nebula.nebula.core.pluginloader import NebulaPlugin
 
 class ReputationModel(NebulaPlugin):
     def __init__(self, config: dict):
@@ -116,14 +116,14 @@ class NebulaPluginLoader:
     _instance = None
     _lock = Locker("_nebula_pluging_loader_lock", async_lock=False)
 
-    def __new__(cls, config_json=None, base_path="/nebula/nebula/core"):
+    def __new__(cls, config_json=None, base_path="/nebula/nebula/core/plugins"):
         with cls._lock:
             if cls._instance is None:
                 cls._instance = super().__new__(cls)
                 cls._instance._initialized = False
         return cls._instance
 
-    def __init__(self, config_json=None, base_path="/nebula/nebula/core"):
+    def __init__(self, config_json=None, base_path="/nebula/nebula/core/plugins"):
         """Initializes the plugin loader with the given configuration JSON and base path."""
         if self._initialized:
             return 

@@ -230,7 +230,7 @@ async def main(config):
         logging.info("Waiting time to start finding federation")
 
         # time.sleep(150)
-        await asyncio.sleep(150)
+        await asyncio.sleep(120)
 
         # time.sleep(6000)  # DEBUG purposes
         # import requests

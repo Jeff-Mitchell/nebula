@@ -123,8 +123,10 @@ class SAReasoner(ISAReasoner):
     
     async def _process_round_end_event(self, ree : RoundEndEvent):
         logging.info("🔄 Arbitration | Round End Event...")
-        for sa_comp in self._sa_components.values():
-            asyncio.create_task(sa_comp.sa_component_actions())
+        # TODO change when front is done
+        # for sa_comp in self._sa_components.values():
+        #     asyncio.create_task(sa_comp.sa_component_actions())
+        asyncio.create_task(self.san.sa_component_actions())
         valid_commands = await self._arbitatrion_suggestions(RoundEndEvent)
 
         # Execute SACommand selected
@@ -204,7 +206,7 @@ class SAReasoner(ISAReasoner):
     async def loading_sa_components(self):
         """Dynamically loads the SA Components defined in the JSON configuration."""
         sa_section = self._config.participant["situational_awareness"]
-        components: dict = sa_section["sa_components"]
+        components: dict = sa_section["sar_components"]
 
         for component_name, is_enabled in components.items():
             if is_enabled:
