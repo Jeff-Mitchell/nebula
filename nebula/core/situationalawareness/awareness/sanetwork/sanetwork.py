@@ -227,11 +227,14 @@ class SANetwork(SAMComponent):
             await self.cm.disconnect(n, mutual_disconnection=False, forced=True)
 
     async def verify_neighbors_stablished(self, nodes: set):
+        logging.info("voy a olvidar")
         await asyncio.sleep(self.NEIGHBOR_VERIFICATION_TIMEOUT)
+        logging.info("Verifyng all connections were stablished")
         nodes_to_forget = nodes.copy()
         neighbors = self.np.get_nodes_known(neighbors_only=True)
         if neighbors:
             nodes_to_forget.difference_update(neighbors)
+        logging.info(f"Connections dont stablished: {nodes_to_forget}")
         self.forget_nodes(nodes_to_forget)
 
     async def forget_nodes(self, nodes_to_forget):

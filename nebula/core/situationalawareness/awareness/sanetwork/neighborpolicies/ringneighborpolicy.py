@@ -45,7 +45,7 @@ class RINGNeighborPolicy(NeighborPolicy):
         if joining:    
             ac = not source in self.neighbors
         else:
-            ac = not len(self.neighbors) == self.max_neighbors
+            ac = not len(self.neighbors) >= self.max_neighbors
         self.neighbors_lock.release()
         return ac
     
@@ -88,12 +88,12 @@ class RINGNeighborPolicy(NeighborPolicy):
         self.neighbors_lock.acquire()
         ct_actions = ""
         df_actions = ""
-        if len(self.neighbors) <= self.max_neighbors:
+        if len(self.neighbors) == self.max_neighbors:
             list_neighbors = list(self.neighbors)
             index = random.randint(0, len(list_neighbors)-1)
             node = list_neighbors[index]                          
-            ct_actions = node         # connect to
-            df_actions = self.addr    # disconnect from                     
+            ct_actions = node           # connect to
+            df_actions = node           # disconnect from                     
         self.neighbors_lock.release()
         return [ct_actions, df_actions]
     

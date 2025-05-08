@@ -256,10 +256,12 @@ class CommunicationsManager:
         msg = self.create_message("discover", msg_type)
 
         # Remove neighbors
-        neighbors = await self.get_addrs_current_connections(only_undirected=True, myself=True)
+        neighbors = await self.get_addrs_current_connections(only_direct=True, myself=True)
         addrs = set(addrs)
         if neighbors:
             addrs.difference_update(neighbors)
+            
+        logging.info(f"neighbors: {neighbors} | addr filtered: {addrs}")
 
         discovers_sent = 0
         if addrs:
@@ -709,6 +711,7 @@ class CommunicationsManager:
 
     async def disconnect(self, dest_addr, mutual_disconnection=True, forced=False):
         removed = False
+        is_neighbor = dest_addr in  await self.get_addrs_current_connections(only_direct=True, myself=True)
 
         if forced:
             self.add_to_blacklist(dest_addr)
@@ -737,9 +740,11 @@ class CommunicationsManager:
         current_connections = set(current_connections)
         logging.info(f"Current connections: {current_connections}")
         self.config.update_neighbors_from_config(current_connections, dest_addr)
+
         if removed:
             current_connections = await self.get_addrs_current_connections(only_direct=True, myself=True)
-            await self.engine.update_neighbors(dest_addr, current_connections, remove=removed)
+            if is_neighbor:
+                await self.engine.update_neighbors(dest_addr, current_connections, remove=removed)
 
     async def remove_temporary_connection(self, temp_addr):
         logging.info(f"Removing temporary conneciton:{temp_addr}..")

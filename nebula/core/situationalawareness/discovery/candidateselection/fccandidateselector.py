@@ -22,7 +22,7 @@ class FCCandidateSelector(CandidateSelector):
         self.candidates_lock.acquire()
         cdts = self.candidates.copy()
         self.candidates_lock.release()
-        return cdts
+        return (cdts, [])
     
     def remove_candidates(self):
         self.candidates_lock.acquire()

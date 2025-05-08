@@ -226,22 +226,8 @@ async def main(config):
     # If it is an additional node, it should wait until additional_node_round to connect to the network
     # In order to do that, it should request the current round to the controller
     if additional_node_status:
-        logging.info(f"Waiting for round {additional_node_round} to start")
-        logging.info("Waiting time to start finding federation")
-
-        # time.sleep(150)
+        logging.info(f"Waiting time to start finding federation: {config.participant["mobility_args"]["additional_node"]["time_start"]}")
         await asyncio.sleep(int(config.participant["mobility_args"]["additional_node"]["time_start"]))
-
-        # time.sleep(6000)  # DEBUG purposes
-        # import requests
-
-        # url = f"http://{node.config.participant['scenario_args']['controller']}/platform/{node.config.participant['scenario_args']['name']}/round"
-        # current_round = int(requests.get(url).json()["round"])
-        # while current_round < additional_node_round:
-        #    logging.info(f"Waiting for round {additional_node_round} to start")
-        #    time.sleep(10)
-        # logging.info(f"Round {additional_node_round} started, connecting to the network")
-
         await node._aditional_node_start()
 
     if node.cm is not None:

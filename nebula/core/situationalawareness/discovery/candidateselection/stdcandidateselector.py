@@ -23,8 +23,9 @@ class STDandidateSelector(CandidateSelector):
         #TODO revisar
         mean_neighbors = sum(n for n, _ in self.candidates) / len(self.candidates) if self.candidates else 0
         cdts = self.candidates[:mean_neighbors]
+        not_selected = set(self.candidates) - set(cdts)
         self.candidates_lock.release()
-        return cdts
+        return (cdts, not_selected)
     
     def remove_candidates(self):
         self.candidates_lock.acquire()

@@ -4,7 +4,8 @@ from nebula.core.utils.locker import Locker
 class RINGCandidateSelector(CandidateSelector):
 
     def __init__(self):
-        self.candidates = []
+        self._candidates = []
+        self._rejected_candidates = []
         self.candidates_lock = Locker(name="candidates_lock")
         
     def set_config(self, config):
@@ -15,23 +16,26 @@ class RINGCandidateSelector(CandidateSelector):
             To avoid topology problems select 1st candidate found
         """
         self.candidates_lock.acquire()
-        if len(self.candidates) == 0:
-            self.candidates.append(candidate)
+        if len(self._candidates) == 0:
+            self._candidates.append(candidate)
+        else:
+            self._rejected_candidates.append(candidate)
         self.candidates_lock.release()
       
     def select_candidates(self):
         self.candidates_lock.acquire()
-        cdts = self.candidates.copy()
+        cdts = self._candidates.copy()
+        not_cdts = self._rejected_candidates.copy()
         self.candidates_lock.release()
-        return cdts
+        return (cdts, not_cdts)
     
     def remove_candidates(self):
         self.candidates_lock.acquire()
-        self.candidates = []
+        self._candidates = []
         self.candidates_lock.release()
 
     def any_candidate(self):
         self.candidates_lock.acquire()
-        any = True if len(self.candidates) > 0 else False
+        any = True if len(self._candidates) > 0 else False
         self.candidates_lock.release()
         return any

@@ -344,10 +344,8 @@ class Engine:
             for (message_name, message_actions) in me_dict.items()
             for message_action in message_actions
         ]
-        # logging.info(f"{message_events}")
         for event_type, action in message_events:
             callback_name = f"_{event_type}_{action}_callback"
-            # logging.info(f"Searching callback named: {callback_name}")
             method = getattr(self, callback_name, None)
 
             if callable(method):
