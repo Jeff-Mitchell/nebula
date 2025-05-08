@@ -230,7 +230,7 @@ async def main(config):
         logging.info("Waiting time to start finding federation")
 
         # time.sleep(150)
-        await asyncio.sleep(120)
+        await asyncio.sleep(int(config.participant["mobility_args"]["additional_node"]["time_start"]))
 
         # time.sleep(6000)  # DEBUG purposes
         # import requests

@@ -73,6 +73,7 @@ class Scenario:
         latitude,
         longitude,
         mobility,
+        network_simulation,
         mobility_type,
         radius_federation,
         scheme_mobility,
@@ -81,6 +82,12 @@ class Scenario:
         additional_participants,
         schema_additional_participants,
         random_topology_probability,
+        with_sa,
+        strict_topology,
+        sad_candidate_selector,
+        sad_model_handler,
+        sar_arbitration_policy,
+        sar_neighbor_policy
     ):
         """
         Initialize the scenario.
@@ -140,6 +147,12 @@ class Scenario:
             additional_participants (list): List of additional participants.
             schema_additional_participants (str): Schema for additional participants.
             random_topology_probability (float): Probability for random topology.
+            with_sa (bool) : Indicator if Situational Awareness is used.
+            strict_topology (bool) : 
+            sad_candidate_selector (str) :
+            sad_model_handler (str) :
+            sar_arbitration_policy (str) :
+            sar_neighbor_policy (str) :
         """
         self.scenario_title = scenario_title
         self.scenario_description = scenario_description
@@ -184,6 +197,7 @@ class Scenario:
         self.latitude = latitude
         self.longitude = longitude
         self.mobility = mobility
+        self.network_simulation = network_simulation
         self.mobility_type = mobility_type
         self.radius_federation = radius_federation
         self.scheme_mobility = scheme_mobility
@@ -192,6 +206,12 @@ class Scenario:
         self.additional_participants = additional_participants
         self.schema_additional_participants = schema_additional_participants
         self.random_topology_probability = random_topology_probability
+        self.with_sa = with_sa
+        self.strict_topology = strict_topology
+        self.sad_candidate_selector = sad_candidate_selector
+        self.sad_model_handler = sad_model_handler
+        self.sar_arbitration_policy = sar_arbitration_policy
+        self.sar_neighbor_policy = sar_neighbor_policy
 
     def attack_node_assign(
         self,
@@ -372,6 +392,7 @@ class ScenarioManagement:
 
             participant_config["network_args"]["ip"] = node_config["ip"]
             participant_config["network_args"]["port"] = int(node_config["port"])
+            participant_config["network_args"]["simulation"] = self.scenario.network_simulation
             participant_config["device_args"]["idx"] = node_config["id"]
             participant_config["device_args"]["start"] = node_config["start"]
             participant_config["device_args"]["role"] = node_config["role"]
@@ -415,7 +436,12 @@ class ScenarioManagement:
             participant_config["mobility_args"]["round_frequency"] = self.scenario.round_frequency
             participant_config["reporter_args"]["report_status_data_queue"] = self.scenario.report_status_data_queue
             participant_config["mobility_args"]["topology_type"] = self.scenario.topology
-
+            participant_config["situational_awareness"]["strict_topology"] = self.scenario.strict_topology
+            participant_config["situational_awareness"]["sa_discovery"]["candidate_selector"] = self.scenario.sad_candidate_selector
+            participant_config["situational_awareness"]["sa_discovery"]["model_handler"] = self.scenario.sad_model_handler
+            participant_config["situational_awareness"]["sa_reasoner"]["arbitatrion_policy"] = self.scenario.sar_arbitration_policy
+            participant_config["situational_awareness"]["sa_reasoner"]["sar_network"]["neighbor_policy"] = self.scenario.sar_neighbor_policy
+            
             with open(participant_file, "w") as f:
                 json.dump(participant_config, f, sort_keys=False, indent=2)
 
@@ -597,7 +623,7 @@ class ScenarioManagement:
                     ).encode()
                 ).hexdigest()
                 participant_config["mobility_args"]["additional_node"]["status"] = True
-                participant_config["mobility_args"]["additional_node"]["round_start"] = additional_participant["round"]
+                participant_config["mobility_args"]["additional_node"]["time_start"] = additional_participant["time"]
 
                 # used for late creation nodes
                 participant_config["mobility_args"]["late_creation"] = True

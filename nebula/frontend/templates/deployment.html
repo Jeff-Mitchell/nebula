@@ -708,6 +708,10 @@
                         <label class="form-check-label" for="mobility-btn">Enable Mobility</label>
                     </div>
                     <div id="mobility-options" style="display: none; margin-left: 10px">
+                        <h5 class="step-title">Network simulation</h5>
+                        <div class="form-check form-switch" style="margin-left: 23px; margin-bottom: 20px;">
+                            <input class="form-check-input" type="checkbox" id="networkSimulation" style="display: inline; width: 80px; height: 30px;">
+                        </div>
                         <h5 class="step-title">Type of mobility</h5>
                         <div class="form-check form-check-inline">
                             <select class="form-control" id="mobilitySelect" name="mobility" style="display: inline">
@@ -747,12 +751,85 @@
                                 placeholder="Number of additional participants" min="0" value="0"
                                 style="display: inline; width: 80%">
                         </div>
+                        <h5 class="step-title" id="connectionDelaytitle" >Same connection delay</h5>
+                        <div class="form-check form-switch" id="connectionDelayDiv" style="margin-left: 23px; margin-bottom: 20px;">
+                            <input class="form-check-input" type="checkbox" id="connectionDelaySwitch" checked style="display: inline; width: 80px; height: 30px; margin-right: 20px;">
+                            <input type="number" class="form-control" id="connectionDelay"
+                                placeholder="Connection delay" min="1" value="1"
+                                style="display: inline; width: 5%">
+                            <small id="connectionDelayHelp" class="form-text text-muted">
+                                <i id="connectionDelayHelpIcon" class="fa fa-info-circle" style="cursor: pointer;"></i>
+                            </small>
+                        </div>
                         <div id="additional-participants-items"></div>
                         <h5 class="step-title">Schema of deployment</h5>
                         <div class="form-check form-check-inline">
                             <select class="form-control" id="schemaAdditionalParticipantsSelect"
                                 name="schemaAdditionalParticipants" style="display: inline" disabled>
                                 <option value="random" selected>Random</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <!-- Situational awareness -->
+                <div class="form-group row container-shadow tiny grey">
+                    <h5 class="step-number">Situtational Awareness <i class="fa fa-binoculars"></i>
+                        <input type="checkbox" id="sa-lock" onchange="lock()" style="display: none;">
+                        <label for="sa-lock" class="icon-container" style="float: right;">
+                            <i class="fa fa-lock"></i>
+                        </label>
+                    </h5>
+                    <h5 class="step-title">Enable/Disable SA</h5>
+                    <div class="form-check form-switch" style="margin-left: 23px;">
+                        <input class="form-check-input" type="checkbox" id="situationalAwarenessSwitch" style="display: inline; width: 80px; height: 30px;">
+                    </div>
+                    <div id="sa-settings" style="margin-top: 10px; display:none;">
+                        <h5 class="step-title">Strict Topology</h5>
+                        <div class="form-check form-switch" style="margin-left: 23px;">
+                            <input class="form-check-input" type="checkbox" id="StrictTopologySwitch" style="display: inline; width: 80px; height: 30px;">
+                        </div>
+                    </div>
+                    <div id="sa-discovery-settings" style="margin-top: 10px; display:none;">
+                        <hr class="styled">
+                        <h5 class="step-title">SA Discovery</h5>
+                        <div id="SADiscovery-options" style="display: block;">
+                            <h5 class="step-title"><span style="font-weight:500;">Candidate Selector</span></h5>
+                            <div class="form-check form-check-inline">
+                                <select class="form-control" id="candidate-selector-select"
+                                    style="display: inline; width:100%">
+                                    <option selected>Random</option>
+                                    <option>Ring</option>
+                                    <option>Fully</option>
+                                </select>
+                            </div>
+                            <h5 class="step-title"><span style="font-weight:500;">Model Handler</span></h5>
+                            <div class="form-check form-check-inline">
+                                <select class="form-control" id="model-handler-select"
+                                    style="display: inline; width:100%">
+                                    <option selected>std</option>
+                                    <option>default</option>
+                                    <option>aggregator</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="sa-reasoner-settings" style="margin-top: 10px; display:none;">
+                        <hr class="styled">
+                        <h5 class="step-title">SA Reasoner</h5>
+                        <h5 class="step-title"><span style="font-weight:500;">Arbitration Policy</span></h5>
+                        <div class="form-check form-check-inline">
+                            <select class="form-control" id="arbitration-policy-select"
+                                style="display: inline; width:100%">
+                                <option selected>sap</option>
+                            </select>
+                        </div>
+                        <h5 class="step-title" style="margin-top: 20px;"><span style="font-weight:500;">Neighbor Policy</span></h5>
+                        <div class="form-check form-check-inline">
+                            <select class="form-control" id="neighbor-policy-select"
+                                style="display: inline; width:100%">
+                                <option selected>Random</option>
+                                <option>Ring</option>
+                                <option>Fully</option>
                             </select>
                         </div>
                     </div>
@@ -1080,8 +1157,14 @@
             var aditional_participants = [];
             additionalParticipants = document.getElementById("additionalParticipants");
             for (var i = 0; i < additionalParticipants.value; i++) {
-                aditional_participants[i] = {
-                    "round": document.getElementById("roundsAdditionalParticipant" + i).value,
+                if(document.getElementById("connectionDelaySwitch").checked){
+                    aditional_participants[i] = {
+                        "time": document.getElementById("connectionDelay").value,
+                    }
+                } else{
+                    aditional_participants[i] = {
+                        "time": document.getElementById("timeAdditionalParticipant" + i).value,
+                    }
                 }
             }
 
@@ -1166,12 +1249,20 @@
             data["longitude"] = parseFloat(document.getElementById("longitude").value)
             data["mobility"] = document.getElementById("mobility-btn").checked ? true : false
             data["mobility_type"] = document.getElementById("mobilitySelect").value
+            data["network_simulation"] = document.getElementById("networkSimulation").checked
             data["radius_federation"] = document.getElementById("radiusFederation").value
             data["scheme_mobility"] = document.getElementById("schemeMobilitySelect").value
             data["round_frequency"] = document.getElementById("roundFrequency").value
             data["mobile_participants_percent"] = document.getElementById("mobileParticipantsPercent").value
             data["additional_participants"] = aditional_participants
             data["schema_additional_participants"] = document.getElementById("schemaAdditionalParticipantsSelect").value
+            // Step 15
+            data["with_sa"] = document.getElementById("situationalAwarenessSwitch").checked;
+            data["strict_topology"] = document.getElementById("StrictTopologySwitch").checked;
+            data["sad_candidate_selector"] = document.getElementById("candidate-selector-select").value;
+            data["sad_model_handler"] = document.getElementById("model-handler-select").value;
+            data["sar_arbitration_policy"] = document.getElementById("arbitration-policy-select").value;
+            data["sar_neighbor_policy"] = document.getElementById("neighbor-policy-select").value;
             return data
         }
 
@@ -1313,6 +1404,7 @@
                 if (data["mobility"]) {
                     document.getElementById("mobility-options").style.display = "block";
                 }
+                document.getElementById("networkSimulation").checked = data["network_simulation"];
                 document.getElementById("mobilitySelect").value = data["mobility_type"];
                 document.getElementById("radiusFederation").value = data["radius_federation"];
                 document.getElementById("schemeMobilitySelect").value = data["scheme_mobility"];
@@ -1326,9 +1418,18 @@
                     additionalParticipants.value = Object.keys(data["additional_participants"]).length;
                     additionalParticipants.dispatchEvent(new Event('change'));
                     for (var i = 0; i < additionalParticipants.value; i++) {
-                        document.getElementById("roundsAdditionalParticipant" + i).value = data["additional_participants"][i]["round"];
+                        document.getElementById("timeAdditionalParticipant" + i).value = data["additional_participants"][i]["round"];
                     }
                 }
+                // Step 14
+                document.getElementById("situationalAwarenessSwitch").checked = data["with_sa"];
+                document.getElementById("situationalAwarenessSwitch").dispatchEvent(new Event('change'));
+                document.getElementById("StrictTopologySwitch").checked = data["strict_topology"];
+                document.getElementById("StrictTopologySwitch").dispatchEvent(new Event('change'));
+                document.getElementById("candidate-selector-select").value = data["sad_candidate_selector"];
+                document.getElementById("model-handler-select").value = data["sad_model_handler"];
+                document.getElementById("arbitration-policy-select").value = data["sar_arbitration_policy"];
+                document.getElementById("neighbor-policy-select").value = data["sar_neighbor_policy"];
             } catch (error) {
                 console.log(error);
             }
@@ -1631,6 +1732,17 @@
         var popover = new bootstrap.Popover(reputationWeighting, {
             title: "Reputation Weighting",
             content: "Use dynamic or static weighting factor for reputation",
+            trigger: "hover",
+            placement: "right",
+            html: true,
+            container: "body",
+            delay: { show: 500, hide: 100 },
+        });
+
+        var connectionDelay= document.getElementById("connectionDelayHelpIcon");
+        var popover = new bootstrap.Popover(connectionDelay, {
+            title: "Connection Delay",
+            content: "Delay in seconds for joining the federation",
             trigger: "hover",
             placement: "right",
             html: true,
@@ -2466,27 +2578,42 @@
     </script>
 
     <script>
+        // Connection delay configuration
+        connectionDelaySwitch = document.getElementById("connectionDelaySwitch");
+        connectionDelaySwitch.addEventListener("change", function () {
+            if (this.checked) {
+                document.getElementById("connectionDelay").style.display = "inline";
+                $(".additional-participant-item").remove();
+            } else {
+                document.getElementById("connectionDelay").style.display = "none";
+                document.getElementById("additionalParticipants").dispatchEvent(new Event("change"));
+            }
+        });
+
         // Detect number of additional participants to deploy and show inputs below (one for participant, below additionalParticipants) to indicate the round of deployment of each one
         additionalParticipants = document.getElementById("additionalParticipants");
         additionalParticipants.addEventListener("change", function () {
             console.log(additionalParticipants.value);
             // Remove all elements with class "additional-participant-item"
             $(".additional-participant-item").remove();
-            // Add new elements
+            // Add new elements if connection delay switch is not checked
+            if (connectionDelaySwitch.checked) {
+                return;
+            }
             for (var i = 0; i < additionalParticipants.value; i++) {
                 var participantItem = document.createElement("div");
                 participantItem.style.marginLeft = "20px";
                 participantItem.classList.add("additional-participant-item");
 
                 var participantHeading = document.createElement("h5");
-                participantHeading.textContent = "Round of deployment (participant " + (i + 1) + ")";
+                participantHeading.textContent = "Connection delay (participant " + (i + 1) + ")";
                 participantItem.appendChild(participantHeading);
 
                 var participantInput = document.createElement("input");
                 participantInput.type = "number";
                 participantInput.classList.add("form-control");
-                participantInput.id = "roundsAdditionalParticipant" + i;
-                participantInput.placeholder = "round";
+                participantInput.id = "timeAdditionalParticipant" + i;
+                participantInput.placeholder = "time (in seconds)";
                 participantInput.min = "1";
                 participantInput.value = "1";
                 participantInput.style.display = "inline";
@@ -3188,6 +3315,34 @@
                 Graph.graphData().nodes[0].start = true;
             }
         }
+    </script>
+
+    <script>
+        document.getElementById("situationalAwarenessSwitch").addEventListener("change", function(){
+            if(this.checked){
+                document.getElementById("sa-settings").style.display = "block";
+                document.getElementById("sa-discovery-settings").style.display = "block";
+                document.getElementById("sa-reasoner-settings").style.display = "block";
+            }else{
+                document.getElementById("sa-settings").style.display = "none";
+                document.getElementById("sa-discovery-settings").style.display = "none";
+                document.getElementById("sa-reasoner-settings").style.display = "none";
+            }
+        });
+
+        document.getElementById("StrictTopologySwitch").addEventListener("change", function(){
+            if(this.checked){
+                document.getElementById("candidate-selector-select").value = document.getElementById("predefined-topology-select").value;
+                document.getElementById("neighbor-policy-select").value = document.getElementById("predefined-topology-select").value;
+                document.getElementById("candidate-selector-select").disabled = true;
+                document.getElementById("neighbor-policy-select").disabled = true;
+            }else{
+                document.getElementById("candidate-selector-select").value = "Random";
+                document.getElementById("neighbor-policy-select").value = "Random";
+                document.getElementById("candidate-selector-select").disabled = false;
+                document.getElementById("neighbor-policy-select").disabled = false;
+            }
+        });
     </script>
 
     <script>
