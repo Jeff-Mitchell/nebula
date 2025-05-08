@@ -1,7 +1,6 @@
-import math
 import os
-from abc import ABC, abstractmethod
 import pickle
+from abc import ABC, abstractmethod
 from typing import Any
 
 import h5py
@@ -10,7 +9,6 @@ import matplotlib.pyplot as plt
 import numpy as np
 import seaborn as sns
 from sklearn.manifold import TSNE
-import torch
 from torch.utils.data import Dataset
 
 matplotlib.use("Agg")
@@ -27,7 +25,8 @@ logging_training = logging.getLogger(TRAINING_LOGGER)
 def wait_for_file(file_path):
     """Wait until the given file exists, polling every 'interval' seconds."""
     while not os.path.exists(file_path):
-        logging_training.info(f"Waiting for file: {file_path}")
+        asyncio.sleep(2)
+    #     logging_training.info(f"Waiting for file: {file_path}")
     return
 
 
@@ -269,9 +268,7 @@ class NebulaPartition:
             self.test_set = self.handler(test_partition_file, "test", config=self.config)
             self.test_indices = list(range(len(self.test_set)))
 
-            self.local_test_set = self.handler(
-                test_partition_file, "local_test", config=self.config, empty=True
-            )
+            self.local_test_set = self.handler(test_partition_file, "local_test", config=self.config, empty=True)
             self.local_test_set.set_data(self.test_set.data, self.test_set.targets)
             self.local_test_indices = self.set_local_test_indices()
 
