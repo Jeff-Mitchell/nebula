@@ -32,25 +32,25 @@ class ISAReasoner(ABC):
     def get_actions(self):
         raise NotImplementedError
     
-def factory_sa_discovery(sa_discovery, additional, topology, model_handler, engine, verbose) -> ISADiscovery:
+def factory_sa_discovery(sa_discovery, additional, selector, model_handler, engine, verbose) -> ISADiscovery:
     from nebula.core.situationalawareness.discovery.federationconnector import FederationConnector
     DISCOVERY = {
         "nebula": FederationConnector,
     }
     sad = DISCOVERY.get(sa_discovery)
     if sad:
-        return sad(additional, topology, model_handler, engine, verbose)
+        return sad(additional, selector, model_handler, engine, verbose)
     else:
         raise Exception(f"SA Discovery service {sa_discovery} not found.")
     
-def factory_sa_reasoner(sa_reasoner, config, addr, topology, verbose) -> ISAReasoner:
+def factory_sa_reasoner(sa_reasoner, config) -> ISAReasoner:
     from nebula.core.situationalawareness.awareness.sareasoner import SAReasoner
     REASONER = {
         "nebula": SAReasoner,
     }
     sar = REASONER.get(sa_reasoner)
     if sar:
-        return sar(config, addr, topology, verbose)
+        return sar(config)
     else:
         raise Exception(f"SA Reasoner service {sa_reasoner} not found.")    
 
@@ -62,23 +62,20 @@ class SituationalAwareness(NebulaPlugin):
             title="Situational Awareness module",
         )
         self._config = config
-        topology = self._config.participant["mobility_args"]["topology_type"]
-        topology = topology.lower()
-        model_handler = "std" 
+        selector = self._config.participant["situational_awareness"]["sa_discovery"]["candidate_selector"]
+        selector = selector.lower()
+        model_handler = config.participant["situational_awareness"]["sa_discovery"]["model_handler"]
         self._sad = factory_sa_discovery(
             "nebula",
             self._config.participant["mobility_args"]["additional_node"]["status"],
-            topology,
+            selector,
             model_handler,
-            engine=engine,
-            verbose=True
+            engine = engine,
+            verbose = config.participant["situational_awareness"]["sa_discovery"]["verbose"]
         )
         self._sareasoner = factory_sa_reasoner(
             "nebula",
-            self._config, 
-            self._config.participant["network_args"]["addr"], 
-            topology, 
-            verbose=True
+            self._config,
         )
     
     @property

@@ -1,5 +1,6 @@
 from nebula.core.situationalawareness.discovery.candidateselection.candidateselector import CandidateSelector
 from nebula.core.utils.locker import Locker
+import logging
 
 class STDandidateSelector(CandidateSelector):
     
@@ -20,8 +21,8 @@ class STDandidateSelector(CandidateSelector):
             Select mean number of neighbors
         """
         self.candidates_lock.acquire()
-        #TODO revisar
-        mean_neighbors = sum(n for n, _ in self.candidates) / len(self.candidates) if self.candidates else 0
+        mean_neighbors = round(sum(n for _, n, _ in self.candidates) / len(self.candidates) if self.candidates else 0)
+        logging.info(f"mean number of neighbors: {mean_neighbors}")
         cdts = self.candidates[:mean_neighbors]
         not_selected = set(self.candidates) - set(cdts)
         self.candidates_lock.release()

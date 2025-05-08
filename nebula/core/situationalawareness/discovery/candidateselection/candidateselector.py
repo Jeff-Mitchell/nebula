@@ -23,7 +23,7 @@ class CandidateSelector(ABC):
     def any_candidate(self):
         pass
     
-def factory_CandidateSelector(topology) -> CandidateSelector:
+def factory_CandidateSelector(selector) -> CandidateSelector:
     from nebula.core.situationalawareness.discovery.candidateselection.stdcandidateselector import STDandidateSelector
     from nebula.core.situationalawareness.discovery.candidateselection.fccandidateselector import FCCandidateSelector
     from nebula.core.situationalawareness.discovery.candidateselection.hetcandidateselector import HETCandidateSelector
@@ -36,5 +36,5 @@ def factory_CandidateSelector(topology) -> CandidateSelector:
         "het": HETCandidateSelector,  
     } 
     
-    cs = options.get(topology, FCCandidateSelector)
+    cs = options.get(selector, FCCandidateSelector)
     return cs() 

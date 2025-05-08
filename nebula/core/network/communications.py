@@ -264,11 +264,13 @@ class CommunicationsManager:
         logging.info(f"neighbors: {neighbors} | addr filtered: {addrs}")
 
         discovers_sent = 0
+        connections_made = set()
         if addrs:
             logging.info("Starting communications with devices found")
             max_tries = 5
             for addr in addrs:
                 await self.connect(addr, direct=False)
+                connections_made.add(addr)
                 await asyncio.sleep(1)
             for i in range(0, max_tries):
                 if self.verify_any_connections(addrs):
@@ -282,7 +284,7 @@ class CommunicationsManager:
                 asyncio.create_task(self.send_message(addr, msg))
                 await asyncio.sleep(1)
                 discovers_sent += 1
-        return discovers_sent
+        return (discovers_sent, connections_made)
 
     """                                                     ##############################
                                                             #    OTHER FUNCTIONALITIES   #

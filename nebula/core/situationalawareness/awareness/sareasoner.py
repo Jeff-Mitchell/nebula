@@ -30,8 +30,6 @@ class SAReasoner(ISAReasoner):
         self,
         config,
         addr,
-        topology,
-        verbose = False,
     ):
         print_msg_box(
             msg=f"Starting Situational Awareness Reasoner module...",
@@ -40,8 +38,8 @@ class SAReasoner(ISAReasoner):
         )
         logging.info("🌐  Initializing SAReasoner")
         self._config = config
-        self._addr = addr
-        self._topology = topology
+        self._addr = self._config.participant["network_args"]["addr"]
+        self._topology = config.participant["mobility_args"]["topology_type"]
         self._situational_awareness_network = None
         self._situational_awareness_training = None
         self._restructure_process_lock = Locker(name="restructure_process_lock")
@@ -50,10 +48,11 @@ class SAReasoner(ISAReasoner):
         self._suggestion_buffer = SuggestionBuffer(self._arbitrator_notification, verbose=True)
         self._communciation_manager = CommunicationsManager.get_instance()
         self._sys_monitor = SystemMonitor()
-        self._arbitatrion_policy = factory_arbitatrion_policy("sap", True)
+        arb_pol = config.participant["situational_awareness"]["sa_reasoner"]["arbitatrion_policy"]
+        self._arbitatrion_policy = factory_arbitatrion_policy(arb_pol, True)
         self._sa_components: dict[str, SAMComponent] = {}
         self._sa_discovery: ISADiscovery = None
-        self._verbose = verbose
+        self._verbose = config.participant["situational_awareness"]["sa_reasoner"]["verbose"]
         
     @property
     def san(self):
@@ -80,6 +79,7 @@ class SAReasoner(ISAReasoner):
         return self._sa_discovery
     
     async def init(self, sa_discovery):
+        #TODO hay que añadir el sadiscovery como argumento en la config para el sa network
         #await self.loading_sa_components()
         from nebula.core.situationalawareness.awareness.sanetwork.sanetwork import SANetwork
         #from nebula.core.situationalawareness.awareness.satraining.satraining import SATraining

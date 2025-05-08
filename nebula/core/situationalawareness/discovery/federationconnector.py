@@ -23,13 +23,13 @@ class FederationConnector(ISADiscovery):
     def __init__(
         self,
         aditional_participant,
-        topology,
+        selector,
         model_handler,
         engine: "Engine",
         verbose=False
     ):
         self._aditional_participant = aditional_participant
-        self.topology = topology
+        self._selector = selector
         print_msg_box(
             msg=f"Starting FederationConnector module...", indent=2, title="FederationConnector module"
         )
@@ -38,7 +38,7 @@ class FederationConnector(ISADiscovery):
         self._cm = None
         self.config = engine.get_config()
         logging.info("Initializing Candidate Selector")
-        self._candidate_selector = factory_CandidateSelector(self.topology)
+        self._candidate_selector = factory_CandidateSelector(self._selector)
         logging.info("Initializing Model Handler")
         self._model_handler = factory_ModelHandler(model_handler)
         self._update_neighbors_lock = Locker(name="_update_neighbors_lock", async_lock=True)
@@ -177,7 +177,7 @@ class FederationConnector(ISADiscovery):
         if not self.accept_candidates_lock.locked():
             self.candidate_selector.add_candidate((source, n_neighbors, loss))
 
-    async def _stop_not_selected_connections(self, rejected = []):
+    async def _stop_not_selected_connections(self, rejected: set = {}):
         await asyncio.sleep(5)
         for r in rejected:
             await self._add_to_discarded_offers(r)
@@ -215,11 +215,11 @@ class FederationConnector(ISADiscovery):
         await self._clear_pending_confirmations()
 
         # find federation and send discover
-        connections_stablished = await self.cm.stablish_connection_to_federation(msg_type, addrs_known)
+        discovers_sent, connections_stablished = await self.cm.stablish_connection_to_federation(msg_type, addrs_known)
 
         # wait offer
-        if self._verbose: logging.info(f"Connections stablish after finding federation: {connections_stablished}")
-        if connections_stablished:
+        if self._verbose: logging.info(f"Discover messages sent after finding federation: {discovers_sent}")
+        if discovers_sent:
             if self._verbose: logging.info(f"Waiting: {self.recieve_offer_timer}s to receive offers from federation")
             await asyncio.sleep(self.recieve_offer_timer)
 
@@ -246,13 +246,15 @@ class FederationConnector(ISADiscovery):
                 # asyncio.create_task(EventManager.get_instance().publish_node_event(upe))
                 if self._verbose: logging.info("Error during stablishment")
                 
-            asyncio.create_task(self._stop_not_selected_connections([rc[0]for rc in rejected_candidates]))
+            asyncio.create_task(self._stop_not_selected_connections({rc[0]for rc in rejected_candidates}))
             self.accept_candidates_lock.release()
             self.late_connection_process_lock.release()
             self.candidate_selector.remove_candidates()
         # if no candidates, repeat process
         else:
             if self._verbose: logging.info("❗️  No Candidates found...")
+            if connected:
+                asyncio.create_task(self._stop_not_selected_connections(connections_stablished))
             self.accept_candidates_lock.release()
             self.late_connection_process_lock.release()
             if not connected:
