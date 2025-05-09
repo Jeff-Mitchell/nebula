@@ -11,6 +11,14 @@ class NeighborPolicy(ABC):
     def need_more_neighbors(self):
         pass
 
+    @abstractmethod 
+    def any_leftovers_neighbors(self):
+        pass
+
+    @abstractmethod 
+    def get_neighbors_to_remove(self):
+        pass
+
     @abstractmethod
     def accept_connection(self, source, joining=False):
         pass

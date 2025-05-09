@@ -250,6 +250,7 @@ class FederationConnector(ISADiscovery):
             self.accept_candidates_lock.release()
             self.late_connection_process_lock.release()
             self.candidate_selector.remove_candidates()
+            logging.info("🌐  Ending late connection process..")
         # if no candidates, repeat process
         else:
             if self._verbose: logging.info("❗️  No Candidates found...")
@@ -293,7 +294,7 @@ class FederationConnector(ISADiscovery):
         logging.info(f"🔗  handle_connection_message | Trigger | Received late connect message from {source}")
         # Verify if it's a confirmation message from a previous late connection message sent to source
         if await self._waiting_confirmation_from(source):
-            await self._confirmation_received(source, joining=True)
+            await self._confirmation_received(source, joining=False)
             return
 
         if not self.engine.get_initialization_status():

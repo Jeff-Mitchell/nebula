@@ -217,6 +217,7 @@ class DFLUpdateHandler(UpdateHandler):
         all_received = False
         if len(updates_left) == 0:
             logging.info("All updates have been received this round")
-            await self._round_updates_lock.release_async()
+            if await self._round_updates_lock.locked_async():
+                await self._round_updates_lock.release_async()
             all_received = True
         return all_received

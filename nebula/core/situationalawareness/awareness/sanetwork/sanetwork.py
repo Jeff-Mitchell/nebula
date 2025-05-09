@@ -1,3 +1,4 @@
+from __future__ import annotations
 import asyncio
 import logging
 from nebula.core.utils.locker import Locker
@@ -49,7 +50,7 @@ class SANetwork(SAMComponent):
         self._sa_network_agent = SANetworkAgent(self)
         
     @property
-    def sar(self):
+    def sar(self) -> SAReasoner:
         """SA Reasoner"""
         return self._sar    
         
@@ -185,6 +186,10 @@ class SANetwork(SAMComponent):
                 else:
                     pass
                 await self.sana.create_and_suggest_action(SACommandAction.SEARCH_CONNECTIONS, self.upgrade_connection_robustness, possible_neighbors)
+            elif self.np.any_leftovers_neighbors():
+                nodes_to_remove = self.np.get_neighbors_to_remove()
+                if self._verbose: logging.info(f"Excess neighbors | removing: {list(nodes_to_remove)}")
+                await self.sana.create_and_suggest_action(SACommandAction.DISCONNECT, self.cm.disconnect, nodes_to_remove)
             else:
                  if self._verbose: logging.info("Sufficient Robustness | no actions required")
                  await self.sana.create_and_suggest_action(SACommandAction.MAINTAIN_CONNECTIONS)
@@ -192,11 +197,13 @@ class SANetwork(SAMComponent):
              if self._verbose: logging.info("❗️ Reestructure/Reconnecting process already running...")
 
     async def reconnect_to_federation(self):
+        logging.info("Going to reconnect with federation...")
         self._restructure_process_lock.acquire()
         await self.cm.clear_restrictions()
         # If we got some refs, try to reconnect to them
         if len(self.np.get_nodes_known()) > 0:
             if self._verbose: logging.info("Reconnecting | Addrs availables")
+            self.sar.a
             await self.sar.sad.start_late_connection_process(
                 connected=False, msg_type="discover_nodes", addrs_known=self.np.get_nodes_known()
             )
@@ -303,8 +310,25 @@ class SANetworkAgent(SAModuleAgent):
                 "",
                 SACommandPRIO.HIGH,
                 True,
-                None,
+                function,
                 *args
             )
             await self.suggest_action(sac)
             await self.notify_all_suggestions_done(RoundEndEvent)
+        elif saca == SACommandAction.DISCONNECT:
+            nodes = set(list(args))
+            for node in nodes:
+                sac = factory_sa_command(
+                "connectivity",
+                SACommandAction.DISCONNECT,
+                self, 
+                node,
+                SACommandPRIO.HIGH,
+                True,
+                function,
+                node,
+                True
+            )
+                await self.suggest_action(sac)
+            await self.notify_all_suggestions_done(RoundEndEvent)
+

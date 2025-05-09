@@ -105,5 +105,21 @@ class RINGNeighborPolicy(NeighborPolicy):
             self.neighbors.add(node)
         self.neighbors_lock.release()
 
+    def any_leftovers_neighbors(self):
+        self.neighbors_lock.acquire()
+        aln = len(self.neighbors) > self.max_neighbors
+        self.neighbors_lock.release()
+        return aln
+
+    def get_neighbors_to_remove(self):
+        neighbors = list()
+        self.neighbors_lock.acquire()
+        if self.neighbors:
+            neighbors = set(self.neighbors)
+            neighbors_to_remove = len(self.neighbors) - self.max_neighbors
+            neighbors = set(random.sample(list(neighbors), neighbors_to_remove))
+            self.neighbors_lock.release()
+        return neighbors
+    
     def stricted_topology_status(stricted_topology: bool):
         pass 

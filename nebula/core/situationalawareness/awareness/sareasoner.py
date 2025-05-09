@@ -78,12 +78,11 @@ class SAReasoner(ISAReasoner):
         return self._arbitatrion_policy
     
     @property
-    def sad(self):
+    def sad(self) -> ISADiscovery:
         """SA Discovery"""
         return self._sa_discovery
     
     async def init(self, sa_discovery):
-        #TODO hay que añadir el sadiscovery como argumento en la config para el sa network
         self._sa_discovery: ISADiscovery = sa_discovery
         await self._loading_sa_components()
         #from nebula.core.situationalawareness.awareness.sanetwork.sanetwork import SANetwork
@@ -128,7 +127,6 @@ class SAReasoner(ISAReasoner):
         logging.info("🔄 Arbitration | Round End Event...")
         for sa_comp in self._sa_components.values():
             asyncio.create_task(sa_comp.sa_component_actions())
-        asyncio.create_task(self.san.sa_component_actions())
         valid_commands = await self._arbitatrion_suggestions(RoundEndEvent)
 
         # Execute SACommand selected

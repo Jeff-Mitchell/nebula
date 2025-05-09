@@ -116,5 +116,11 @@ class IDLENeighborPolicy(NeighborPolicy):
             logging.info(f"Add neighbor | addr: {node}")
         self.neighbors_lock.release()
 
+    def any_leftovers_neighbors(self):
+        return False
+
+    def get_neighbors_to_remove(self):
+        return set()
+
     def stricted_topology_status(stricted_topology: bool):
         pass
