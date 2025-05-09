@@ -17,7 +17,7 @@ from nebula.core.network.propagator import Propagator
 from nebula.core.utils.locker import Locker
 
 if TYPE_CHECKING:
-    from nebula.core.situationalawareness.awareness.sanetwork.sanetwork import SANetwork
+    from nebula.core.engine import Engine
 
 BLACKLIST_EXPIRATION_TIME = 60
 

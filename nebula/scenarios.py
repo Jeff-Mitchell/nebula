@@ -440,7 +440,7 @@ class ScenarioManagement:
             participant_config["situational_awareness"]["sa_discovery"]["candidate_selector"] = self.scenario.sad_candidate_selector
             participant_config["situational_awareness"]["sa_discovery"]["model_handler"] = self.scenario.sad_model_handler
             participant_config["situational_awareness"]["sa_reasoner"]["arbitatrion_policy"] = self.scenario.sar_arbitration_policy
-            participant_config["situational_awareness"]["sa_reasoner"]["sar_network"]["neighbor_policy"] = self.scenario.sar_neighbor_policy
+            participant_config["situational_awareness"]["sa_reasoner"]["sa_network"]["neighbor_policy"] = self.scenario.sar_neighbor_policy
             
             with open(participant_file, "w") as f:
                 json.dump(participant_config, f, sort_keys=False, indent=2)

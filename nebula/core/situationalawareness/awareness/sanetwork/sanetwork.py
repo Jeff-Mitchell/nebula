@@ -22,28 +22,29 @@ RESTRUCTURE_COOLDOWN = 5
 class SANetwork(SAMComponent):
     
     NEIGHBOR_VERIFICATION_TIMEOUT = 30
-    
+    # sar: "SAReasoner",
+    #     addr, 
+    #     topology, 
+    #     strict_topology=True,
+    #     verbose = False
     def __init__(
         self,
-        sar: "SAReasoner",
-        addr, 
-        topology, 
-        strict_topology=True,
-        verbose = False
+        config
     ):
+        self._neighbor_policy = config["neighbor_policy"] #topology
+        self._neighbor_policy = self._neighbor_policy.lower()
+        self._strict_topology = config["strict_topology"] #strict_topology
         print_msg_box(
-            msg=f"Starting Network SA\nTopology: {topology}\nStrict: {strict_topology}",
+            msg=f"Starting Network SA\nNeighbor Policy: {self._neighbor_policy}\nStrict: {self._strict_topology}",
             indent=2,
             title="Network SA module",
         )
-        self._sar = sar
-        self._addr = addr
-        self._topology = topology
-        self._strict_topology = strict_topology
-        self._neighbor_policy = factory_NeighborPolicy(topology)
+        self._sar = config["sar"] #sar
+        self._addr = config["addr"] #addr
+        self._neighbor_policy = factory_NeighborPolicy(self._neighbor_policy)
         self._restructure_process_lock = Locker(name="restructure_process_lock")
         self._restructure_cooldown = 0
-        self._verbose = verbose
+        self._verbose = config["verbose"] #verbose
         self._cm = CommunicationsManager.get_instance()
         self._sa_network_agent = SANetworkAgent(self)
         

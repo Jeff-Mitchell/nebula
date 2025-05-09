@@ -159,7 +159,7 @@
       "sar_components": {
         "sa_network" : true
       },
-      "sar_network" : {
+      "sa_network" : {
         "neighbor_policy": "random",
         "verbose" : true
       }

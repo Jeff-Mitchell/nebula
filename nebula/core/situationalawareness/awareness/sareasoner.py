@@ -1,3 +1,5 @@
+from __future__ import annotations
+import copy
 from abc import abstractmethod, ABC
 import asyncio
 import logging
@@ -15,7 +17,7 @@ from nebula.core.situationalawareness.awareness.arbitatrionpolicies.arbitatrionp
 from nebula.core.situationalawareness.situationalawareness import ISAReasoner, ISADiscovery
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
-    from nebula.core.engine import Engine
+    from nebula.core.situationalawareness.awareness.sanetwork.sanetwork import SANetwork
     
 class SAMComponent(ABC):
     @abstractmethod
@@ -39,8 +41,8 @@ class SAReasoner(ISAReasoner):
             title="SA Reasoner",
         )
         logging.info("🌐  Initializing SAReasoner")
-        self._config = config
-        self._addr = self._config.participant["network_args"]["addr"]
+        self._config = copy.deepcopy(config.participant)
+        self._addr = config.participant["network_args"]["addr"]
         self._topology = config.participant["mobility_args"]["topology_type"]
         self._situational_awareness_network = None
         self._situational_awareness_training = None
@@ -57,7 +59,7 @@ class SAReasoner(ISAReasoner):
         self._verbose = config.participant["situational_awareness"]["sa_reasoner"]["verbose"]
         
     @property
-    def san(self):
+    def san(self) -> SANetwork:
         """Situational Awareness Network"""
         return self._situational_awareness_network
     
@@ -82,19 +84,18 @@ class SAReasoner(ISAReasoner):
     
     async def init(self, sa_discovery):
         #TODO hay que añadir el sadiscovery como argumento en la config para el sa network
+        self._sa_discovery: ISADiscovery = sa_discovery
         await self._loading_sa_components()
         #from nebula.core.situationalawareness.awareness.sanetwork.sanetwork import SANetwork
         #from nebula.core.situationalawareness.awareness.satraining.satraining import SATraining
         #self._situational_awareness_training = SATraining(self, self._addr, "qds", "fastreboot", verbose=True)
-        self._sa_discovery: ISADiscovery = sa_discovery
         await EventManager.get_instance().subscribe_node_event(RoundEndEvent, self._process_round_end_event)
         await EventManager.get_instance().subscribe_node_event(AggregationEvent, self._process_aggregation_event)
-        
         #self._situational_awareness_network = SANetwork(self, self._addr, self._topology, verbose=True)
         #await self.san.init()
         
     def is_additional_participant(self):
-        return self._config.participant["mobility_args"]["additional_node"]["status"]
+        return self._config["mobility_args"]["additional_node"]["status"]
 
     """                                                     ###############################
                                                             #    REESTRUCTURE TOPOLOGY    #
@@ -196,7 +197,7 @@ class SAReasoner(ISAReasoner):
                                                             ###############################
     """
 
-    def _to_pascal_case(name: str) -> str:
+    def _to_pascal_case(self, name: str) -> str:
         """Converts a snake_case or compact lowercase name into PascalCase with 'SA' prefix."""
         if name.startswith("sa_"):
             name = name[3:]  # remove 'sa_' prefix
@@ -207,25 +208,29 @@ class SAReasoner(ISAReasoner):
 
     async def _loading_sa_components(self):
         """Dynamically loads the SA Components defined in the JSON configuration."""
-        sa_section = self._config.participant["situational_awareness"]
+        self._load_minimal_requirement_config()
+        sa_section = self._config["situational_awareness"]["sa_reasoner"]
         components: dict = sa_section["sar_components"]
 
         for component_name, is_enabled in components.items():
             if is_enabled:
                 component_config = sa_section[component_name]
-                class_name = self._to_pascal_case(component_name)  # ← función limpia
+                component_name = component_name.replace("_", "")
+                class_name = self._to_pascal_case(component_name) 
                 module_path = os.path.join(self.MODULE_PATH, component_name)
                 module_file = os.path.join(module_path, f"{component_name}.py")
 
                 if os.path.exists(module_file):
-                    module = self._load_component(class_name, module_file, component_config)
+                    module = await self._load_component(class_name, module_file, component_config)
                     if module:
+                        logging.info("Addint sa component module to list")
                         self._sa_components[component_name] = module
                 else:
                     logging.error(f"⚠️ SA Component {component_name} not found on {module_file}")
 
-        await self._initialize_sa_components()
         await self._set_minimal_requirements()
+        await self._initialize_sa_components()
+        
 
     async def _load_component(self, class_name, component_file, config):
         """Loads a SA Component dynamically and initializes it with its configuration."""
@@ -244,9 +249,17 @@ class SAReasoner(ISAReasoner):
             for sacomp in self._sa_components.values():
                 await sacomp.init()
 
+    def _load_minimal_requirement_config(self):
+        self._config["situational_awareness"]["sa_reasoner"]["sa_network"]["addr"] = self._addr
+        self._config["situational_awareness"]["sa_reasoner"]["sa_network"]["sar"] = self
+        self._config["situational_awareness"]["sa_reasoner"]["sa_network"]["strict_topology"] = self._config["situational_awareness"]["strict_topology"]
+
     async def _set_minimal_requirements(self):
+        logging.info(f"sa components found: {len(self._sa_components)}")
+        for sac in self._sa_components.keys():
+            logging.info(f"Component: {sac}")
         if self._sa_components:
-            self._situational_awareness_network = self._sa_components["sanetwork"]
+            self._situational_awareness_network = self._sa_components["sanetwork"]         
         else:
             raise ValueError("SA Network not found")
 
