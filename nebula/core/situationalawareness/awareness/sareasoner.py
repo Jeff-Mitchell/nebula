@@ -13,6 +13,9 @@ from nebula.core.network.communications import CommunicationsManager
 from nebula.core.situationalawareness.awareness.sautils.sasystemmonitor import SystemMonitor
 from nebula.core.situationalawareness.awareness.arbitatrionpolicies.arbitatrionpolicy import factory_arbitatrion_policy
 from nebula.core.situationalawareness.situationalawareness import ISAReasoner, ISADiscovery
+from typing import TYPE_CHECKING
+if TYPE_CHECKING:
+    from nebula.core.engine import Engine
     
 class SAMComponent(ABC):
     @abstractmethod
@@ -29,7 +32,6 @@ class SAReasoner(ISAReasoner):
     def __init__(
         self,
         config,
-        addr,
     ):
         print_msg_box(
             msg=f"Starting Situational Awareness Reasoner module...",
@@ -80,16 +82,16 @@ class SAReasoner(ISAReasoner):
     
     async def init(self, sa_discovery):
         #TODO hay que añadir el sadiscovery como argumento en la config para el sa network
-        #await self.loading_sa_components()
-        from nebula.core.situationalawareness.awareness.sanetwork.sanetwork import SANetwork
+        await self._loading_sa_components()
+        #from nebula.core.situationalawareness.awareness.sanetwork.sanetwork import SANetwork
         #from nebula.core.situationalawareness.awareness.satraining.satraining import SATraining
         #self._situational_awareness_training = SATraining(self, self._addr, "qds", "fastreboot", verbose=True)
         self._sa_discovery: ISADiscovery = sa_discovery
         await EventManager.get_instance().subscribe_node_event(RoundEndEvent, self._process_round_end_event)
         await EventManager.get_instance().subscribe_node_event(AggregationEvent, self._process_aggregation_event)
         
-        self._situational_awareness_network = SANetwork(self, self._addr, self._topology, verbose=True)
-        await self.san.init()
+        #self._situational_awareness_network = SANetwork(self, self._addr, self._topology, verbose=True)
+        #await self.san.init()
         
     def is_additional_participant(self):
         return self._config.participant["mobility_args"]["additional_node"]["status"]
@@ -123,9 +125,8 @@ class SAReasoner(ISAReasoner):
     
     async def _process_round_end_event(self, ree : RoundEndEvent):
         logging.info("🔄 Arbitration | Round End Event...")
-        # TODO change when front is done
-        # for sa_comp in self._sa_components.values():
-        #     asyncio.create_task(sa_comp.sa_component_actions())
+        for sa_comp in self._sa_components.values():
+            asyncio.create_task(sa_comp.sa_component_actions())
         asyncio.create_task(self.san.sa_component_actions())
         valid_commands = await self._arbitatrion_suggestions(RoundEndEvent)
 
@@ -194,6 +195,7 @@ class SAReasoner(ISAReasoner):
                                                             #    SA COMPONENT LOADING     #
                                                             ###############################
     """
+
     def _to_pascal_case(name: str) -> str:
         """Converts a snake_case or compact lowercase name into PascalCase with 'SA' prefix."""
         if name.startswith("sa_"):
@@ -203,7 +205,7 @@ class SAReasoner(ISAReasoner):
         parts = name.split("_") if "_" in name else [name]
         return "SA" + ''.join(part.capitalize() for part in parts)
 
-    async def loading_sa_components(self):
+    async def _loading_sa_components(self):
         """Dynamically loads the SA Components defined in the JSON configuration."""
         sa_section = self._config.participant["situational_awareness"]
         components: dict = sa_section["sar_components"]

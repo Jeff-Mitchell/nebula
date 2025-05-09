@@ -304,7 +304,6 @@ class Connection:
             logging.exception(f"Error handling incoming message: {e}")
         finally:
             if self.direct:
-                # TODO tal vez una task?
                 await self.reconnect()
 
     async def _read_exactly(self, num_bytes: int, max_retries: int = 3) -> bytes:
