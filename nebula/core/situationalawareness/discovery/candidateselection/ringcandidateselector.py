@@ -1,5 +1,6 @@
 from nebula.core.situationalawareness.discovery.candidateselection.candidateselector import CandidateSelector
 from nebula.core.utils.locker import Locker
+import logging
 
 class RINGCandidateSelector(CandidateSelector):
 
@@ -16,15 +17,20 @@ class RINGCandidateSelector(CandidateSelector):
             To avoid topology problems select 1st candidate found
         """
         self.candidates_lock.acquire()
-        if len(self._candidates) == 0:
-            self._candidates.append(candidate)
-        else:
-            self._rejected_candidates.append(candidate)
+        # if len(self._candidates) == 0:
+        self._candidates.append(candidate)
+        # else:
+        #     self._rejected_candidates.append(candidate)
         self.candidates_lock.release()
       
     def select_candidates(self):
         self.candidates_lock.acquire()
-        cdts = self._candidates.copy()
+        cdts = []
+        if self._candidates:
+            cdts.append(sorted(self._candidates, key=lambda x: x[1])[0])
+        for cdt in self._candidates:
+            if cdt not in cdts:
+                self._rejected_candidates.append(cdt)
         not_cdts = self._rejected_candidates.copy()
         self.candidates_lock.release()
         return (cdts, not_cdts)

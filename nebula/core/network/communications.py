@@ -512,7 +512,6 @@ class CommunicationsManager:
                 await asyncio.sleep(interval)
 
     async def send_message(self, dest_addr, message, is_compressed=False):
-        logging.info(f"Sending message to addr: {dest_addr}")
         if not is_compressed:
             try:
                 conn = self.connections[dest_addr]

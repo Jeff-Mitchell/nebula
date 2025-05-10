@@ -11,6 +11,7 @@ class SACommandType(Enum):
 
 #TODO separar por tipos de commands
 class SACommandAction(Enum):
+    IDLE = "idle"
     DISCONNECT = "disconnect"
     RECONNECT = "reconnect"
     SEARCH_CONNECTIONS = "search_connections"

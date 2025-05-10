@@ -229,7 +229,6 @@ class SAReasoner(ISAReasoner):
         await self._set_minimal_requirements()
         await self._initialize_sa_components()
         
-
     async def _load_component(self, class_name, component_file, config):
         """Loads a SA Component dynamically and initializes it with its configuration."""
         spec = importlib.util.spec_from_file_location(class_name, component_file)

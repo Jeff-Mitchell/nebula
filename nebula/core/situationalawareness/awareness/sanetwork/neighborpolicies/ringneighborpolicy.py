@@ -100,7 +100,8 @@ class RINGNeighborPolicy(NeighborPolicy):
     def update_neighbors(self, node, remove=False):
         self.neighbors_lock.acquire()
         if remove:
-            self.neighbors.remove(node)
+            if node in self.neighbors:
+                self.neighbors.remove(node)
         else:
             self.neighbors.add(node)
         self.neighbors_lock.release()

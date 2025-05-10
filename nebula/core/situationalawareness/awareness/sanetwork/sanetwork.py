@@ -195,6 +195,7 @@ class SANetwork(SAMComponent):
                  await self.sana.create_and_suggest_action(SACommandAction.MAINTAIN_CONNECTIONS)
         else:
              if self._verbose: logging.info("❗️ Reestructure/Reconnecting process already running...")
+             await self.sana.create_and_suggest_action(SACommandAction.IDLE)
 
     async def reconnect_to_federation(self):
         logging.info("Going to reconnect with federation...")
@@ -235,7 +236,6 @@ class SANetwork(SAMComponent):
             await self.cm.disconnect(n, mutual_disconnection=False, forced=True)
 
     async def verify_neighbors_stablished(self, nodes: set):
-        logging.info("voy a olvidar")
         await asyncio.sleep(self.NEIGHBOR_VERIFICATION_TIMEOUT)
         logging.info("Verifyng all connections were stablished")
         nodes_to_forget = nodes.copy()
@@ -316,7 +316,7 @@ class SANetworkAgent(SAModuleAgent):
             await self.suggest_action(sac)
             await self.notify_all_suggestions_done(RoundEndEvent)
         elif saca == SACommandAction.DISCONNECT:
-            nodes = set(list(args))
+            nodes = list([a for a in args])
             for node in nodes:
                 sac = factory_sa_command(
                 "connectivity",
@@ -331,4 +331,18 @@ class SANetworkAgent(SAModuleAgent):
             )
                 await self.suggest_action(sac)
             await self.notify_all_suggestions_done(RoundEndEvent)
+        elif saca == SACommandAction.IDLE:
+            sac = factory_sa_command(
+                "connectivity",
+                SACommandAction.IDLE,
+                self, 
+                "",
+                SACommandPRIO.LOW,
+                False,
+                function,
+                None
+            )
+            await self.suggest_action(sac)
+            await self.notify_all_suggestions_done(RoundEndEvent)
+
 
