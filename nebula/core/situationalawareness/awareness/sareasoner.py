@@ -221,7 +221,6 @@ class SAReasoner(ISAReasoner):
                 if os.path.exists(module_file):
                     module = await self._load_component(class_name, module_file, component_config)
                     if module:
-                        logging.info("Addint sa component module to list")
                         self._sa_components[component_name] = module
                 else:
                     logging.error(f"⚠️ SA Component {component_name} not found on {module_file}")
@@ -252,9 +251,6 @@ class SAReasoner(ISAReasoner):
         self._config["situational_awareness"]["sa_reasoner"]["sa_network"]["strict_topology"] = self._config["situational_awareness"]["strict_topology"]
 
     async def _set_minimal_requirements(self):
-        logging.info(f"sa components found: {len(self._sa_components)}")
-        for sac in self._sa_components.keys():
-            logging.info(f"Component: {sac}")
         if self._sa_components:
             self._situational_awareness_network = self._sa_components["sanetwork"]         
         else:

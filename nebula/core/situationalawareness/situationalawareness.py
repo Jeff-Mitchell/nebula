@@ -1,6 +1,5 @@
 from abc import ABC, abstractmethod
 from nebula.addons.functions import print_msg_box
-from nebula.core.pluginloader import NebulaPlugin
 
 class ISADiscovery(ABC):
     @abstractmethod
@@ -54,7 +53,7 @@ def factory_sa_reasoner(sa_reasoner, config) -> ISAReasoner:
     else:
         raise Exception(f"SA Reasoner service {sa_reasoner} not found.")    
 
-class SituationalAwareness(NebulaPlugin):
+class SituationalAwareness():
     def __init__(self, config, engine):
         print_msg_box(
             msg=f"Starting Situational Awareness module...",
@@ -87,9 +86,6 @@ class SituationalAwareness(NebulaPlugin):
     def sar(self):
         """SA Reasoner"""
         return self._sareasoner
-
-    async def initialize_plugin(self):
-        await self.init()
 
     async def init(self):
         await self.sad.init(self.sar)
