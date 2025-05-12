@@ -32,7 +32,7 @@ class STARNeighborPolicy(NeighborPolicy):
                 self.nodes_known.add(addr)
         self.addr = config[2]
             
-    def accept_connection(self, source, joining=False):
+    async def accept_connection(self, source, joining=False):
         """
             return true if connection is accepted
         """

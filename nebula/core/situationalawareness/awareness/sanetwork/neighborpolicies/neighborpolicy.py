@@ -19,12 +19,12 @@ class NeighborPolicy(ABC):
         pass
 
     @abstractmethod 
-    def get_neighbors_to_remove(self):
+    async def get_neighbors_to_remove(self):
         """Return a list of neighbors that should be removed based on current policy constraints or evaluation."""
         pass
 
     @abstractmethod
-    def accept_connection(self, source, joining=False):
+    async def accept_connection(self, source, joining=False):
         """
         Determine whether to accept a connection request from a given node.
         

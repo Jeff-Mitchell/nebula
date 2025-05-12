@@ -2,8 +2,10 @@ from nebula.core.situationalawareness.awareness.sanetwork.neighborpolicies.neigh
 from nebula.core.utils.locker import Locker
 import random
 import logging
+import asyncio
 
 class RINGNeighborPolicy(NeighborPolicy):
+    RECENTLY_REMOVED_BAN_TIME = 10
         
     def __init__(self):
         self.max_neighbors = 2
@@ -12,6 +14,8 @@ class RINGNeighborPolicy(NeighborPolicy):
         self.neighbors_lock = Locker(name="neighbors_lock")
         self.nodes_known_lock = Locker(name="nodes_known_lock")
         self.addr = ""
+        self._excess_neighbors_removed = set()
+        self._excess_neighbors_removed_lock = Locker("excess_neighbors_removed_lock", async_lock=True)
         
     def need_more_neighbors(self):
         self.neighbors_lock.acquire()
@@ -36,17 +40,19 @@ class RINGNeighborPolicy(NeighborPolicy):
                 self.nodes_known.add(addr)
         self.addr = config[2]
             
-    def accept_connection(self, source, joining=False):
+    async def accept_connection(self, source, joining=False):
         """
             return true if connection is accepted
         """
         ac = False
-        self.neighbors_lock.acquire()
-        if joining:    
-            ac = not source in self.neighbors
-        else:
-            ac = not len(self.neighbors) >= self.max_neighbors
-        self.neighbors_lock.release()
+        if await self._is_recently_removed(source):
+            return ac
+        
+        with self.neighbors_lock:
+            if joining:    
+                ac = not source in self.neighbors
+            else:
+                ac = not len(self.neighbors) >= self.max_neighbors
         return ac
     
     def meet_node(self, node):
@@ -112,7 +118,7 @@ class RINGNeighborPolicy(NeighborPolicy):
         self.neighbors_lock.release()
         return aln
 
-    def get_neighbors_to_remove(self):
+    async def get_neighbors_to_remove(self):
         neighbors = list()
         self.neighbors_lock.acquire()
         if self.neighbors:
@@ -120,7 +126,23 @@ class RINGNeighborPolicy(NeighborPolicy):
             neighbors_to_remove = len(self.neighbors) - self.max_neighbors
             neighbors = set(random.sample(list(neighbors), neighbors_to_remove))
             self.neighbors_lock.release()
+        await self._add_removed_ban(neighbors)
         return neighbors
     
     def stricted_topology_status(stricted_topology: bool):
         pass 
+
+    async def _is_recently_removed(self, source):
+        async with self._excess_neighbors_removed_lock:
+            return source in self._excess_neighbors_removed
+        
+    async def _add_removed_ban(self, sources):
+        async with self._excess_neighbors_removed_lock:
+            for source in sources:
+                self._excess_neighbors_removed.add(source)
+                asyncio.create_task(self._clear_ban(source))
+        
+    async def _clear_ban(self, source):
+        asyncio.sleep(self.RECENTLY_REMOVED_BAN_TIME)
+        async with self._excess_neighbors_removed_lock:
+            self._excess_neighbors_removed.discard(source)

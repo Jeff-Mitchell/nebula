@@ -116,8 +116,8 @@ class FederationConnector(ISADiscovery):
                 ##############################
     """
     
-    def _accept_connection(self, source, joining=False):
-        return self.sar.accept_connection(source, joining)
+    async def _accept_connection(self, source, joining=False):
+        return await self.sar.accept_connection(source, joining)
     
     def _still_waiting_for_candidates(self):
         return not self.accept_candidates_lock.locked() and self.late_connection_process_lock.locked()
@@ -142,12 +142,13 @@ class FederationConnector(ISADiscovery):
             found = addr in self.pending_confirmation_from_nodes
         return found
 
-    async def _confirmation_received(self, addr, joining=False):
+    async def _confirmation_received(self, addr, confirmation=True, joining=False):
         logging.info(f" Update | connection confirmation received from: {addr} | joining federation: {joining}")
         await self.cm.connect(addr, direct=True)
         await self._remove_pending_confirmation_from(addr)
-        une = UpdateNeighborEvent(addr, joining=joining)
-        await EventManager.get_instance().publish_node_event(une)
+        if confirmation:
+            une = UpdateNeighborEvent(addr, joining=joining)
+            await EventManager.get_instance().publish_node_event(une)
             
     async def _add_to_discarded_offers(self, addr_discarded):
         async with self.discarded_offers_addr_lock:
@@ -324,20 +325,20 @@ class FederationConnector(ISADiscovery):
 
     async def _model_update_callback(self, source, message):
         if await self._waiting_confirmation_from(source):
-            await self._confirmation_received(source, confirmation=False)
+            await self._confirmation_received(source)
 
     async def _connection_late_connect_callback(self, source, message):
         logging.info(f"🔗  handle_connection_message | Trigger | Received late connect message from {source}")
         # Verify if it's a confirmation message from a previous late connection message sent to source
         if await self._waiting_confirmation_from(source):
-            await self._confirmation_received(source, joining=False)
+            await self._confirmation_received(source, joining=True)
             return
 
         if not self.engine.get_initialization_status():
             logging.info("❗️ Connection refused | Device not initialized yet...")
             return
 
-        if self._accept_connection(source, joining=True):
+        if await self._accept_connection(source, joining=True):
             logging.info(f"🔗  handle_connection_message | Late connection accepted | source: {source}")
             await self.cm.connect(source, direct=True)
 
@@ -370,14 +371,14 @@ class FederationConnector(ISADiscovery):
         logging.info(f"🔗  handle_connection_message | Trigger | Received restructure message from {source}")
         # Verify if it's a confirmation message from a previous restructure connection message sent to source
         if await self._waiting_confirmation_from(source):
-            await self._confirmation_received(source)
+            await self._confirmation_received(source, joining=False)
             return
 
         if not self.engine.get_initialization_status():
             logging.info("❗️ Connection refused | Device not initialized yet...")
             return
 
-        if self._accept_connection(source, joining=False):
+        if await self._accept_connection(source, joining=False):
             logging.info(f"🔗  handle_connection_message | Trigger | restructure connection accepted from {source}")
             await self.cm.connect(source, direct=True)
 
@@ -432,7 +433,7 @@ class FederationConnector(ISADiscovery):
     async def _discover_discover_nodes_callback(self, source, message):
         logging.info(f"🔍  handle_discover_message | Trigger | Received discover_node message from {source} ")
         if len(await self.engine.get_federation_nodes()) > 0:
-            if self._accept_connection(source, joining=False):
+            if await self._accept_connection(source, joining=False):
                 msg = self.cm.create_message(
                     "offer",
                     "offer_metric",

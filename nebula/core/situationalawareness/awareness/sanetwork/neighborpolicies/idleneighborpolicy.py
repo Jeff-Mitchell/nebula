@@ -38,7 +38,7 @@ class IDLENeighborPolicy(NeighborPolicy):
                 self.nodes_known.add(addr)
         self.addr
             
-    def accept_connection(self, source, joining=False):
+    async def accept_connection(self, source, joining=False):
         """
             return true if connection is accepted
         """
@@ -119,7 +119,7 @@ class IDLENeighborPolicy(NeighborPolicy):
     def any_leftovers_neighbors(self):
         return False
 
-    def get_neighbors_to_remove(self):
+    async def get_neighbors_to_remove(self):
         return set()
 
     def stricted_topology_status(stricted_topology: bool):

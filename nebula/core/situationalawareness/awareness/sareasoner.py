@@ -144,8 +144,8 @@ class SAReasoner(ISAReasoner):
     def get_nodes_known(self, neighbors_too=False, neighbors_only=False):
         return self.san.get_nodes_known(neighbors_too, neighbors_only)
 
-    def accept_connection(self, source, joining=False):
-        return self.san.accept_connection(source, joining)
+    async def accept_connection(self, source, joining=False):
+        return await self.san.accept_connection(source, joining)
 
     def get_actions(self):
         return self.san.get_actions()
@@ -162,6 +162,7 @@ class SAReasoner(ISAReasoner):
         valid_commands = await self._arbitatrion_suggestions(RoundEndEvent)
 
         # Execute SACommand selected
+        if self._verbose: logging.info(f"Going to execute {len(valid_commands)} SACommands")
         for cmd in valid_commands:
             if cmd.is_parallelizable():
                 if self._verbose: logging.info(f"going to execute parallelizable action: {cmd.get_action()} made by: {await cmd.get_owner()}")

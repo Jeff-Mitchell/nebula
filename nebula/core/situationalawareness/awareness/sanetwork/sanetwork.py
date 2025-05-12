@@ -123,8 +123,8 @@ class SANetwork(SAMComponent):
     async def neighbors_left(self):
         return len(await self.cm.get_addrs_current_connections(only_direct=True, myself=False)) > 0
 
-    def accept_connection(self, source, joining=False):
-        return self.np.accept_connection(source, joining)
+    async def accept_connection(self, source, joining=False):
+        return await self.np.accept_connection(source, joining)
 
     def need_more_neighbors(self):
         return self.np.need_more_neighbors()
@@ -187,7 +187,7 @@ class SANetwork(SAMComponent):
                     pass
                 await self.sana.create_and_suggest_action(SACommandAction.SEARCH_CONNECTIONS, self.upgrade_connection_robustness, possible_neighbors)
             elif self.np.any_leftovers_neighbors():
-                nodes_to_remove = self.np.get_neighbors_to_remove()
+                nodes_to_remove = await self.np.get_neighbors_to_remove()
                 if self._verbose: logging.info(f"Excess neighbors | removing: {list(nodes_to_remove)}")
                 await self.sana.create_and_suggest_action(SACommandAction.DISCONNECT, self.cm.disconnect, nodes_to_remove)
             else:
@@ -316,7 +316,11 @@ class SANetworkAgent(SAModuleAgent):
             await self.suggest_action(sac)
             await self.notify_all_suggestions_done(RoundEndEvent)
         elif saca == SACommandAction.DISCONNECT:
-            nodes = list([a for a in args])
+            nodes = set()
+            if len(args) == 1 and isinstance(args[0], set):
+                nodes = args[0]
+            else:
+                nodes = set(args)
             for node in nodes:
                 sac = factory_sa_command(
                 "connectivity",
@@ -329,6 +333,7 @@ class SANetworkAgent(SAModuleAgent):
                 node,
                 True
             )
+                # TODO Check executed state to ensure node is removed
                 await self.suggest_action(sac)
             await self.notify_all_suggestions_done(RoundEndEvent)
         elif saca == SACommandAction.IDLE:

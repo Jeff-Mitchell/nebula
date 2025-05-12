@@ -514,8 +514,9 @@ class CommunicationsManager:
     async def send_message(self, dest_addr, message, is_compressed=False):
         if not is_compressed:
             try:
-                conn = self.connections[dest_addr]
-                await conn.send(data=message)
+                if dest_addr in self.connections:
+                    conn = self.connections[dest_addr]
+                    await conn.send(data=message)
             except Exception as e:
                 logging.exception(f"❗️  Cannot send message {message} to {dest_addr}. Error: {e!s}")
                 await self.disconnect(dest_addr, mutual_disconnection=False)

@@ -20,7 +20,7 @@ class ISAReasoner(ABC):
         raise NotImplementedError
     
     @abstractmethod
-    def accept_connection(self, source, joining=False):
+    async def accept_connection(self, source, joining=False):
         raise NotImplementedError
     
     @abstractmethod
