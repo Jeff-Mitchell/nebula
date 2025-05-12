@@ -16,7 +16,7 @@ if TYPE_CHECKING:
     from nebula.core.engine import Engine
 
 RESTRUCTURE_COOLDOWN = 5
-OFFER_TIMEOUT = 5
+OFFER_TIMEOUT = 7
 
 class FederationConnector(ISADiscovery):
     """
@@ -215,22 +215,21 @@ class FederationConnector(ISADiscovery):
             rejected (set): A set of node addresses that were explicitly rejected 
                             and should be marked for disconnection.
         """
-        await asyncio.sleep(5)
+        await asyncio.sleep(20)
         for r in rejected:
             await self._add_to_discarded_offers(r)
             
         try:
             async with self.discarded_offers_addr_lock:
                 if len(self.discarded_offers_addr) > 0:
-                    self.discarded_offers_addr = set(
-                        self.discarded_offers_addr
-                    ) - await self.cm.get_addrs_current_connections(only_direct=True, myself=False)
+                    self.discarded_offers_addr = set(self.discarded_offers_addr).difference_update(await self.cm.get_addrs_current_connections(only_direct=True, myself=False))
                     if self._verbose: logging.info(
                         f"Interrupting connections | discarded offers | nodes discarded: {self.discarded_offers_addr}"
                     )
                     for addr in self.discarded_offers_addr:
-                        await self.cm.disconnect(addr, mutual_disconnection=True)
-                        await asyncio.sleep(1)
+                        if not self._waiting_confirmation_from(addr):
+                            await self.cm.disconnect(addr, mutual_disconnection=True)
+                            await asyncio.sleep(1)
                     self.discarded_offers_addr = []
         except asyncio.CancelledError:
             pass
@@ -283,7 +282,7 @@ class FederationConnector(ISADiscovery):
                 # asyncio.create_task(EventManager.get_instance().publish_node_event(upe))
                 if self._verbose: logging.info("Error during stablishment")
                 
-            asyncio.create_task(self._stop_not_selected_connections({rc[0]for rc in rejected_candidates}))
+            #asyncio.create_task(self._stop_not_selected_connections({rc[0]for rc in rejected_candidates}))
             self.accept_candidates_lock.release()
             self.late_connection_process_lock.release()
             self.candidate_selector.remove_candidates()
@@ -291,8 +290,8 @@ class FederationConnector(ISADiscovery):
         # if no candidates, repeat process
         else:
             if self._verbose: logging.info("❗️  No Candidates found...")
-            if connected:
-                asyncio.create_task(self._stop_not_selected_connections(connections_stablished))
+            #if connected:
+                #asyncio.create_task(self._stop_not_selected_connections(connections_stablished))
             self.accept_candidates_lock.release()
             self.late_connection_process_lock.release()
             if not connected:

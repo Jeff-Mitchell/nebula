@@ -5,7 +5,7 @@ import logging
 import asyncio
 
 class RINGNeighborPolicy(NeighborPolicy):
-    RECENTLY_REMOVED_BAN_TIME = 10
+    RECENTLY_REMOVED_BAN_TIME = 20
         
     def __init__(self):
         self.max_neighbors = 2

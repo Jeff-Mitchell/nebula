@@ -28,6 +28,7 @@ MAX_INCOMPLETED_RECONNECTIONS = 3
 
 class Connection:
     DEFAULT_FEDERATED_ROUND = -1
+    INACTIVITY_TIMER = 30
 
     def __init__(
         self,
@@ -165,7 +166,7 @@ class Connection:
                 logging.exception(f"❗️  Error ocurred when closing pipe: {e}")
 
     async def reconnect(self, max_retries: int = 5, delay: int = 5) -> None:
-        if self.forced_disconnection:
+        if self.forced_disconnection or not self.direct:
             return
 
         self.incompleted_reconnections += 1

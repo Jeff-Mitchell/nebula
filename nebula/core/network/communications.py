@@ -461,6 +461,14 @@ class CommunicationsManager:
                 connection["tries"] += 1
                 await self.connect(connection["addr"])
 
+    async def clear_undirect_connections(self, addrs):
+        if addrs:
+            logging.info(f"Cleaning unused undirect connections: {addrs}")
+            async with self.connections_lock:
+                for conn in self.connections.values():
+                    if not conn.direct and conn.addr in addrs:
+                        await self.disconnect(conn.addr, mutual_disconnection=False)
+
     def verify_any_connections(self, neighbors):
         # Return True if any neighbors are connected
         if any(neighbor in self.connections for neighbor in neighbors):
@@ -649,7 +657,8 @@ class CommunicationsManager:
                     logging.info(f"🔗  [outgoing] Reconnection check is enabled on node {addr}")
                     self.connections_reconnect.append({"addr": addr, "tries": 0})
 
-                self.config.add_neighbor_from_config(addr)
+
+                if direct: self.config.add_neighbor_from_config(addr)
                 return True
             except Exception as e:
                 logging.info(f"❗️  [outgoing] Error adding direct connected neighbor {addr}: {e!s}")

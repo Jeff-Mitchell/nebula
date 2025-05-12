@@ -21,13 +21,8 @@ if TYPE_CHECKING:
 RESTRUCTURE_COOLDOWN = 5
 
 class SANetwork(SAMComponent):
-    
     NEIGHBOR_VERIFICATION_TIMEOUT = 30
-    # sar: "SAReasoner",
-    #     addr, 
-    #     topology, 
-    #     strict_topology=True,
-    #     verbose = False
+
     def __init__(
         self,
         config
@@ -48,6 +43,9 @@ class SANetwork(SAMComponent):
         self._verbose = config["verbose"] #verbose
         self._cm = CommunicationsManager.get_instance()
         self._sa_network_agent = SANetworkAgent(self)
+        self._currently_connecting_nodes = set()
+        self._currently_connecting_nodes_lock = Locker(name="currently_connecting_nodes_lock", async_lock=True)
+
         
     @property
     def sar(self) -> SAReasoner:
@@ -124,7 +122,10 @@ class SANetwork(SAMComponent):
         return len(await self.cm.get_addrs_current_connections(only_direct=True, myself=False)) > 0
 
     async def accept_connection(self, source, joining=False):
-        return await self.np.accept_connection(source, joining)
+        accepted = await self.np.accept_connection(source, joining)
+        if accepted:
+            await self._currently_connecting(source)
+        return accepted
 
     def need_more_neighbors(self):
         return self.np.need_more_neighbors()
@@ -157,6 +158,22 @@ class SANetwork(SAMComponent):
                                                             #    REESTRUCTURE TOPOLOGY    #
                                                             ###############################
     """
+
+    async def _grace_time_finished(self, node):
+        await asyncio.sleep(self.LATE_CONNECTION_GRACE_TIME)
+        async with self._currently_connecting_nodes_lock:
+            self._currently_connecting_nodes.discard(node)
+
+    async def _currently_connecting(self, node):
+        async with self._currently_connecting_nodes_lock:
+            self._currently_connecting_nodes.add(node)
+            asyncio.create_task(self._grace_time_finished(node))
+
+    async def _get_unused_undirect_connections(self):
+        undirected = await self.cm.get_addrs_current_connections(only_undirected=True, myself=False)
+        async with self._currently_connecting_nodes_lock:
+            unused = undirected.difference(self._currently_connecting_nodes)
+        return unused
 
     def _update_restructure_cooldown(self):
         if self._restructure_cooldown:
@@ -192,7 +209,7 @@ class SANetwork(SAMComponent):
                 await self.sana.create_and_suggest_action(SACommandAction.DISCONNECT, self.cm.disconnect, nodes_to_remove)
             else:
                  if self._verbose: logging.info("Sufficient Robustness | no actions required")
-                 await self.sana.create_and_suggest_action(SACommandAction.MAINTAIN_CONNECTIONS)
+                 await self.sana.create_and_suggest_action(SACommandAction.MAINTAIN_CONNECTIONS, self.cm.clear_undirect_connections, await self._get_unused_undirect_connections())
         else:
              if self._verbose: logging.info("❗️ Reestructure/Reconnecting process already running...")
              await self.sana.create_and_suggest_action(SACommandAction.IDLE)
@@ -310,17 +327,12 @@ class SANetworkAgent(SAModuleAgent):
                 "",
                 SACommandPRIO.HIGH,
                 True,
-                function,
-                *args
+                function
             )
             await self.suggest_action(sac)
             await self.notify_all_suggestions_done(RoundEndEvent)
         elif saca == SACommandAction.DISCONNECT:
-            nodes = set()
-            if len(args) == 1 and isinstance(args[0], set):
-                nodes = args[0]
-            else:
-                nodes = set(args)
+            nodes = args[0] if isinstance(args[0], set) else set(args)
             for node in nodes:
                 sac = factory_sa_command(
                 "connectivity",

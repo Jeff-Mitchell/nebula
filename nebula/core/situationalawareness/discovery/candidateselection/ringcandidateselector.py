@@ -1,6 +1,6 @@
 from nebula.core.situationalawareness.discovery.candidateselection.candidateselector import CandidateSelector
 from nebula.core.utils.locker import Locker
-import logging
+import random
 
 class RINGCandidateSelector(CandidateSelector):
 
@@ -26,11 +26,18 @@ class RINGCandidateSelector(CandidateSelector):
     def select_candidates(self):
         self.candidates_lock.acquire()
         cdts = []
+
         if self._candidates:
-            cdts.append(sorted(self._candidates, key=lambda x: x[1])[0])
+            min_neighbors = min(self._candidates, key=lambda x: x[1])[1]
+            tied_candidates = [c for c in self._candidates if c[1] == min_neighbors]
+
+            selected = random.choice(tied_candidates)
+            cdts.append(selected)
+
         for cdt in self._candidates:
             if cdt not in cdts:
                 self._rejected_candidates.append(cdt)
+
         not_cdts = self._rejected_candidates.copy()
         self.candidates_lock.release()
         return (cdts, not_cdts)
