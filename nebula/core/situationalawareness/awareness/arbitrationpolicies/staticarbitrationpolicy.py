@@ -1,10 +1,10 @@
 import logging
 from nebula.core.situationalawareness.awareness.sautils.sacommand import SACommand
-from nebula.core.situationalawareness.awareness.arbitatrionpolicies.arbitatrionpolicy import ArbitatrionPolicy
+from nebula.core.situationalawareness.awareness.arbitrationpolicies.arbitrationpolicy import ArbitrationPolicy
 import asyncio
 
 
-class SAP(ArbitatrionPolicy): # Static Arbitatrion Policy
+class SAP(ArbitrationPolicy): # Static Arbitatrion Policy
     def __init__(self, verbose):
         self._verbose = verbose
         # Define static weights for SA Agents from SA Components

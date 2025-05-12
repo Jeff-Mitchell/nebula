@@ -145,7 +145,8 @@ class Engine:
         self._addon_manager = AddondManager(self, self.config)
 
         # Additional Components
-        self._situational_awareness = SituationalAwareness(self.config, self)
+        if "situational_awareness" in self.config.participant:
+            self._situational_awareness = SituationalAwareness(self.config, self)
 
     @property
     def cm(self):
@@ -448,7 +449,7 @@ class Engine:
 
     async def deploy_components(self):
         await self.aggregator.init()
-        if self.config.participant["mobility_args"]["mobility"]:
+        if "situational_awareness" in self.config.participant:
             await self.sa.init()
         await self._reporter.start()
         await self._addon_manager.deploy_additional_services()

@@ -19,7 +19,21 @@ RESTRUCTURE_COOLDOWN = 5
 OFFER_TIMEOUT = 5
 
 class FederationConnector(ISADiscovery):
-    
+    """
+    Responsible for the discovery and operational management of the federation within the Situational Awareness module.
+
+    The FederationConnector implements the ISADiscovery interface and coordinates both the discovery 
+    of participants in the federation and the operational steps required to integrate them into the 
+    Situational Awareness (SA) workflow. Its responsibilities include:
+
+    - Initiating the discovery process using the configured CandidateSelector and ModelHandler.
+    - Managing neighbor evaluation and model exchange.
+    - Interfacing with the SAReasoner to accept connections and ask for actions to do in response.
+    - Applying neighbor policies and orchestrating topology changes.
+    - Acting as the operational core of the SA module by executing workflows and ensuring coordination.
+
+    This class bridges the discovery logic with situational response capabilities in decentralized or federated systems.
+    """
     def __init__(
         self,
         aditional_participant,
@@ -71,7 +85,7 @@ class FederationConnector(ISADiscovery):
 
     @property
     def sar(self):
-        """Situational Awareness Module"""
+        """Situational Awareness Reasoner"""
         return self._sa_reasoner
 
     async def init(self, sa_reasoner):
@@ -160,6 +174,21 @@ class FederationConnector(ISADiscovery):
         await EventManager.get_instance().publish_node_event(nfe)
 
     def accept_model_offer(self, source, decoded_model, rounds, round, epochs, n_neighbors, loss):
+        """
+        Evaluate and possibly accept a model offer from a remote source.
+
+        Parameters:
+            source (str): Identifier of the node sending the model.
+            decoded_model (object): The model received and decoded from the sender.
+            rounds (int): Total number of training rounds in the current session.
+            round (int): Current round.
+            epochs (int): Number of epochs assigned for local training.
+            n_neighbors (int): Number of neighbors of the sender.
+            loss (float): Loss value associated with the proposed model.
+
+        Returns:
+            bool: True if the model is accepted and the sender added as a candidate, False otherwise.
+        """
         if not self.accept_candidates_lock.locked():
             if self._verbose: logging.info(f"🔄 Processing offer from {source}...")
             model_accepted = self.model_handler.accept_model(decoded_model)
@@ -178,6 +207,13 @@ class FederationConnector(ISADiscovery):
             self.candidate_selector.add_candidate((source, n_neighbors, loss))
 
     async def _stop_not_selected_connections(self, rejected: set = {}):
+        """
+        Asynchronously stop connections that were not selected after a waiting period.
+
+        Parameters:
+            rejected (set): A set of node addresses that were explicitly rejected 
+                            and should be marked for disconnection.
+        """
         await asyncio.sleep(5)
         for r in rejected:
             await self._add_to_discarded_offers(r)

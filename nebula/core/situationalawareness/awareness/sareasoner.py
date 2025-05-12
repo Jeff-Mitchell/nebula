@@ -13,22 +13,59 @@ from nebula.core.eventmanager import EventManager
 from nebula.core.nebulaevents import RoundEndEvent, AggregationEvent
 from nebula.core.network.communications import CommunicationsManager
 from nebula.core.situationalawareness.awareness.sautils.sasystemmonitor import SystemMonitor
-from nebula.core.situationalawareness.awareness.arbitatrionpolicies.arbitatrionpolicy import factory_arbitatrion_policy
+from nebula.core.situationalawareness.awareness.arbitrationpolicies.arbitrationpolicy import factory_arbitration_policy
 from nebula.core.situationalawareness.situationalawareness import ISAReasoner, ISADiscovery
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from nebula.core.situationalawareness.awareness.sanetwork.sanetwork import SANetwork
     
 class SAMComponent(ABC):
+    """
+    Abstract base class representing a Situational Awareness Module Component (SAMComponent).
+
+    Each SAMComponent is responsible for analyzing specific aspects of the system's state and 
+    proposing relevant actions. These components act as internal reasoning units within the 
+    SAReasoner and contribute suggestions to the command arbitration process.
+
+    Methods:
+    - init(): Initialize internal state and resources required by the component.
+    - sa_component_actions(): Generate and return actions based on local analysis.
+    """
     @abstractmethod
     async def init(self):
+        """
+        Initialize the SAMComponent.
+
+        This method should prepare any internal state, models, or resources required 
+        before the component starts analyzing and proposing actions.
+        """
         raise NotImplementedError
     @abstractmethod
     async def sa_component_actions(self):
+        """
+        Analyze system state and generate a list of SACommand suggestions.
+        It uses the SuggestionBuffer to send a list of SACommands.
+        """
         raise NotImplementedError
 
 
 class SAReasoner(ISAReasoner):
+    """
+    Core implementation of the Situational Awareness Reasoner (SAReasoner).
+
+    This class coordinates the lifecycle and interactions of all internal components 
+    in the SA module, including SAMComponents (reasoning units), the suggestion buffer, 
+    and the arbitration policy. It is responsible for:
+
+    - Initializing and managing all registered SAMComponents.
+    - Collecting suggestions from each component in response to events.
+    - Registering and notifying the SuggestionBuffer of suggestions.
+    - Triggering arbitration when multiple conflicting commands are proposed.
+    - Interfacing with the wider system through the ISAReasoner interface.
+
+    This class acts as the central controller for decision-making based on local 
+    or global awareness in distributed systems.
+    """
     MODULE_PATH = "nebula/nebula/core/situationalawareness/awareness"
 
     def __init__(
@@ -53,7 +90,7 @@ class SAReasoner(ISAReasoner):
         self._communciation_manager = CommunicationsManager.get_instance()
         self._sys_monitor = SystemMonitor()
         arb_pol = config.participant["situational_awareness"]["sa_reasoner"]["arbitatrion_policy"]
-        self._arbitatrion_policy = factory_arbitatrion_policy(arb_pol, True)
+        self._arbitatrion_policy = factory_arbitration_policy(arb_pol, True)
         self._sa_components: dict[str, SAMComponent] = {}
         self._sa_discovery: ISADiscovery = None
         self._verbose = config.participant["situational_awareness"]["sa_reasoner"]["verbose"]
@@ -85,13 +122,8 @@ class SAReasoner(ISAReasoner):
     async def init(self, sa_discovery):
         self._sa_discovery: ISADiscovery = sa_discovery
         await self._loading_sa_components()
-        #from nebula.core.situationalawareness.awareness.sanetwork.sanetwork import SANetwork
-        #from nebula.core.situationalawareness.awareness.satraining.satraining import SATraining
-        #self._situational_awareness_training = SATraining(self, self._addr, "qds", "fastreboot", verbose=True)
         await EventManager.get_instance().subscribe_node_event(RoundEndEvent, self._process_round_end_event)
         await EventManager.get_instance().subscribe_node_event(AggregationEvent, self._process_aggregation_event)
-        #self._situational_awareness_network = SANetwork(self, self._addr, self._topology, verbose=True)
-        #await self.san.init()
         
     def is_additional_participant(self):
         return self._config["mobility_args"]["additional_node"]["status"]
@@ -147,6 +179,19 @@ class SAReasoner(ISAReasoner):
             age.update_updates(final_updates)
 
     async def _arbitatrion_suggestions(self, event_type):
+        """
+        Perform arbitration over a set of agent suggestions for a given event type.
+
+        This method waits for all suggestions to be submitted, detects and resolves 
+        conflicts based on command priorities and optional tie-breaking, and 
+        returns a list of valid, non-conflicting commands.
+
+        Parameters:
+            event_type (str): The identifier or type of the event for which suggestions are being arbitrated.
+
+        Returns:
+            list[SACommand]: A list of validated and conflict-free commands after arbitration.
+        """
         if self._verbose: logging.info("Waiting for all suggestions done")
         await self.sb.set_event_waited(event_type)
         await self._arbitrator_notification.wait()

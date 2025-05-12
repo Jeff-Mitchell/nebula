@@ -5,46 +5,97 @@ class NeighborPolicy(ABC):
     
     @abstractmethod 
     def set_config(self, config):
+        """Set internal configuration parameters for the neighbor policy, typically from a shared configuration object."""
         pass
     
     @abstractmethod 
     def need_more_neighbors(self):
+        """Return True if the current node requires additional neighbors to fulfill its connectivity policy."""
         pass
 
     @abstractmethod 
     def any_leftovers_neighbors(self):
+        """Return True if there are any neighbors that are no longer needed or should be replaced."""
         pass
 
     @abstractmethod 
     def get_neighbors_to_remove(self):
+        """Return a list of neighbors that should be removed based on current policy constraints or evaluation."""
         pass
 
     @abstractmethod
     def accept_connection(self, source, joining=False):
+        """
+        Determine whether to accept a connection request from a given node.
+        
+        Parameters:
+            source: The identifier of the node requesting the connection.
+            joining (bool): Whether this is an initial joining request.
+        
+        Returns:
+            bool: True if the connection is accepted, False otherwise.
+        """
         pass
     
     @abstractmethod
     def get_actions(self):
+        """Return a list of actions (e.g., add or remove neighbors) that should be executed to maintain the policy."""
         pass
 
     @abstractmethod
     def meet_node(self, node):
+        """
+        Register the discovery or interaction with a new node.
+        
+        Parameters:
+            node: The node being encountered or added to internal memory.
+        """
         pass
     
-    abstractmethod
+    @abstractmethod
     def forget_nodes(self, nodes, forget_all=False):
+        """
+        Remove the specified nodes from internal memory.
+        
+        Parameters:
+            nodes: A list of node identifiers to forget.
+            forget_all (bool): If True, forget all nodes.
+        """
         pass
     
     @abstractmethod
     def get_nodes_known(self, neighbors_too=False, neighbors_only=False):
+        """
+        Retrieve a list of nodes known by the current policy.
+        
+        Parameters:
+            neighbors_too (bool): If True, include current neighbors in the result.
+            neighbors_only (bool): If True, return only current neighbors.
+        
+        Returns:
+            list: A list of node identifiers.
+        """
         pass
     
     @abstractmethod
     def update_neighbors(self, node, remove=False):
+        """
+        Add or remove a neighbor in the current neighbor set.
+        
+        Parameters:
+            node: The node to be added or removed.
+            remove (bool): If True, remove the node instead of adding.
+        """
         pass
 
     @abstractmethod
     def stricted_topology_status(stricted_topology: bool):
+        """
+        Update the policy with the current strict topology status.
+        
+        Parameters:
+            stricted_topology (bool): True if the topology should be preserved.
+        """
         pass
 
 def factory_NeighborPolicy(topology) -> NeighborPolicy:

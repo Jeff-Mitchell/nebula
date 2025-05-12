@@ -37,7 +37,25 @@ class SACommandState(Enum):
     """
 
 class SACommand:
-    """Base class for Situational Awareness module commands."""
+    """
+    Base class for Situational Awareness (SA) module commands.
+
+    This class defines the core structure and behavior of commands that can be 
+    issued by SA agents. Each command has an associated type, action, target, 
+    priority, and execution state. Commands may also declare whether they can be 
+    executed in parallel. Subclasses must implement the actual logic for execution 
+    and conflict detection.
+
+    Attributes:
+        command_type (SACommandType): Type of the command (e.g., parameter update, structural change).
+        action (SACommandAction): Specific action the command performs.
+        owner (SAModuleAgent): Reference to the module or agent that issued the command.
+        target (Any): Target of the command (e.g., node, parameter name).
+        priority (SACommandPRIO): Priority level of the command.
+        parallelizable (bool): Indicates whether the command can be run concurrently.
+        _state (SACommandState): Internal state of the command (e.g., PENDING, DISCARDED).
+        _state_future (asyncio.Future): Future that resolves when the command changes state.
+    """
     def __init__(
         self, 
         command_type: SACommandType, 
@@ -58,10 +76,30 @@ class SACommand:
 
     @abstractmethod
     async def execute(self):
+        """
+        Execute the command's action on the specified target.
+
+        This method must be implemented by subclasses to define the actual logic
+        of how the command affects the system. It may involve sending messages,
+        modifying local or global state, or interacting with external components.
+        """
         raise NotImplementedError
     
     @abstractmethod
     async def conflicts_with(self, other: "SACommand") -> bool:
+        """
+        Determine whether this command conflicts with another command.
+
+        This method must be implemented by subclasses to define conflict logic,
+        e.g., whether two commands target the same resource in incompatible ways.
+        Used during arbitration to resolve simultaneous command suggestions.
+
+        Parameters:
+            other (SACommand): Another command instance to check for conflicts.
+
+        Returns:
+            bool: True if there is a conflict, False otherwise.
+        """
         raise NotImplementedError
     
     async def discard_command(self):

@@ -10,7 +10,7 @@ from nebula.core.utils.locker import Locker
 
 class EventManager:
     _instance = None
-    _lock = Locker("event_manager")  # Para evitar condiciones de carrera en entornos multihilo
+    _lock = Locker("event_manager")
 
     def __new__(cls, *args, **kwargs):
         """Implementación del patrón Singleton."""
@@ -22,7 +22,7 @@ class EventManager:
 
     def _initialize(self, verbose=False):
         """Inicializa la instancia única (solo se ejecuta una vez)."""
-        if hasattr(self, "_initialized"):  # Evita reinicialización
+        if hasattr(self, "_initialized"):  
             return
         self._subscribers: dict[tuple[str, str], list] = {}
         self._message_events_lock = Locker("message_events_lock", async_lock=True)
@@ -33,7 +33,7 @@ class EventManager:
         self._global_message_subscribers: list[Callable] = []
         self._global_message_subscribers_lock = Locker("global_message_subscribers_lock", async_lock=True)
         self._verbose = verbose
-        self._initialized = True  # Marca que ya se inicializó
+        self._initialized = True  
 
     @staticmethod
     def get_instance(verbose=False):

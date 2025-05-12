@@ -3,11 +3,25 @@ from nebula.utils import logging
 import asyncio
 from nebula.core.situationalawareness.awareness.sautils.samoduleagent import SAModuleAgent
 from nebula.core.situationalawareness.awareness.sautils.sacommand import SACommand
-from nebula.core.nebulaevents import NodeEvent, RoundEndEvent, AggregationEvent
+from nebula.core.nebulaevents import NodeEvent
 from collections import defaultdict
 from typing import Type
 
 class SuggestionBuffer():
+    """
+    Singleton class that manages the coordination of suggestions from Situational Awareness (SA) agents.
+
+    The SuggestionBuffer stores, synchronizes, and tracks command suggestions issued by agents in 
+    response to specific node events. It ensures that all expected agents have submitted their input 
+    before triggering arbitration. Internally, it maintains buffers for suggestions, synchronization 
+    locks, and agent-specific notifications to guarantee consistency in distributed settings.
+
+    Main Responsibilities:
+    - Register expected agents for an event and track their completion.
+    - Store and retrieve suggestions for arbitration.
+    - Signal the arbitrator once all expected suggestions have been received.
+    - Support safe concurrent access through async-aware locking mechanisms.
+    """
     _instance = None
     _lock = Locker("initialize_sb_lock", async_lock=False)
 
@@ -37,7 +51,13 @@ class SuggestionBuffer():
         self._event_waited = None
                       
     async def register_event_agents(self, event_type, agent: SAModuleAgent):
-        """Registers expected agents for a given event."""
+        """
+        Register a Situational Awareness (SA) agent as an expected participant for a given event type.
+
+        Parameters:
+            event_type (Type[NodeEvent]): The type of event being registered.
+            agent (SAModuleAgent): The agent expected to submit suggestions for the event.
+        """
         async with self._expected_agents_lock:
             if self._verbose:
                 logging.info(f"Registering SA Agent: {await agent.get_agent()} for event: {event_type. __name__}")
@@ -52,20 +72,40 @@ class SuggestionBuffer():
                 self._event_notifications[event_type].append((agent, asyncio.Event()))
 
     async def register_suggestion(self, event_type, agent: SAModuleAgent, suggestion: SACommand):
-        """Registers a suggestion from an agent for a specific event."""
+        """
+        Register a suggestion issued by a specific SA agent for a given event.
+
+        Parameters:
+            event_type (Type[NodeEvent]): The event type for which the suggestion is made.
+            agent (SAModuleAgent): The agent submitting the suggestion.
+            suggestion (SACommand): The command being suggested.
+        """
         async with self._suggestion_buffer_lock:
             if self._verbose: logging.info(f"Registering Suggestion from SA Agent: {await agent.get_agent()} for event: {event_type. __name__}")
             self._buffer[event_type].append((agent, suggestion))
 
     async def set_event_waited(self, event_type):
-        """Registers event to be waited"""
+        """
+        Set the event type that the SuggestionBuffer will wait for.
+
+        Used to indicate that arbitration should proceed when all suggestions for this event are received.
+
+        Parameters:
+            event_type (Type[NodeEvent]): The event type to monitor.
+        """
         if not self._event_waited:
             if self._verbose: logging.info(f"Set notification when all suggestions have being received for event: {event_type. __name__}")
             self._event_waited = event_type
             await self._notify_arbitrator(event_type)
 
     async def notify_all_suggestions_done_for_agent(self, saa : SAModuleAgent, event_type):
-        """SA Agent notification that has registered all the suggestions for event_type."""
+        """
+        Notify that a specific SA agent has completed its suggestion submission for an event.
+
+        Parameters:
+            saa (SAModuleAgent): The notifying agent.
+            event_type (Type[NodeEvent]): The related event type.
+        """
         async with self._expected_agents_lock:
             agent_found = False
             for agent, event in self._event_notifications.get(event_type, []):
@@ -80,7 +120,11 @@ class SuggestionBuffer():
         await self._notify_arbitrator(event_type)
 
     async def _notify_arbitrator(self, event_type):
-        """Checks whether to notify the arbitrator that all suggestions for event_type are received."""
+        """
+        Check if all expected agents have submitted their suggestions for the current awaited event.
+
+        If so, notifies the arbitrator via the provided asyncio event.
+        """
         if event_type != self._event_waited:
             return
 
@@ -101,14 +145,30 @@ class SuggestionBuffer():
                     await self._reset_notifications_for_agents(event_type, expected_agents)                
 
     async def _reset_notifications_for_agents(self, event_type, agents):
-        """Reset notifications for SA Agents for the given event."""
+        """
+        Reset all notification events for the given agents tied to a specific event.
+
+        Parameters:
+            event_type (Type[NodeEvent]): The event for which to reset agent notifications.
+            agents (list[SAModuleAgent]): The list of agents to reset.
+        """
         notifications = self._event_notifications.get(event_type, set())
         for agent, event in notifications:
             if agent in agents:
                 event.clear()
 
     async def get_suggestions(self, event_type) -> list[tuple[SAModuleAgent, SACommand]]:
-        """Retrieves all suggestions registered for a given event."""
+        """
+        Retrieve and return all suggestions for a given event type.
+
+        Also clears the buffer after reading.
+
+        Parameters:
+            event_type (Type[NodeEvent]): The event whose suggestions are requested.
+
+        Returns:
+            list[tuple[SAModuleAgent, SACommand]]: List of (agent, suggestion) pairs.
+        """
         async with self._suggestion_buffer_lock:
             async with  self._expected_agents_lock:
                 suggestions = list(self._buffer.get(event_type, []))
@@ -117,6 +177,11 @@ class SuggestionBuffer():
                 return suggestions
 
     async def _clear_suggestions(self, event_type):
-        """Clears all suggestions and metadata stored for a given event."""
+        """
+        Clear the buffer and associated data for a specific event type.
+
+        Parameters:
+            event_type (Type[NodeEvent]): The event whose stored suggestions are to be removed.
+        """
         self._buffer[event_type].clear()
     
