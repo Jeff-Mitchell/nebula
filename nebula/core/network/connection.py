@@ -11,6 +11,8 @@ from typing import TYPE_CHECKING, Any
 
 import lz4.frame
 
+from nebula.core.utils.locker import Locker
+
 if TYPE_CHECKING:
     pass
 
@@ -29,6 +31,7 @@ MAX_INCOMPLETED_RECONNECTIONS = 3
 class Connection:
     DEFAULT_FEDERATED_ROUND = -1
     INACTIVITY_TIMER = 30
+    INACTIVITY_DAEMON_SLEEP_TIME = 20
 
     def __init__(
         self,
@@ -63,6 +66,9 @@ class Connection:
         self.pending_messages_queue = asyncio.Queue(maxsize=100)
         self.message_buffers: dict[bytes, dict[int, MessageChunk]] = {}
         self._prio = prio
+        self._inactivity = False
+        self._last_activity = time.time()
+        self._activity_lock = Locker(name="activity_lock", async_lock=True)
 
         self.EOT_CHAR = b"\x00\x00\x00\x04"
         self.COMPRESSION_CHAR = b"\x00\x00\x00\x01"
@@ -108,6 +114,30 @@ class Connection:
     def get_prio(self):
         return self._prio
 
+    async def is_inactive(self):
+        async with self._activity_lock:
+            return self._inactivity
+
+    async def _update_activity(self):
+        async with self._activity_lock:
+            self._last_activity = time.time()
+            self._inactivity = False
+
+    async def _monitor_inactivity(self):
+        while True:
+            if self.direct:
+                break
+            await asyncio.sleep(self.INACTIVITY_DAEMON_SLEEP_TIME)
+            async with self._activity_lock:
+                time_since_last = time.time() - self._last_activity
+                if time_since_last > self.INACTIVITY_TIMER:
+                    if not self._inactivity:
+                        self._inactivity = True
+                        logging.warning(f"[{self}] Connection marked as inactive.")
+                else:
+                    if self._inactivity:
+                        self._inactivity = False
+
     def get_federated_round(self):
         return self.federated_round
 
@@ -145,6 +175,7 @@ class Connection:
     async def start(self):
         self.read_task = asyncio.create_task(self.handle_incoming_message(), name=f"Connection {self.addr} reader")
         self.process_task = asyncio.create_task(self.process_message_queue(), name=f"Connection {self.addr} processor")
+        asyncio.create_task(self._monitor_inactivity())
 
     async def stop(self):
         logging.info(f"❗️  Connection [stopped]: {self.addr} (id: {self.id})")
@@ -223,6 +254,7 @@ class Connection:
             else:
                 data_to_send = data_prefix + encoded_data
 
+            await self._update_activity()
             await self._send_chunks(message_id, data_to_send)
         except Exception as e:
             logging.exception(f"Error sending data: {e}")
@@ -289,6 +321,7 @@ class Connection:
                 message_id, chunk_index, is_last_chunk = self._parse_header(header)
 
                 chunk_data = await self._read_chunk(reusable_buffer)
+                await self._update_activity()
                 self._store_chunk(message_id, chunk_index, chunk_data, is_last_chunk)
                 # logging.debug(f"Received chunk {chunk_index} of message {message_id.hex()} | size: {len(chunk_data)} bytes")
                 # Active connection without fails

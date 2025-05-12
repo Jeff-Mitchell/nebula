@@ -260,7 +260,7 @@ class CommunicationsManager:
         addrs = set(addrs)
         if neighbors:
             addrs.difference_update(neighbors)
-            
+
         logging.info(f"neighbors: {neighbors} | addr filtered: {addrs}")
 
         discovers_sent = 0
@@ -461,13 +461,12 @@ class CommunicationsManager:
                 connection["tries"] += 1
                 await self.connect(connection["addr"])
 
-    async def clear_undirect_connections(self, addrs):
-        if addrs:
-            logging.info(f"Cleaning unused undirect connections: {addrs}")
-            async with self.connections_lock:
-                for conn in self.connections.values():
-                    if not conn.direct and conn.addr in addrs:
-                        await self.disconnect(conn.addr, mutual_disconnection=False)
+    async def clear_unused_undirect_connections(self):
+        async with self.connections_lock:
+            for conn in self.connections.values():
+                if not conn.direct and await conn.is_inactive():
+                    logging.info(f"Cleaning unused connection: {conn.addr}")
+                    asyncio.create_task(self.disconnect(conn.addr, mutual_disconnection=False))
 
     def verify_any_connections(self, neighbors):
         # Return True if any neighbors are connected
@@ -657,8 +656,8 @@ class CommunicationsManager:
                     logging.info(f"🔗  [outgoing] Reconnection check is enabled on node {addr}")
                     self.connections_reconnect.append({"addr": addr, "tries": 0})
 
-
-                if direct: self.config.add_neighbor_from_config(addr)
+                if direct:
+                    self.config.add_neighbor_from_config(addr)
                 return True
             except Exception as e:
                 logging.info(f"❗️  [outgoing] Error adding direct connected neighbor {addr}: {e!s}")
@@ -722,7 +721,7 @@ class CommunicationsManager:
 
     async def disconnect(self, dest_addr, mutual_disconnection=True, forced=False):
         removed = False
-        is_neighbor = dest_addr in  await self.get_addrs_current_connections(only_direct=True, myself=True)
+        is_neighbor = dest_addr in await self.get_addrs_current_connections(only_direct=True, myself=True)
 
         if forced:
             self.add_to_blacklist(dest_addr)
