@@ -269,7 +269,7 @@ class CommunicationsManager:
             logging.info("Starting communications with devices found")
             max_tries = 5
             for addr in addrs:
-                await self.connect(addr, direct=False)
+                await self.connect(addr, direct=False, priority="high")
                 connections_made.add(addr)
                 await asyncio.sleep(1)
             for i in range(0, max_tries):
@@ -319,8 +319,8 @@ class CommunicationsManager:
     def create_message(self, message_type: str, action: str = "", *args, **kwargs):
         return self.mm.create_message(message_type, action, *args, **kwargs)
 
-    async def handle_connection(self, reader, writer):
-        async def process_connection(reader, writer):
+    async def handle_connection(self, reader, writer, priority="medium"):
+        async def process_connection(reader, writer, priority="medium"):
             try:
                 addr = writer.get_extra_info("peername")
 
@@ -410,6 +410,7 @@ class CommunicationsManager:
                     connected_node_port,
                     direct=direct,
                     config=self.config,
+                    prio=priority,
                 )
                 async with self.connections_manager_lock:
                     logging.info(f"🔗  [incoming] Including {connection_addr} in connections")
@@ -435,7 +436,7 @@ class CommunicationsManager:
                     )
                     self.incoming_connections.pop(connection_addr)
 
-        await process_connection(reader, writer)
+        await process_connection(reader, writer, priority)
 
     async def terminate_failed_reconnection(self, conn: Connection):
         connected_with = conn.addr
@@ -539,16 +540,23 @@ class CommunicationsManager:
                     logging.exception(f"❗️  Cannot send model to {dest_addr}: {e!s}")
                     await self.disconnect(dest_addr, mutual_disconnection=False)
 
-    async def establish_connection(self, addr, direct=True, reconnect=False):
+    async def establish_connection(self, addr, direct=True, reconnect=False, priority="medium"):
         logging.info(f"🔗  [outgoing] Establishing connection with {addr} (direct: {direct})")
 
-        async def process_establish_connection(addr, direct, reconnect):
+        async def process_establish_connection(addr, direct, reconnect, priority):
             try:
                 host = str(addr.split(":")[0])
                 port = str(addr.split(":")[1])
                 if host == self.host and port == self.port:
                     logging.info("🔗  [outgoing] Connection with yourself is not allowed")
                     return False
+                
+                blacklist = await self.bl.get_blacklist()
+                if blacklist:
+                    logging.info(f"blacklist: {blacklist}, source trying to connect: {addr}")
+                    if addr in blacklist:
+                        logging.info(f"🔗  [incoming] Rejecting connection from {addr}, it is blacklisted.")
+                        return
 
                 async with self.connections_manager_lock:
                     if addr in self.connections:
@@ -643,6 +651,7 @@ class CommunicationsManager:
                             port,
                             direct=direct,
                             config=self.config,
+                            prio=priority,
                         )
                         self.connections[addr] = connection
                         await connection.start()
@@ -677,9 +686,9 @@ class CommunicationsManager:
                     )
                     self.incoming_connections.pop(addr)
 
-        asyncio.create_task(process_establish_connection(addr, direct, reconnect))
+        asyncio.create_task(process_establish_connection(addr, direct, reconnect, priority))
 
-    async def connect(self, addr, direct=True):
+    async def connect(self, addr, direct=True, priority="medium"):
         await self.get_connections_lock().acquire_async()
         duplicated = addr in self.connections
         await self.get_connections_lock().release_async()
@@ -687,18 +696,18 @@ class CommunicationsManager:
             if direct:  # Upcoming direct connection
                 if not self.connections[addr].get_direct():
                     logging.info(f"🔗  [outgoing] Upgrading non direct connected neighbor {addr} to direct connection")
-                    return await self.establish_connection(addr, direct=True, reconnect=False)
+                    return await self.establish_connection(addr, direct=True, reconnect=False, priority=priority)
                 else:  # Upcoming undirected connection
                     logging.info(f"🔗  [outgoing] Already direct connected neighbor {addr}, reconnecting...")
-                    return await self.establish_connection(addr, direct=True, reconnect=False)
+                    return await self.establish_connection(addr, direct=True, reconnect=False, priority=priority)
             else:
                 logging.info(f"❗️  Cannot add a duplicate {addr} (undirected connection), already connected")
                 return False
         else:
             if direct:
-                return await self.establish_connection(addr, direct=True, reconnect=False)
+                return await self.establish_connection(addr, direct=True, reconnect=False, priority=priority)
             else:
-                return await self.establish_connection(addr, direct=False, reconnect=False)
+                return await self.establish_connection(addr, direct=False, reconnect=False, priority=priority)
 
     async def register(self):
         data = {"node": self.addr}

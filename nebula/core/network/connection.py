@@ -8,6 +8,7 @@ import uuid
 import zlib
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any
+from enum import Enum
 
 import lz4.frame
 
@@ -16,6 +17,11 @@ from nebula.core.utils.locker import Locker
 if TYPE_CHECKING:
     pass
 
+
+class ConnectionPriority(Enum):
+    LOW = "low"
+    MEDIUM = "medium"
+    HIGH = "high"
 
 @dataclass
 class MessageChunk:
@@ -44,7 +50,7 @@ class Connection:
         active=True,
         compression="zlib",
         config=None,
-        prio="MEDIUM",
+        prio="medium",
     ):
         self.reader = reader
         self.writer = writer
@@ -65,7 +71,7 @@ class Connection:
         self.process_task = None
         self.pending_messages_queue = asyncio.Queue(maxsize=100)
         self.message_buffers: dict[bytes, dict[int, MessageChunk]] = {}
-        self._prio = prio
+        self._prio: ConnectionPriority = ConnectionPriority(prio)
         self._inactivity = False
         self._last_activity = time.time()
         self._activity_lock = Locker(name="activity_lock", async_lock=True)
@@ -90,7 +96,7 @@ class Connection:
         )
 
     def __str__(self):
-        return f"Connection to {self.addr} (id: {self.id}) (active: {self.active}) (last active: {self.last_active}) (direct: {self.direct})"
+        return f"Connection to {self.addr} (id: {self.id}) (active: {self.active}) (last active: {self.last_active}) (direct: {self.direct}) (priority: {self._prio.value})"
 
     def __repr__(self):
         return self.__str__()
@@ -337,7 +343,7 @@ class Connection:
         except BrokenPipeError:
             logging.exception(f"Error handling incoming message: {e}")
         finally:
-            if self.direct:
+            if self.direct or self._prio == ConnectionPriority.HIGH:
                 await self.reconnect()
 
     async def _read_exactly(self, num_bytes: int, max_retries: int = 3) -> bytes:
