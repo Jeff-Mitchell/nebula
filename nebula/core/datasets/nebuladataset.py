@@ -16,6 +16,8 @@ plt.switch_backend("Agg")
 
 import logging
 
+import asyncio
+
 from nebula.config.config import TRAINING_LOGGER
 from nebula.core.utils.deterministic import enable_deterministic
 
@@ -25,8 +27,7 @@ logging_training = logging.getLogger(TRAINING_LOGGER)
 def wait_for_file(file_path):
     """Wait until the given file exists, polling every 'interval' seconds."""
     while not os.path.exists(file_path):
-        asyncio.sleep(2)
-    #     logging_training.info(f"Waiting for file: {file_path}")
+        logging_training.info(f"Waiting for file: {file_path}")
     return
 
 
@@ -195,6 +196,7 @@ class NebulaPartition:
         """
         if self.train_indices is None:
             return None
+        
         return [self.train_set.targets[idx] for idx in self.train_indices]
 
     def get_test_labels(self):

@@ -6,6 +6,11 @@ from fastapi.responses import FileResponse
 
 import nebula.node as node
 
+import subprocess, json, re
+
+import asyncio
+import signal
+
 app = FastAPI()
 
 CERTS_FOLDER = "./app/certs/"
@@ -16,6 +21,7 @@ METRICS_FOLDER = "./app/logs/metrics/"
 CONFIG_FILE_COUNT = 1
 DATASET_FILE_COUNT = 2
 
+TRAINING_PROC: asyncio.subprocess.Process | None = None
 
 def _find_x_files(folder: str, extension: str = ".json"):
     """
@@ -468,35 +474,217 @@ def get_metrics():
 
 # Actions
 @app.get("/run/", tags=["actions"])
-def run(
-    path: str,
-):
+async def run():
     """
-    Run the models
+    Lanza el entrenamiento con la configuración indicada en `path`
+    """
 
-    """
-    # El comando manual es:
-    # python3.11 /home/dietpi/nebula/nebula/node.py /home/dietpi/nebula/app/config/test_lc/participant_1.json
-    json_files = _find_x_files(CONFIG_FOLDER + path + "/")
+    json_files = _find_x_files(CONFIG_FOLDER)
+
+    # Check if there is a json file in the folder
     if len(json_files) != CONFIG_FILE_COUNT:
-        # raise Exception("There should be only one json file in the folder")
         raise HTTPException(status_code=404, detail="Config file not found")
-    else:
-        node.main(json_files.pop())  # Llamada elegante a node.py
-        return True
+
+    # Avoids running multiple training processes at the same time
+    global TRAINING_PROC
+    if TRAINING_PROC and TRAINING_PROC.returncode is None:
+        raise HTTPException(status_code=409, detail="Training already running")
+
+    # Creates the subprocess in a non-blocking way
+    cmd = [
+        "python",
+        "/home/dietpi/prueba/nebula/nebula/node.py",
+        json_files[0],
+    ]
+    TRAINING_PROC = await asyncio.create_subprocess_exec(*cmd)
+
+    return {"pid": TRAINING_PROC.pid, "state": "running"}
 
 
-@app.get("/pause/", tags=["actions"])
-def pause(
-    path: str,
-):
-    # TODO
-    pass
+# @app.get("/pause/", tags=["actions"])
+# async def pause():
+#     """
+#     Send SIGSTOP to the training process to pause it.
+#     """
+#     global TRAINING_PROC
+#     if not TRAINING_PROC or TRAINING_PROC.returncode is not None:
+#         raise HTTPException(status_code=404, detail="No training running")
 
+#     TRAINING_PROC.send_signal(signal.SIGSTOP)
+#     return {"pid": TRAINING_PROC.pid, "state": "paused"}
 
 @app.get("/stop/", tags=["actions"])
-def stop(
-    path: str,
-):
-    # TODO
-    pass
+async def stop():
+    """
+    Send SIGTERM to the training process and wait for it to finish.
+    """
+    global TRAINING_PROC
+    if not TRAINING_PROC or TRAINING_PROC.returncode is not None:
+        raise HTTPException(status_code=404, detail="No training running")
+
+    TRAINING_PROC.send_signal(signal.SIGTERM)
+    await TRAINING_PROC.wait()
+    pid = TRAINING_PROC.pid 
+    TRAINING_PROC = None
+    return {"pid": pid, "state": "stopped"}
+
+
+@app.put(
+    "/setup/",
+    status_code=status.HTTP_201_CREATED,
+    tags=["setup"],
+    response_model=list,
+)
+def setup_new_run(
+    config: Annotated[UploadFile, File()],
+    global_test: Annotated[UploadFile, File()],
+    train_set: Annotated[UploadFile, File()],
+) -> list:
+    """
+    Upload three files (1 × *.json* + 2 × *.h5*), rewrite paths inside the JSON
+    to match this node, validate neighbour IPs via Tailscale, then clear old
+    configs/logs and save the new files.
+
+    Errors
+    ------
+    • **409 Conflict** – training already running  
+    • **400 Bad Request** – wrong extensions, neighbour IP mismatch, or JSON
+      parse error.
+
+    Returns
+    -------
+    list
+        Names of the stored files (JSON first, then the two datasets).
+    """
+
+    # Concurrency guard
+    global TRAINING_PROC
+    if TRAINING_PROC and TRAINING_PROC.returncode is None:
+        raise HTTPException(
+            status_code=409,
+            detail="Training already running; pause or stop it before uploading.",
+        )
+
+    # Extension validation
+    if not config.filename.endswith(".json"):
+        raise HTTPException(
+            status_code=400,
+            detail=f"`{config.filename}` must have a .json extension.",
+        )
+    for ds in (global_test, train_set):
+        if not ds.filename.endswith(".h5"):
+            raise HTTPException(
+                status_code=400,
+                detail=f"`{ds.filename}` must have a .h5 extension.",
+            )
+
+    # Read & patch the JSON
+    try:
+        original_cfg = json.load(config.file)
+    except Exception as exc:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid JSON file: {exc}",
+        )
+
+    # Replace tracking paths 
+    tracking = original_cfg.get("tracking_args", {})
+    tracking["log_dir"] = LOGS_FOLDER.rstrip("/")
+    tracking["config_dir"] = CONFIG_FOLDER.rstrip("/")
+    original_cfg["tracking_args"] = tracking
+
+    # Replace security paths
+    sec = original_cfg.get("security_args", {})
+    for key in ("certfile", "keyfile", "cafile"):
+        if key in sec and sec[key]:
+            basename = os.path.basename(sec[key])
+            sec[key] = os.path.join(CERTS_FOLDER.rstrip("/"), basename)
+    original_cfg["security_args"] = sec
+
+    # Validate neighbour IPs
+    neigh_str: str = (
+        original_cfg.get("network_args", {})
+        .get("neighbors", "")
+        .strip()
+    )
+    # Extract plain IPs (ignore :port if present)
+    requested_ips = {
+        re.split(r":", entry)[0]
+        for entry in neigh_str.split()
+        if entry
+    }
+
+    if requested_ips:
+        try:
+            ts_out = subprocess.run(
+                ["tailscale", "status", "--json"],
+                capture_output=True,
+                text=True,
+                check=True,
+            )
+            ts_status = json.loads(ts_out.stdout)
+            reachable_ips = set(ts_status.get("Self", {}).get("TailscaleIPs", []))
+            for peer in ts_status.get("Peer", {}).values():
+                reachable_ips.update(peer.get("TailscaleIPs", []))
+        except Exception as exc:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Could not verify neighbours via Tailscale: {exc}",
+            )
+
+        missing = sorted(ip for ip in requested_ips if ip not in reachable_ips)
+        if missing:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Neighbour IP(s) not reachable via Tailscale: {', '.join(missing)}",
+            )
+
+    # Remove old .json / .h5 files
+    for fname in os.listdir(CONFIG_FOLDER):
+        if fname.endswith((".json", ".h5")):
+            try:
+                os.remove(os.path.join(CONFIG_FOLDER, fname))
+            except OSError:
+                pass
+            
+    # Check if files were removed
+    for fname in os.listdir(CONFIG_FOLDER):
+        if fname.endswith((".json", ".h5")):
+            raise HTTPException(
+                status_code=400,
+                detail=f"Could not delete old file: {fname}",
+            )
+
+    # Save the patched JSON 
+    json_dest = os.path.join(CONFIG_FOLDER, config.filename)
+    with open(json_dest, "wb") as dst:
+        dst.write(json.dumps(original_cfg, indent=2).encode("utf-8"))
+
+    # Save the datasets
+    saved_files: list[str] = [config.filename]
+    for uploaded in (global_test, train_set):
+        dst_path = os.path.join(CONFIG_FOLDER, uploaded.filename)
+        with open(dst_path, "wb") as dst:
+            dst.write(uploaded.file.read())
+        saved_files.append(uploaded.filename)
+        print (f"Saved {uploaded.filename} to {dst_path}")
+
+    # Purge all *.log files 
+    for root, _, files in os.walk(LOGS_FOLDER):
+        for fname in files:
+            if fname.endswith(".log"):
+                try:
+                    os.remove(os.path.join(root, fname))
+                except OSError:
+                    pass
+    
+    # Check if files were removed
+    for root, _, files in os.walk(LOGS_FOLDER):
+        for fname in files:
+            if fname.endswith(".log"):
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"Could not delete old file: {fname}",
+                )
+
+    return saved_files
