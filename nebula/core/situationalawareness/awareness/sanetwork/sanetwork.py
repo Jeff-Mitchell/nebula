@@ -181,10 +181,14 @@ class SANetwork(SAMComponent):
     async def _analize_topology_robustness(self):
         logging.info("🔄 Analizing node network robustness...")
         if not self._restructure_process_lock.locked():
+            #TODO remove
+            if self.sar.cm.engine.get_round() == 30 and self._addr == "192.168.54.7:45006":
+                asyncio.create_task(self.stop_connections_with_federation())
+                return
             if not await self.neighbors_left():
                 if self._verbose:
                     logging.info("No Neighbors left | reconnecting with Federation")
-                await self.sana.create_and_suggest_action(SACommandAction.RECONNECT, self.reconnect_to_federation, None)
+                #await self.sana.create_and_suggest_action(SACommandAction.RECONNECT, self.reconnect_to_federation, None)
             elif self.np.need_more_neighbors() and self._restructure_available():
                 if self._verbose:
                     logging.info("Insufficient Robustness | Upgrading robustness | Searching for more connections")
@@ -250,7 +254,7 @@ class SANetwork(SAMComponent):
         self._restructure_process_lock.release()
 
     async def stop_connections_with_federation(self):
-        await asyncio.sleep(200)
+        await asyncio.sleep(10)
         logging.info("### DISCONNECTING FROM FEDERATON ###")
         neighbors = self.np.get_nodes_known(neighbors_only=True)
         for n in neighbors:

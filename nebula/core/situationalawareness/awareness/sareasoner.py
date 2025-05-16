@@ -188,7 +188,7 @@ class SAReasoner(ISAReasoner):
         returns a list of valid, non-conflicting commands.
 
         Parameters:
-            event_type (str): The identifier or type of the event for which suggestions are being arbitrated.
+            event_type: The identifier or type of the event for which suggestions are being arbitrated.
 
         Returns:
             list[SACommand]: A list of validated and conflict-free commands after arbitration.
@@ -196,7 +196,7 @@ class SAReasoner(ISAReasoner):
         if self._verbose: logging.info("Waiting for all suggestions done")
         await self.sb.set_event_waited(event_type)
         await self._arbitrator_notification.wait()
-        logging.info("waiting released")
+        if self._verbose: logging.info("waiting released")
         suggestions = await self.sb.get_suggestions(event_type)
         self._arbitrator_notification.clear()
         if not len(suggestions):

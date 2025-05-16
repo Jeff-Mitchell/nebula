@@ -278,11 +278,8 @@ class FederationConnector(ISADiscovery):
                     await self.cm.send_message(addr, msg)
                     await asyncio.sleep(1)
             except asyncio.CancelledError:
-                # upe = UpdateNeighborEvent(addr, removed=True)
-                # asyncio.create_task(EventManager.get_instance().publish_node_event(upe))
                 if self._verbose: logging.info("Error during stablishment")
                 
-            #asyncio.create_task(self._stop_not_selected_connections({rc[0]for rc in rejected_candidates}))
             self.accept_candidates_lock.release()
             self.late_connection_process_lock.release()
             self.candidate_selector.remove_candidates()
@@ -290,8 +287,6 @@ class FederationConnector(ISADiscovery):
         # if no candidates, repeat process
         else:
             if self._verbose: logging.info("❗️  No Candidates found...")
-            #if connected:
-                #asyncio.create_task(self._stop_not_selected_connections(connections_stablished))
             self.accept_candidates_lock.release()
             self.late_connection_process_lock.release()
             if not connected:
