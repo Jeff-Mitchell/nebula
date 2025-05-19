@@ -66,7 +66,7 @@ class MessagesManager:
             },
             "reputation": {
                 "parameters": ["action", "reputation", "defendant", "verdict"],
-                "defaults": {"defendant": "", "verdict": ""},
+                "defaults": {"reputation":"", "defendant": "", "verdict": ""},
             },
             "discover": {"parameters": ["action"], "defaults": {}},
             "link": {"parameters": ["action", "addrs"], "defaults": {}},

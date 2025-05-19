@@ -24,8 +24,10 @@ class BlackList:
      
     async def apply_restrictions(self, nodes) -> set | None:
         nodes_allowed = await self.verify_allowed_nodes(nodes)
+        logging.info(f"nodes allowed after appliying blacklist restricttions: {nodes_allowed}")
         if nodes_allowed:
             nodes_allowed = await self.verify_not_recently_disc(nodes_allowed)
+            logging.info(f"nodes allowed after seen recently disconnection restrictions: {nodes_allowed}")
         return nodes_allowed
     
     async def clear_restrictions(self):
@@ -99,14 +101,14 @@ class BlackList:
         await self._blacklisted_nodes_lock.release_async()
         return blacklisted
                        
-    async def verify_allowed_nodes(self, nodes) -> set | None:
+    async def verify_allowed_nodes(self, nodes: set) -> set | None:
         if not nodes:
             return None
         nodes_not_listed = nodes
         await self._blacklisted_nodes_lock.acquire_async()
         blacklist = self._blacklisted_nodes
         if blacklist:
-            nodes_not_listed = set(nodes).difference_update(blacklist)
+            nodes_not_listed = nodes.difference(blacklist)
         await self._blacklisted_nodes_lock.release_async()
         return nodes_not_listed 
 
@@ -144,13 +146,14 @@ class BlackList:
         logging.info(f"Recently disconnection timeout expired for souce: {addr}")
         self._recently_disconnected_lock.release_async()
         
-    async def verify_not_recently_disc(self, nodes) -> set | None:
+    async def verify_not_recently_disc(self, nodes: set) -> set | None:
         if not nodes:
             return None
         nodes_not_listed = nodes
         self._recently_disconnected_lock.acquire_async()
         rec_disc = self._recently_disconnected
+        logging.info(f"recently disconencted nodes: {rec_disc}")
         if rec_disc:
-            nodes_not_listed = set(nodes).difference_update(rec_disc)
+            nodes_not_listed = nodes.difference(rec_disc)
         self._recently_disconnected_lock.release_async()
         return nodes_not_listed

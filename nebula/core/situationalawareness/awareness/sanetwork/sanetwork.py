@@ -166,7 +166,7 @@ class SANetwork(SAMComponent):
     """
 
     def _update_restructure_cooldown(self):
-        if self._restructure_cooldown:
+        if self._restructure_cooldown > 0:
             self._restructure_cooldown = (self._restructure_cooldown + 1) % RESTRUCTURE_COOLDOWN
 
     def _restructure_available(self):
@@ -182,13 +182,18 @@ class SANetwork(SAMComponent):
         logging.info("🔄 Analizing node network robustness...")
         if not self._restructure_process_lock.locked():
             #TODO remove
-            if self.sar.cm.engine.get_round() == 30 and self._addr == "192.168.54.7:45006":
+            ip, _ = self._addr.split(":")
+            # Obtener el último octeto y luego su último dígito
+            last_digit = ip.split(".")[-1][-1]
+            if self.sar.cm.engine.get_round() == 20 and last_digit == "6":
                 asyncio.create_task(self.stop_connections_with_federation())
+                await self.sana.notify_all_suggestions_done(RoundEndEvent) #TODO remove
                 return
             if not await self.neighbors_left():
                 if self._verbose:
                     logging.info("No Neighbors left | reconnecting with Federation")
-                #await self.sana.create_and_suggest_action(SACommandAction.RECONNECT, self.reconnect_to_federation, None)
+                await self.sana.create_and_suggest_action(SACommandAction.RECONNECT, self.reconnect_to_federation, None)
+                #await self.sana.notify_all_suggestions_done(RoundEndEvent) #TODO remove
             elif self.np.need_more_neighbors() and self._restructure_available():
                 if self._verbose:
                     logging.info("Insufficient Robustness | Upgrading robustness | Searching for more connections")
@@ -263,8 +268,11 @@ class SANetwork(SAMComponent):
             await self.cm.disconnect(n, mutual_disconnection=False, forced=True)
 
     async def verify_neighbors_stablished(self, nodes: set):
+        if not nodes:
+            return 
+        
         await asyncio.sleep(self.NEIGHBOR_VERIFICATION_TIMEOUT)
-        logging.info("Verifyng all connections were stablished")
+        logging.info("Verifyng all connections were stablished") 
         nodes_to_forget = nodes.copy()
         neighbors = self.np.get_nodes_known(neighbors_only=True)
         if neighbors:

@@ -144,9 +144,9 @@ class FederationConnector(ISADiscovery):
 
     async def _confirmation_received(self, addr, confirmation=True, joining=False):
         logging.info(f" Update | connection confirmation received from: {addr} | joining federation: {joining}")
-        await self.cm.connect(addr, direct=True)
         await self._remove_pending_confirmation_from(addr)
         if confirmation:
+            await self.cm.connect(addr, direct=True)
             une = UpdateNeighborEvent(addr, joining=joining)
             await EventManager.get_instance().publish_node_event(une)
             

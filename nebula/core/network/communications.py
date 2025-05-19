@@ -169,7 +169,6 @@ class CommunicationsManager:
 
     async def forward_message(self, data, addr_from):
         logging.info("Forwarding message... ")
-        logging.info("Forwarding message... ")
         await self.forwarder.forward(data, addr_from=addr_from)
 
     async def handle_message(self, message_event):
@@ -204,7 +203,7 @@ class CommunicationsManager:
     async def get_blacklist(self):
         return await self.bl.get_blacklist()
 
-    async def apply_restrictions(self, nodes):
+    async def apply_restrictions(self, nodes: set) -> set | None:
         return await self.bl.apply_restrictions(nodes)
 
     async def clear_restrictions(self):

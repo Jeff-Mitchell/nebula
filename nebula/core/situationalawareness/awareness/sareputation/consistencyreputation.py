@@ -7,7 +7,7 @@ from collections import defaultdict
 from nebula.core.utils.helper import cosine_metric
 from nebula.core.eventmanager import EventManager
 from nebula.core.nebulaevents import AggregationEvent, UpdateNeighborEvent
-from nebula.core.situationalawareness.awareness.sareputation.sareputation import ThreatCategory
+from nebula.core.situationalawareness.awareness.sareputation.sareputation import ThreatCategory, PotencialThreat
 
 class ConsistencyReputation():
     MAX_HISTORIC_SIZE = 20
@@ -15,6 +15,7 @@ class ConsistencyReputation():
     SCORE_THRESHOLD_SUSPICIOUS = 0.6
     ADVANCED_METRICS_THRESHOLD = 5
     SIMILARITY_THRESHOLD = 0.85
+    # Metrics
     DEFAULT_SIMILARITY_WEIGHT = 0.6     # Default metrics
     DEFAULT_CONSISTENCY_WEIGHT = 0.15
     DEFAULT_STABILITY_WEIGHT = 0.25
@@ -30,7 +31,7 @@ class ConsistencyReputation():
         self._historical_similarities_lock = Locker("historical_similarities_lock", async_lock=True)
         self._consistency_scores: dict[str, deque[float]] = defaultdict(deque)
         self._consistency_scores_lock = Locker("consistency_scores_lock", async_lock=True)
-        self._suspicious_nodes = set()
+        self._suspicious_nodes: set[PotencialThreat] = set()
         self._suspicious_nodes_lock = Locker(name="suspicious_nodes_lock", async_lock=True)
         
     @property
@@ -86,14 +87,14 @@ class ConsistencyReputation():
         return cosine_metric(model1=model1, model2=model2, similarity=True)
     
     async def analize_malice(self, node, score):
-        category = None
+        potencial_threat = None
         if score <= self.SCORE_THRESHOLD_MALICIOUS:
-            category = (node, ThreatCategory.MODEL_POISSONING)
+            potencial_threat = PotencialThreat(node, ThreatCategory.MODEL_POISSONING)
         elif score <= self.SCORE_THRESHOLD_SUSPICIOUS:
-            category = (node, ThreatCategory.BAD_BEHAVIOR)
-        if category:
+            potencial_threat = PotencialThreat(node, ThreatCategory.BAD_BEHAVIOR)
+        if potencial_threat:
             async with self._suspicious_nodes_lock:
-                self._suspicious_nodes.add(category)
+                self._suspicious_nodes.add(potencial_threat)
     
     async def evaluate(self):
         if self._verbose: logging.info("Evaluating Consistency Reputation, generating score...")
@@ -142,7 +143,6 @@ class ConsistencyReputation():
         final_score = base_score
 
         if len(similarities) >= self.ADVANCED_METRICS_THRESHOLD:
-            # Ajuste de pesos avanzados
             similarity_weight = self.ADVANCED_SIMILARITY_WEIGHT
             consistency_weight = self.ADVANCED_CONSISTENCY_WEIGHT
             stability_weight = self.ADVANCED_STABILITY_WEIGHT

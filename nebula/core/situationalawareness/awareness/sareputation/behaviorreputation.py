@@ -5,7 +5,7 @@ from collections import defaultdict
 from nebula.core.eventmanager import EventManager
 from nebula.core.nebulaevents import UpdateReceivedEvent, AggregationEvent, RoundStartEvent, UpdateNeighborEvent, NodeBlacklistedEvent
 import time
-from nebula.core.situationalawareness.awareness.sareputation.sareputation import ThreatCategory
+from nebula.core.situationalawareness.awareness.sareputation.sareputation import ThreatCategory, PotencialThreat
 import asyncio
 
 class TimeStamp():
@@ -64,7 +64,7 @@ class BehaviorReputation():
         self._messages_received_per_round_lock = Locker(name="messages_received_per_round_lock", async_lock=True)
         self._internal_rounds_done = -1
         self._last_aggregation_time = None
-        self._suspicious_nodes = set()
+        self._suspicious_nodes: set[PotencialThreat] = set()
         self._suspicious_nodes_lock = Locker(name="suspicious_nodes_lock", async_lock=True)
         
     @property
@@ -209,7 +209,7 @@ class BehaviorReputation():
             n_messages += 1
             if n_messages >= self.MAX_MESSAGES_PER_ROUND:
                 async with self._suspicious_nodes_lock:
-                    self._suspicious_nodes.union({(source, ThreatCategory.FLOODING)})
+                    self._suspicious_nodes.union({PotencialThreat(source, ThreatCategory.FLOODING)})
             self._messages_received_per_round[source] = n_messages
             
     async def evaluate(self):
@@ -259,7 +259,7 @@ class BehaviorReputation():
             # Check inactivity beyond max tolerance
             if missed_count >= self.MAX_INACTIVITY_ALLOWED:
                 async with self._suspicious_nodes_lock:
-                    self._suspicious_nodes.union(((node, ThreatCategory.INACTIVITY)))
+                    self._suspicious_nodes.union((PotencialThreat(node, ThreatCategory.INACTIVITY)))
                     scores[node] = 0.0
                     continue
 
@@ -302,7 +302,7 @@ class BehaviorReputation():
         
         # Update suspicious nodes
         async with self._suspicious_nodes_lock:
-            self._suspicious_nodes.union({(n, ThreatCategory.BAD_BEHAVIOR) for n in nodes_below_th}) 
+            self._suspicious_nodes.union({PotencialThreat(n, ThreatCategory.BAD_BEHAVIOR) for n in nodes_below_th}) 
                                        
     
     
