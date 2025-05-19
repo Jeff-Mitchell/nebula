@@ -13,15 +13,28 @@ class Trial():
         self._defendant = defendant
         self._verdicts: list[ReputationCategory] = list()
         self._verdicts_lock = Locker("verdicts_lock", async_lock=True)
+        self._final_judgment = asyncio.get_event_loop().create_future()
         self._trial_duration = None
         
     async def init_trial(self, timeout=None):
         self._trial_duration = timeout if timeout else self.TRIAL_DURATION
         
+    async def force_stop_trial(self):
+        async with self._verdicts_lock:
+            self._final_judgment.set_result(None)
+        
+    async def _close_trial(self):
+        asyncio.sleep(self._trial_duration)
+        async with self._verdicts_lock:
+            pass
+    
     async def receive_verdict(self, verdict: ReputationCategory):
         async with self._verdicts_lock:
             self._verdicts.append(verdict)
-
+            
+    async def get_judgment(self):
+        return self._final_judgment
+            
 class TrialPolicy():
     MAX_TRIALS_ACCEPTED = 3
     TRIAL_TIMEOUT = 20
@@ -31,7 +44,7 @@ class TrialPolicy():
         self._trials_recently_accepted = 0
         self._trials_lock = Locker("trials_lock", async_lock=True)
     
-    async def _clean_trial(self):
+    async def _clean_trial_count(self):
         asyncio.sleep(self.TRIAL_TIMEOUT)
         async with self._trials_lock:
             self._trials_recently_accepted -= 1
@@ -40,7 +53,7 @@ class TrialPolicy():
         async with self._trials_lock:
             if self._trials_recently_accepted < self.MAX_TRIALS_ACCEPTED:
                 self._trials_recently_accepted += 1
-                asyncio.create_task(self._clean_trial())
+                asyncio.create_task(self._clean_trial_count())
                 return True
             else:
                 return False
@@ -98,6 +111,10 @@ class CollaborativeReputation():
         async with self._social_expectations_lock:
                 if remove:
                     self.se.pop(node, None)
+                    #TODO check open trials
+                    async with self._open_trials_lock:
+                        if node in self.ot:
+                            await self.ot[node].force_stop_trial()
                 else:
                     if not node in self.se.keys():
                         self.se.update({node : deque(maxlen=self.MAX_HISTORIC_SIZE)})
@@ -127,6 +144,10 @@ class CollaborativeReputation():
                 await self.ot.get(source).receive_verdict(verdict)
             else:
                 if self._verbose: logging.info(f"There is no open trial on source: {source}")
+                
+    async def _start_trial_to_node(self, node):
+        start_trial_message = CommunicationsManager.get_instance().create_message("reputation", "start_trial", defendant=node)
+        await CommunicationsManager.get_instance().send_message_to_neighbors(start_trial_message)
             
     async def update_social_reputations(self, reputations: dict[str, ReputationCategory]):
         async with self._social_reputations_lock:
@@ -137,5 +158,18 @@ class CollaborativeReputation():
                                                         ##################################
     """    
             
+    async def close_trial(self, node):
+        async with self._open_trials_lock:
+            self.ot.pop(node)
+            
     async def start_trial(self, node):
-        pass
+        opened = False
+        async with self._open_trials_lock:
+            if not node in self.ot:
+                new_trial = Trial(node)
+                self.ot[node] = new_trial
+                await new_trial.init_trial()
+                opened = True
+        if opened: await self._start_trial_to_node(node)
+        
+    

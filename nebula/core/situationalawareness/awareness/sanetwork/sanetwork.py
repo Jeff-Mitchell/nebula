@@ -185,7 +185,7 @@ class SANetwork(SAMComponent):
             ip, _ = self._addr.split(":")
             # Obtener el último octeto y luego su último dígito
             last_digit = ip.split(".")[-1][-1]
-            if self.sar.cm.engine.get_round() == 20 and last_digit == "6":
+            if self.sar.cm.engine.get_round() == 20 and last_digit == "9":
                 asyncio.create_task(self.stop_connections_with_federation())
                 await self.sana.notify_all_suggestions_done(RoundEndEvent) #TODO remove
                 return
@@ -326,7 +326,7 @@ class SANetworkAgent(SAModuleAgent):
             )
             await self.suggest_action(sac)
             await self.notify_all_suggestions_done(RoundEndEvent)
-            sa_command_state = await sac.get_state_future()
+            sa_command_state = await sac.get_state_future()         # By using 'await' we get future.set_result()
             if sa_command_state == SACommandState.EXECUTED:
                 (nodes_to_forget,) = args
                 asyncio.create_task(self._san.verify_neighbors_stablished(nodes_to_forget))
