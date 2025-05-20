@@ -108,12 +108,14 @@ def factory_NeighborPolicy(topology) -> NeighborPolicy:
     from nebula.core.situationalawareness.awareness.sanetwork.neighborpolicies.fcneighborpolicy import FCNeighborPolicy
     from nebula.core.situationalawareness.awareness.sanetwork.neighborpolicies.ringneighborpolicy import RINGNeighborPolicy
     from nebula.core.situationalawareness.awareness.sanetwork.neighborpolicies.starneighborpolicy import STARNeighborPolicy
+    from nebula.core.situationalawareness.awareness.sanetwork.neighborpolicies.distanceneighborpolicy import DistanceNeighborPolicy
     
     options = {
         "random": IDLENeighborPolicy, # default value
         "fully": FCNeighborPolicy,
         "ring": RINGNeighborPolicy,
         "star": IDLENeighborPolicy,
+        "distance": DistanceNeighborPolicy
     } 
     
     cs = options.get(topology, IDLENeighborPolicy)

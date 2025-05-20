@@ -43,6 +43,9 @@ class DistanceNeighborPolicy(NeighborPolicy):
     async def need_more_neighbors(self):
         async with self.neighbors_lock:
             async with self.nodes_distances_lock:
+                if not self.nodes_distances:
+                    return False
+                
                 closest_nodes: set[str] = {
                     nodo_id
                     for nodo_id, (distancia, _) in self.nodes_distances.items()
@@ -138,6 +141,9 @@ class DistanceNeighborPolicy(NeighborPolicy):
         distant_nodes = set()
         async with self.neighbors_lock:
             async with self.nodes_distances_lock:
+                if not self.nodes_distances:
+                    return False
+                
                 distant_nodes: set[str] = {
                     nodo_id
                     for nodo_id, (distancia, _) in self.nodes_distances.items()

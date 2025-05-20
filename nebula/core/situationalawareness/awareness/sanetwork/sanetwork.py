@@ -31,7 +31,7 @@ from nebula.core.utils.locker import Locker
 if TYPE_CHECKING:
     from nebula.core.situationalawareness.awareness.sareasoner import SAReasoner
 
-RESTRUCTURE_COOLDOWN = 5
+RESTRUCTURE_COOLDOWN = 1#5
 
 
 class SANetwork(SAMComponent):
@@ -48,7 +48,7 @@ class SANetwork(SAMComponent):
         )
         self._sar = config["sar"]  # sar
         self._addr = config["addr"]  # addr
-        self._neighbor_policy = factory_NeighborPolicy(self._neighbor_policy)
+        self._neighbor_policy = factory_NeighborPolicy("distance")#self._neighbor_policy)
         self._restructure_process_lock = Locker(name="restructure_process_lock")
         self._restructure_cooldown = 0
         self._verbose = config["verbose"]  # verbose
@@ -178,18 +178,21 @@ class SANetwork(SAMComponent):
     def get_restructure_process_lock(self):
         return self._restructure_process_lock
     
-    async def _distance_topology(self):
-        if await self.np.need_more_neighbors():
-            pass
-
     async def _analize_topology_robustness(self):
         logging.info("🔄 Analizing node network robustness...")
         if not self._restructure_process_lock.locked():
             if not await self.neighbors_left():
                 if self._verbose:
                     logging.info("No Neighbors left | reconnecting with Federation")
-                await self.sana.create_and_suggest_action(SACommandAction.RECONNECT, self.reconnect_to_federation, None)
+                await self.sana.create_and_suggest_action(SACommandAction.RECONNECT, self.reconnect_to_federation, False, None)
             elif await self.np.need_more_neighbors() and self._restructure_available():
+                if self._verbose:
+                    logging.info("Suggesting to Remove neighbors according to policy...")
+                if await self.np.any_leftovers_neighbors():
+                    nodes_to_remove = await self.np.get_neighbors_to_remove()
+                    await self.sana.create_and_suggest_action(
+                        SACommandAction.DISCONNECT, self.cm.disconnect, True, nodes_to_remove
+                    )
                 if self._verbose:
                     logging.info("Insufficient Robustness | Upgrading robustness | Searching for more connections")
                 self._update_restructure_cooldown()
@@ -201,25 +204,25 @@ class SANetwork(SAMComponent):
                 else:
                     pass
                 await self.sana.create_and_suggest_action(
-                    SACommandAction.SEARCH_CONNECTIONS, self.upgrade_connection_robustness, possible_neighbors
+                    SACommandAction.SEARCH_CONNECTIONS, self.upgrade_connection_robustness, False, possible_neighbors
                 )
             elif await self.np.any_leftovers_neighbors():
                 nodes_to_remove = await self.np.get_neighbors_to_remove()
                 if self._verbose:
                     logging.info(f"Excess neighbors | removing: {list(nodes_to_remove)}")
                 await self.sana.create_and_suggest_action(
-                    SACommandAction.DISCONNECT, self.cm.disconnect, nodes_to_remove
+                    SACommandAction.DISCONNECT, self.cm.disconnect, False, nodes_to_remove
                 )
             else:
                 if self._verbose:
                     logging.info("Sufficient Robustness | no actions required")
                 await self.sana.create_and_suggest_action(
-                    SACommandAction.MAINTAIN_CONNECTIONS, self.cm.clear_unused_undirect_connections
+                    SACommandAction.MAINTAIN_CONNECTIONS, self.cm.clear_unused_undirect_connections, more_suggestions=False,
                 )
         else:
             if self._verbose:
                 logging.info("❗️ Reestructure/Reconnecting process already running...")
-            await self.sana.create_and_suggest_action(SACommandAction.IDLE)
+            await self.sana.create_and_suggest_action(SACommandAction.IDLE, more_suggestions=False)
 
     async def reconnect_to_federation(self):
         logging.info("Going to reconnect with federation...")
@@ -230,7 +233,7 @@ class SANetwork(SAMComponent):
             if self._verbose:
                 logging.info("Reconnecting | Addrs availables")
             await self.sar.sad.start_late_connection_process(
-                connected=False, msg_type="discover_nodes", addrs_known=self.np.get_nodes_known()
+                connected=False, msg_type="discover_nodes", addrs_known=await self.np.get_nodes_known()
             )
         else:
             if self._verbose:
@@ -300,7 +303,7 @@ class SANetworkAgent(SAModuleAgent):
     async def notify_all_suggestions_done(self, event_type):
         await SuggestionBuffer.get_instance().notify_all_suggestions_done_for_agent(self, event_type)
 
-    async def create_and_suggest_action(self, saca: SACommandAction, function: Callable = None, *args):
+    async def create_and_suggest_action(self, saca: SACommandAction, function: Callable = None, more_suggestions=False, *args):
         sac = None
         if saca == SACommandAction.MAINTAIN_CONNECTIONS:
             sac = factory_sa_command(
@@ -320,7 +323,7 @@ class SANetworkAgent(SAModuleAgent):
                 *args,
             )
             await self.suggest_action(sac)
-            await self.notify_all_suggestions_done(RoundEndEvent)
+            if not more_suggestions: await self.notify_all_suggestions_done(RoundEndEvent)
             sa_command_state = await sac.get_state_future()         # By using 'await' we get future.set_result()
             if sa_command_state == SACommandState.EXECUTED:
                 (nodes_to_forget,) = args
@@ -330,7 +333,7 @@ class SANetworkAgent(SAModuleAgent):
                 "connectivity", SACommandAction.RECONNECT, self, "", SACommandPRIO.HIGH, True, function
             )
             await self.suggest_action(sac)
-            await self.notify_all_suggestions_done(RoundEndEvent)
+            if not more_suggestions: await self.notify_all_suggestions_done(RoundEndEvent)
         elif saca == SACommandAction.DISCONNECT:
             nodes = args[0] if isinstance(args[0], set) else set(args)
             for node in nodes:
@@ -347,10 +350,10 @@ class SANetworkAgent(SAModuleAgent):
                 )
                 # TODO Check executed state to ensure node is removed
                 await self.suggest_action(sac)
-            await self.notify_all_suggestions_done(RoundEndEvent)
+            if not more_suggestions: await self.notify_all_suggestions_done(RoundEndEvent)
         elif saca == SACommandAction.IDLE:
             sac = factory_sa_command(
                 "connectivity", SACommandAction.IDLE, self, "", SACommandPRIO.LOW, False, function, None
             )
             await self.suggest_action(sac)
-            await self.notify_all_suggestions_done(RoundEndEvent)
+            if not more_suggestions: await self.notify_all_suggestions_done(RoundEndEvent)
