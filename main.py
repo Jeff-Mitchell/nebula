@@ -1,690 +1,492 @@
+#!/usr/bin/env python3
+# ──────────────────────────────────────────────────────────────────────────────
+import io
+import json
 import os
-from typing import Annotated
-
-from fastapi import FastAPI, File, HTTPException, UploadFile, status
-from fastapi.responses import FileResponse
-
-import nebula.node as node
-
-import subprocess, json, re
-
-import asyncio
+import re
 import signal
+import subprocess
+import zipfile
+from typing import Dict, List, Optional, Set
 
-app = FastAPI()
+from flask import (
+    Flask,
+    abort,
+    jsonify,
+    request,
+    send_file,
+)
 
-CERTS_FOLDER = "./app/certs/"
-CONFIG_FOLDER = "./app/config/"
-LOGS_FOLDER = "./app/logs/"
+# ──────────────────────────────  GLOBAL CONFIG  ──────────────────────────────
+
+app = Flask(__name__)
+
+CERTS_FOLDER   = "./app/certs/"
+CONFIG_FOLDER  = "./app/config/"
+LOGS_FOLDER    = "./app/logs/"
 METRICS_FOLDER = "./app/logs/metrics/"
 
-CONFIG_FILE_COUNT = 1
-DATASET_FILE_COUNT = 2
+CONFIG_FILE_COUNT  = 1          # Exactly one *.json* per run
+DATASET_FILE_COUNT = 2          # Exactly two *.h5* per run
 
-TRAINING_PROC: asyncio.subprocess.Process | None = None
+# Current training subprocess (None ⇢ not running)
+TRAINING_PROC: Optional[subprocess.Popen] = None
 
-def _find_x_files(folder: str, extension: str = ".json"):
+# ──────────────────────────────  HELPER ROUTINES  ────────────────────────────
+def _find_x_files(folder: str, extension: str = ".json") -> List[str]:
     """
-    Find all json files in a folder
+    Return *all* files inside *folder* ending with *extension*.
 
-    Args:
-        folder (str): Path to the folder to be checked
+    The check is non-recursive on purpose – the project stores every run in a
+    dedicated directory with a flat layout.
     """
-    archivos_json = []
-    for file_name in os.listdir(folder):
-        if file_name.endswith(extension):
-            archivos_json.append(os.path.join(folder, file_name))
-    return archivos_json
+    return [
+        os.path.join(folder, fn)
+        for fn in os.listdir(folder)
+        if fn.endswith(extension)
+    ]
 
 
-def _LFI_sentry(path: str):
+def _LFI_sentry(path: str) -> bool:
     """
-    Basic anti path traversal sentry. TODO: improve, it shouldn't be necessary to check for all these characters manually
-    It also checks if the folder exists
+    Very strict Local-File-Inclusion guard.
 
-    Args:
-        path (str): Path to be checked
-
-    Returns:
-        bool: True if the path is malicious, False if it's safe and exists
+    Returns **True** when *path* is unsafe (attempted path traversal or the
+    referenced folder does not exist), **False** otherwise.
     """
+    forbidden_tokens = (
+        "", "..", "/", "\\", "~", "*", "?", ":", "<", ">", "|", '"', "'", "`",
+        "$", "%", "&", "!", "{", "}", "[", "]", "@", "#", "+", "=", ";", ",",
+        " ", "\t", "\n", "\r", "\f", "\v",
+    )
     return (
-        not os.path.exists(CONFIG_FOLDER + path)
-        or path == ""
-        or ".." in path
-        or "/" in path
-        or "\\" in path
-        or "~" in path
-        or "*" in path
-        or "?" in path
-        or ":" in path
-        or "<" in path
-        or ">" in path
-        or "|" in path
-        or '"' in path
-        or "'" in path
-        or "`" in path
-        or "$" in path
-        or "%" in path
-        or "&" in path
-        or "!" in path
-        or "{" in path
-        or "}" in path
-        or "[" in path
-        or "]" in path
-        or "@" in path
-        or "#" in path
-        or "+" in path
-        or "=" in path
-        or ";" in path
-        or "," in path
-        or " " in path
-        or "\t" in path
-        or "\n" in path
-        or "\r" in path
-        or "\f" in path
-        or "\v" in path
+        not os.path.exists(os.path.join(CONFIG_FOLDER, path))
+        or any(tok in path for tok in forbidden_tokens)
     )
 
 
-# Config
-@app.get("/config/", tags=["config"])
-def get_config(
-    path: str,
-):
-    """
-    Get the config file
+def _json_abort(code: int, msg: str) -> None:
+    """Abort the current request emitting a JSON payload: `{"detail": msg}`."""
+    response = jsonify({"detail": msg})
+    response.status_code = code
+    abort(response)
 
-    Args:
-        path (str): Name of the folder (nebula+DFL+timestamp) where the config file is located
+# ────────────────────────────────  END-POINTS  ───────────────────────────────
+# ———————————————————————————————  CONFIG  ————————————————————————————————
 
-    Returns:
-        FileResponse: The config file"""
-    # check for path traversal
+@app.route("/config/", methods=["GET"])
+def get_config():
+    """Return the single *.json* config file for the requested run."""
+    path = request.args.get("path", "")
     if _LFI_sentry(path):
-        raise HTTPException(status_code=404, detail="Item not found")
-    else:
-        json_files = _find_x_files(CONFIG_FOLDER + path + "/")
-        if len(json_files) != CONFIG_FILE_COUNT:
-            # raise Exception("There should be only one json file in the folder")
-            raise HTTPException(status_code=404, detail="Item not found")
-        else:
-            file_name = json_files.pop()
-            with open(file_name) as file:
-                return FileResponse(file)
+        _json_abort(404, "Item not found")
 
-
-@app.put("/config/", status_code=status.HTTP_201_CREATED, tags=["config"], response_model=dict)
-def set_config(
-    config: Annotated[UploadFile, File()],
-    path: str,
-) -> dict:
-    """
-    Set the config file
-
-    Args:
-        config (UploadFile): File to be written
-        path (str): Name of the folder where the config file is located. Path should be $scenraio_args.name
-
-    Returns:
-        dict: Name of the written file
-
-    """
-    # check for path traversal
-    if _LFI_sentry(path):
-        raise HTTPException(status_code=404, detail="Item not found")
-
-    else:
-        os.makedirs(CONFIG_FOLDER + path, exist_ok=True)
-        with open(CONFIG_FOLDER + path + "/" + config.filename, "wb") as file:
-            file.write(config.file.read())
-            return {"filename": config.filename}
-
-
-@app.delete("/config/", tags=["config"], response_model=dict)
-def delete_config(
-    path: str,
-) -> dict:
-    """
-    Delete the config file
-
-    Args:
-        path (str): Name of the folder (nebula+DFL+timestamp) where the config file is located
-
-    Returns:
-        dict: Name of the deleted file
-    """
-    # check for path traversal
-    if _LFI_sentry(path):
-        raise HTTPException(status_code=404, detail="Item not found")
-
-    # check if there is a json file in the folder
-    json_files = _find_x_files(CONFIG_FOLDER + path + "/")
+    json_files = _find_x_files(os.path.join(CONFIG_FOLDER, path))
     if len(json_files) != CONFIG_FILE_COUNT:
-        # raise Exception("There should be only one json file in the folder")
-        raise HTTPException(status_code=404, detail="Item not found")
-    else:
-        file_name = json_files.pop()
-        os.remove(file_name)
-        return {"filename": file_name}
+        _json_abort(404, "Item not found")
+
+    return send_file(json_files.pop(), mimetype="application/json",
+                     as_attachment=True)
 
 
-# Dataset
-@app.get("/dataset/", tags=["dataset"], response_model=list)
-def get_dataset(
-    path: str,
-) -> list:
-    """
-    Get the dataset file
+@app.route("/config/", methods=["PUT"])
+def set_config():
+    """Upload a config *.json* for the provided run directory."""
+    if "config" not in request.files:
+        _json_abort(400, "Missing file field 'config'")
 
-    Args:
-        path (str): Name of the folder (nebula+DFL+timestamp) where the dataset file is located
-
-    Returns:
-        list[FileResponse]: List of the two dataset files in the folder
-    """
-
-    # check for path traversal
+    path = request.args.get("path", "")
     if _LFI_sentry(path):
-        raise HTTPException(status_code=404, detail="Item not found")
+        _json_abort(404, "Item not found")
 
-    h5_files = _find_x_files(CONFIG_FOLDER + path + "/", ".h5")
+    os.makedirs(os.path.join(CONFIG_FOLDER, path), exist_ok=True)
+
+    uploaded = request.files["config"]
+    dst = os.path.join(CONFIG_FOLDER, path, uploaded.filename)
+    uploaded.save(dst)
+
+    return jsonify(filename=uploaded.filename), 201
+
+
+@app.route("/config/", methods=["DELETE"])
+def delete_config():
+    """Remove the config *.json* from the given run directory."""
+    path = request.args.get("path", "")
+    if _LFI_sentry(path):
+        _json_abort(404, "Item not found")
+
+    json_files = _find_x_files(os.path.join(CONFIG_FOLDER, path))
+    if len(json_files) != CONFIG_FILE_COUNT:
+        _json_abort(404, "Item not found")
+
+    fn = json_files.pop()
+    os.remove(fn)
+    return jsonify(filename=fn)
+
+# ———————————————————————————————  DATASET  ————————————————————————————————
+
+@app.route("/dataset/", methods=["GET"])
+def get_dataset():
+    """
+    Deliver both *.h5* datasets as a single ZIP archive.
+
+    Returning a single payload simplifies transfer, cache-control and client
+    code compared to sending two independent responses.
+    """
+    path = request.args.get("path", "")
+    if _LFI_sentry(path):
+        _json_abort(404, "Item not found")
+
+    h5_files = _find_x_files(os.path.join(CONFIG_FOLDER, path), ".h5")
     if len(h5_files) != DATASET_FILE_COUNT:
-        # raise Exception("There should be only two h5 file in the folder")
-        raise HTTPException(status_code=404, detail="Item not found")
-    else:
-        file_response = []
-        for file_name in h5_files:
-            with open(file_name) as file:
-                file_response.append(FileResponse(file))
-            return file_response
+        _json_abort(404, "Item not found")
+
+    buf = io.BytesIO()
+    with zipfile.ZipFile(buf, "w", zipfile.ZIP_DEFLATED) as zf:
+        for f in h5_files:
+            zf.write(f, arcname=os.path.basename(f))
+    buf.seek(0)
+
+    return send_file(buf, mimetype="application/zip",
+                     download_name="dataset.zip", as_attachment=True)
 
 
-@app.put("/dataset/", status_code=status.HTTP_201_CREATED, tags=["dataset"])
-def set_dataset(
-    dataset: Annotated[UploadFile, File()],
-    dataset_p: Annotated[UploadFile, File()],
-    path: str,
-) -> list:
-    """
-    Set the dataset file
+@app.route("/dataset/", methods=["PUT"])
+def set_dataset():
+    """Upload the pair of train/test *.h5* files for a run."""
+    missing = [fld for fld in ("dataset", "dataset_p") if fld not in request.files]
+    if missing:
+        _json_abort(400, f"Missing file field(s): {', '.join(missing)}")
 
-    Args:
-        dataset (UploadFile): File to be written
-        path (str): Name of the folder (nebula+DFL+timestamp) where the dataset file is located
-
-    Returns:
-        dict: Name of the written file
-    """
-    # check for path traversal
+    path = request.args.get("path", "")
     if _LFI_sentry(path):
-        raise HTTPException(status_code=404, detail="Item not found")
+        _json_abort(404, "Item not found")
 
-    else:
-        try:
-            os.makedirs(CONFIG_FOLDER + path, exist_ok=True)
-            return_files = []
-            with open(CONFIG_FOLDER + path + "/" + dataset.filename, "wb") as file:
-                file.write(dataset.file.read())
-                return_files.append(dataset.filename)
-            with open(CONFIG_FOLDER + path + "/" + dataset_p.filename, "wb") as file:
-                file.write(dataset_p.file.read())
-                return_files.append(dataset_p.filename)
-        except OSError:
-            pass
-        return return_files
+    os.makedirs(os.path.join(CONFIG_FOLDER, path), exist_ok=True)
+    stored: List[str] = []
+
+    for fld in ("dataset", "dataset_p"):
+        up = request.files[fld]
+        dst = os.path.join(CONFIG_FOLDER, path, up.filename)
+        up.save(dst)
+        stored.append(up.filename)
+
+    return jsonify(stored), 201
 
 
-@app.delete("/dataset/", tags=["dataset"])
-def delete_dataset(
-    path: str,
-):
-    """
-    Delete the dataset file
-
-    Args:
-        path (str): Name of the folder (nebula+DFL+timestamp) where the dataset file is located
-
-    Returns:
-        dict: Name of the deleted file"""
-    # check for path traversal
+@app.route("/dataset/", methods=["DELETE"])
+def delete_dataset():
+    """Delete both dataset *.h5* files from the specified run directory."""
+    path = request.args.get("path", "")
     if _LFI_sentry(path):
-        raise HTTPException(status_code=404, detail="Item not found")
+        _json_abort(404, "Item not found")
 
-    # check if there is a json file in the folder
-    data_files = _find_x_files(CONFIG_FOLDER + path + "/", ".h5")
+    data_files = _find_x_files(os.path.join(CONFIG_FOLDER, path), ".h5")
     if len(data_files) != DATASET_FILE_COUNT:
-        # raise Exception("There should be only one json file in the folder")
-        raise HTTPException(status_code=404, detail="Item not found")
-    else:
-        removed_files = {}
-        for file_name in data_files:
-            os.remove(file_name)
-            removed_files[file_name] = "deleted"
-        return removed_files
+        _json_abort(404, "Item not found")
 
+    removed: Dict[str, str] = {}
+    for fn in data_files:
+        os.remove(fn)
+        removed[fn] = "deleted"
+    return jsonify(removed)
 
-# certs
-@app.get("/certs/", tags=["certs"])
+# ————————————————————————————————  CERTS  ————————————————————————————————
+
+@app.route("/certs/", methods=["GET"])
 def get_certs():
-    """
-    Get the certs file
+    """Download every *.cert* file in a ZIP archive."""
+    certs_files = _find_x_files(CERTS_FOLDER, ".cert")
+    if not certs_files:
+        _json_abort(404, "No cert files found")
 
-    Returns:
-        FileResponse: The certs file
-    """
-    certs_files = _find_x_files(CERTS_FOLDER + "/", ".cert")
-    return_files = []
-    for file_name in certs_files:
-        with open(file_name) as file:
-            return_files.append(FileResponse(file))
-    return return_files
+    buf = io.BytesIO()
+    with zipfile.ZipFile(buf, "w", zipfile.ZIP_DEFLATED) as zf:
+        for f in certs_files:
+            zf.write(f, arcname=os.path.basename(f))
+    buf.seek(0)
 
-
-@app.put("/certs/", status_code=status.HTTP_201_CREATED, tags=["certs"])
-def set_cert(
-    cert: Annotated[UploadFile, File()],
-) -> dict:
-    """
-    Set the certs file
-
-    Args:
-        cert (UploadFile): File to be written
-
-    Returns:
-        dict: Name of the written file"""
-    with open(CERTS_FOLDER + cert.filename, "wb") as file:
-        file.write(cert.file.read())
-        return {"filename": cert.filename}
+    return send_file(buf, mimetype="application/zip",
+                     download_name="certs.zip", as_attachment=True)
 
 
-@app.delete("/certs/", tags=["certs"])
+@app.route("/certs/", methods=["PUT"])
+def set_cert():
+    """Upload one *.cert* file to the global certificates folder."""
+    if "cert" not in request.files:
+        _json_abort(400, "Missing file field 'cert'")
+
+    uploaded = request.files["cert"]
+    dst = os.path.join(CERTS_FOLDER, uploaded.filename)
+    uploaded.save(dst)
+
+    return jsonify(filename=uploaded.filename), 201
+
+
+@app.route("/certs/", methods=["DELETE"])
 def delete_certs():
+    """Remove **all** certificate files from the system."""
+    certs_files = _find_x_files(CERTS_FOLDER, ".cert")
+    removed: Dict[str, str] = {}
+    for fn in certs_files:
+        os.remove(fn)
+        removed[fn] = "deleted"
+    return jsonify(removed)
+
+# ————————————————————————————————  LOGS  ————————————————————————————————
+
+def _send_single_log(path: str, pattern: str):
+    """Return the shortest matching log file inside *path*."""
+    log_files = _find_x_files(path, pattern)
+    if not log_files:
+        _json_abort(404, "Log file not found")
+
+    target = min(log_files, key=lambda x: len(os.path.basename(x)))
+    return send_file(target, mimetype="text/plain", as_attachment=True)
+
+@app.route("/get_logs/", methods=["GET"])
+def get_logs():
+    """Download the main *.log* produced during training."""
+    path = request.args.get("path", "")
+    if _LFI_sentry(path):
+        _json_abort(404, "Item not found")
+    return _send_single_log(os.path.join(LOGS_FOLDER, path), ".log")
+
+
+@app.route("/get_logs/", methods=["DELETE"])
+def delete_logs():
+    """Delete the main *.log* for the requested run."""
+    path = request.args.get("path", "")
+    if _LFI_sentry(path):
+        _json_abort(404, "Item not found")
+
+    log_files = _find_x_files(os.path.join(LOGS_FOLDER, path), ".log")
+    if not log_files:
+        _json_abort(404, "Log file not found")
+
+    target = min(log_files, key=lambda x: len(os.path.basename(x)))
+    os.remove(target)
+    return jsonify(filename=target)
+
+
+# Create *dedicated* GET+DELETE routes for debug/error/training logs
+def _log_route(route_name: str, filename: str) -> None:
     """
-    Delete the ALL certs file
+    Register two URL rules:
 
-    Returns:
-        dict: Name of the deleted file
+      • **GET  /get_logs/<route_name>/**  → download the file
+      • **DELETE /get_logs/<route_name>/** → delete the file
     """
-    certs_files = _find_x_files(CERTS_FOLDER + "/", ".cert")
-    removed_files = {}
-    for file_name in certs_files:
-        os.remove(file_name)
-        removed_files[file_name] = "deleted"
-    return removed_files
+    def _getter():
+        path = request.args.get("path", "")
+        if _LFI_sentry(path):
+            _json_abort(404, "Item not found")
+        return _send_single_log(os.path.join(LOGS_FOLDER, path), filename)
 
+    def _deleter():
+        path = request.args.get("path", "")
+        if _LFI_sentry(path):
+            _json_abort(404, "Item not found")
 
-# Logs
-@app.get("/get_logs/", tags=["logs"])
-def get_logs(
-    path: str,
-):
-    """
-    Get the log file
+        files = _find_x_files(os.path.join(LOGS_FOLDER, path), filename)
+        if not files:
+            _json_abort(404, "Log file not found")
 
-    Args:
-        path (str): Name of the folder (nebula+DFL+timestamp) where the log file is located
+        target = files.pop()
+        os.remove(target)
+        return jsonify(filename=target)
 
-    Returns:
-        FileResponse: The log file
-    """
-    # check for path traversal
-    if _LFI_sentry(path):
-        raise HTTPException(status_code=404, detail="Item not found")
-    else:
-        log_files = _find_x_files(LOGS_FOLDER + path + "/", ".log")
-        if not log_files:
-            raise HTTPException(status_code=404, detail="Log file not found")
-        log_file = min(log_files, key=lambda x: len(os.path.basename(x)))
-        with open(log_file) as file:
-            return FileResponse(file)
+    # `endpoint` must be unique – build one from the route name + HTTP verb
+    app.add_url_rule(
+        f"/get_logs/{route_name}/",
+        endpoint=f"get_logs_{route_name}_get",
+        view_func=_getter,
+        methods=["GET"],
+    )
+    app.add_url_rule(
+        f"/get_logs/{route_name}/",
+        endpoint=f"get_logs_{route_name}_del",
+        view_func=_deleter,
+        methods=["DELETE"],
+    )
 
+for _name in ("debug", "error", "training"):
+    _log_route(_name, f"{_name}.log")
 
-@app.delete("/get_logs/", tags=["logs"])
-def delete_logs(
-    path: str,
-) -> dict:
-    """
-    Delete the log file
+# ————————————————————————————————  METRICS  ————————————————————————————————
 
-    Args:
-        path (str): Name of the folder (nebula+DFL+timestamp) where the log file is located
-
-    Returns:
-        dict: Name of the deleted file
-    """
-    # check for path traversal
-    if _LFI_sentry(path):
-        raise HTTPException(status_code=404, detail="Item not found")
-    else:
-        log_files = _find_x_files(LOGS_FOLDER + path + "/", ".log")
-        if not log_files:
-            raise HTTPException(status_code=404, detail="Log file not found")
-        log_file = min(log_files, key=lambda x: len(os.path.basename(x)))
-        os.remove(log_file)
-        return {"filename": log_file}
-
-
-@app.get("/get_logs/debug/", tags=["logs"])
-def get_debug_logs(
-    path: str,
-):
-    # check for path traversal
-    if _LFI_sentry(path):
-        raise HTTPException(status_code=404, detail="Item not found")
-    else:
-        log_files = _find_x_files(LOGS_FOLDER + path + "/", "debug.log")
-        if not log_files:
-            raise HTTPException(status_code=404, detail="Log file not found")
-        with open(log_files.pop()) as file:
-            return FileResponse(file)
-
-
-@app.delete("/get_logs/debug/", tags=["logs"])
-def delete_debug_logs(
-    path: str,
-) -> dict:
-    # check for path traversal
-    if _LFI_sentry(path):
-        raise HTTPException(status_code=404, detail="Item not found")
-    else:
-        log_files = _find_x_files(LOGS_FOLDER + path + "/", "debug.log")
-        if not log_files:
-            raise HTTPException(status_code=404, detail="Log file not found")
-        log_file = log_files.pop()
-        os.remove(log_file)
-        return {"filename": log_file}
-
-
-@app.get("/get_logs/error/", tags=["logs"])
-def get_error_logs(
-    path: str,
-):
-    # check for path traversal
-    if _LFI_sentry(path):
-        raise HTTPException(status_code=404, detail="Item not found")
-    else:
-        log_files = _find_x_files(LOGS_FOLDER + path + "/", "error.log")
-        if not log_files:
-            raise HTTPException(status_code=404, detail="Log file not found")
-        with open(log_files.pop()) as file:
-            return FileResponse(file)
-
-
-@app.delete("/get_logs/error/", tags=["logs"])
-def delete_error_logs(
-    path: str,
-) -> dict:
-    # check for path traversal
-    if _LFI_sentry(path):
-        raise HTTPException(status_code=404, detail="Item not found")
-    else:
-        log_files = _find_x_files(LOGS_FOLDER + path + "/", "error.log")
-        if not log_files:
-            raise HTTPException(status_code=404, detail="Log file not found")
-        log_file = log_files.pop()
-        os.remove(log_file)
-        return {"filename": log_file}
-
-
-@app.get("/get_logs/training/", tags=["logs"])
-def get_train_logs(
-    path: str,
-):
-    # check for path traversal
-    if _LFI_sentry(path):
-        raise HTTPException(status_code=404, detail="Item not found")
-    else:
-        log_files = _find_x_files(LOGS_FOLDER + path + "/", "training.log")
-        if not log_files:
-            raise HTTPException(status_code=404, detail="Log file not found")
-        with open(log_files.pop()) as file:
-            return FileResponse(file)
-
-
-@app.delete("/get_logs/training/", tags=["logs"])
-def delete_train_logs(
-    path: str,
-) -> dict:
-    # check for path traversal
-    if _LFI_sentry(path):
-        raise HTTPException(status_code=404, detail="Item not found")
-    else:
-        log_files = _find_x_files(LOGS_FOLDER + path + "/", "training.log")
-        if not log_files:
-            raise HTTPException(status_code=404, detail="Log file not found")
-        log_file = log_files.pop()
-        os.remove(log_file)
-        return {"filename": log_file}
-
-
-# Metrics
-@app.get("/metrics/", tags=["metrics"])
+@app.route("/metrics/", methods=["GET"])
 def get_metrics():
-    # check for path traversal
-
+    """Bundle every file under *METRICS_FOLDER* into a ZIP archive."""
     log_files = _find_x_files(METRICS_FOLDER, "")
     if not log_files:
-        raise HTTPException(status_code=404, detail="Log file not found")
-    return_files = []
-    for file_name in log_files:
-        with open(file_name) as file:
-            return_files.append(FileResponse(file))
+        _json_abort(404, "Log file not found")
 
+    buf = io.BytesIO()
+    with zipfile.ZipFile(buf, "w", zipfile.ZIP_DEFLATED) as zf:
+        for f in log_files:
+            zf.write(f, arcname=os.path.basename(f))
+    buf.seek(0)
 
-# Actions
-@app.get("/run/", tags=["actions"])
-async def run():
+    return send_file(buf, mimetype="application/zip",
+                     download_name="metrics.zip", as_attachment=True)
+
+# ————————————————————————————————  ACTIONS  ————————————————————————————————
+
+@app.route("/run/", methods=["GET"])
+def run():
     """
-    Lanza el entrenamiento con la configuración indicada en `path`
-    """
-
-    json_files = _find_x_files(CONFIG_FOLDER)
-
-    # Check if there is a json file in the folder
-    if len(json_files) != CONFIG_FILE_COUNT:
-        raise HTTPException(status_code=404, detail="Config file not found")
-
-    # Avoids running multiple training processes at the same time
-    global TRAINING_PROC
-    if TRAINING_PROC and TRAINING_PROC.returncode is None:
-        raise HTTPException(status_code=409, detail="Training already running")
-
-    # Creates the subprocess in a non-blocking way
-    cmd = [
-        "python",
-        "/home/dietpi/prueba/nebula/nebula/node.py",
-        json_files[0],
-    ]
-    TRAINING_PROC = await asyncio.create_subprocess_exec(*cmd)
-
-    return {"pid": TRAINING_PROC.pid, "state": "running"}
-
-
-# @app.get("/pause/", tags=["actions"])
-# async def pause():
-#     """
-#     Send SIGSTOP to the training process to pause it.
-#     """
-#     global TRAINING_PROC
-#     if not TRAINING_PROC or TRAINING_PROC.returncode is not None:
-#         raise HTTPException(status_code=404, detail="No training running")
-
-#     TRAINING_PROC.send_signal(signal.SIGSTOP)
-#     return {"pid": TRAINING_PROC.pid, "state": "paused"}
-
-@app.get("/stop/", tags=["actions"])
-async def stop():
-    """
-    Send SIGTERM to the training process and wait for it to finish.
-    """
-    global TRAINING_PROC
-    if not TRAINING_PROC or TRAINING_PROC.returncode is not None:
-        raise HTTPException(status_code=404, detail="No training running")
-
-    TRAINING_PROC.send_signal(signal.SIGTERM)
-    await TRAINING_PROC.wait()
-    pid = TRAINING_PROC.pid 
-    TRAINING_PROC = None
-    return {"pid": pid, "state": "stopped"}
-
-
-@app.put(
-    "/setup/",
-    status_code=status.HTTP_201_CREATED,
-    tags=["setup"],
-    response_model=list,
-)
-def setup_new_run(
-    config: Annotated[UploadFile, File()],
-    global_test: Annotated[UploadFile, File()],
-    train_set: Annotated[UploadFile, File()],
-) -> list:
-    """
-    Upload three files (1 × *.json* + 2 × *.h5*), rewrite paths inside the JSON
-    to match this node, validate neighbour IPs via Tailscale, then clear old
-    configs/logs and save the new files.
-
-    Errors
-    ------
-    • **409 Conflict** – training already running  
-    • **400 Bad Request** – wrong extensions, neighbour IP mismatch, or JSON
-      parse error.
+    Spawn the federated training process (once).
 
     Returns
     -------
-    list
-        Names of the stored files (JSON first, then the two datasets).
+    JSON {pid, state}
     """
+    json_files = _find_x_files(CONFIG_FOLDER)
+    if len(json_files) != CONFIG_FILE_COUNT:
+        _json_abort(404, "Config file not found")
 
-    # Concurrency guard
     global TRAINING_PROC
-    if TRAINING_PROC and TRAINING_PROC.returncode is None:
-        raise HTTPException(
-            status_code=409,
-            detail="Training already running; pause or stop it before uploading.",
-        )
+    if TRAINING_PROC and TRAINING_PROC.poll() is None:
+        _json_abort(409, "Training already running")
 
-    # Extension validation
-    if not config.filename.endswith(".json"):
-        raise HTTPException(
-            status_code=400,
-            detail=f"`{config.filename}` must have a .json extension.",
-        )
+    cmd = ["python", "/home/dietpi/prueba/nebula/nebula/node.py", json_files[0]]
+    TRAINING_PROC = subprocess.Popen(cmd)
+
+    return jsonify(pid=TRAINING_PROC.pid, state="running")
+
+
+@app.route("/stop/", methods=["GET"])
+def stop():
+    """Terminate the running training process (SIGTERM) and wait for it."""
+    global TRAINING_PROC
+    if not TRAINING_PROC or TRAINING_PROC.poll() is not None:
+        _json_abort(404, "No training running")
+
+    TRAINING_PROC.send_signal(signal.SIGTERM)
+    TRAINING_PROC.wait()
+    pid = TRAINING_PROC.pid
+    TRAINING_PROC = None
+
+    return jsonify(pid=pid, state="stopped")
+
+# ———————————————————————  SETUP – UPLOAD 3 FILES  ————————————————————————
+
+@app.route("/setup/", methods=["PUT"])
+def setup_new_run():
+    """
+    Prepare a **new** federated-learning round.
+
+    Expected multipart-form fields
+    -------------------------------
+    * **config**     – JSON with scenario, network and security arguments  
+    * **global_test** – shared evaluation dataset (`*.h5`)  
+    * **train_set**   – participant-specific training dataset (`*.h5`)
+
+    The function rewrites paths inside *config*, validates neighbour IPs
+    through Tailscale, deletes previous artefacts and finally stores the new
+    trio of files.
+    """
+    # 1 · Refuse while a training task is still running
+    global TRAINING_PROC
+    if TRAINING_PROC and TRAINING_PROC.poll() is None:
+        _json_abort(409, "Training already running; pause or stop it first.")
+
+    # 2 · Check field presence
+    missing = [x for x in ("config", "global_test", "train_set")
+               if x not in request.files]
+    if missing:
+        _json_abort(400, f"Missing file field(s): {', '.join(missing)}")
+
+    config_up   = request.files["config"]
+    global_test = request.files["global_test"]
+    train_set   = request.files["train_set"]
+
+    # 3 · Extension sanity
+    if not config_up.filename.endswith(".json"):
+        _json_abort(400, f"`{config_up.filename}` must have a .json extension.")
     for ds in (global_test, train_set):
         if not ds.filename.endswith(".h5"):
-            raise HTTPException(
-                status_code=400,
-                detail=f"`{ds.filename}` must have a .h5 extension.",
-            )
+            _json_abort(400, f"`{ds.filename}` must have a .h5 extension.")
 
-    # Read & patch the JSON
+    # 4 · Parse + patch JSON
     try:
-        original_cfg = json.load(config.file)
-    except Exception as exc:
-        raise HTTPException(
-            status_code=400,
-            detail=f"Invalid JSON file: {exc}",
-        )
+        original_cfg = json.load(config_up)
+    except Exception as exc:  # broad – any parsing failure should abort
+        _json_abort(400, f"Invalid JSON file: {exc}")
 
-    # Replace tracking paths 
+    # Update tracking / security paths to local folders
     tracking = original_cfg.get("tracking_args", {})
-    tracking["log_dir"] = LOGS_FOLDER.rstrip("/")
+    tracking["log_dir"]    = LOGS_FOLDER.rstrip("/")
     tracking["config_dir"] = CONFIG_FOLDER.rstrip("/")
     original_cfg["tracking_args"] = tracking
 
-    # Replace security paths
     sec = original_cfg.get("security_args", {})
     for key in ("certfile", "keyfile", "cafile"):
         if key in sec and sec[key]:
-            basename = os.path.basename(sec[key])
-            sec[key] = os.path.join(CERTS_FOLDER.rstrip("/"), basename)
+            sec[key] = os.path.join(CERTS_FOLDER.rstrip("/"),
+                                    os.path.basename(sec[key]))
     original_cfg["security_args"] = sec
 
-    # Validate neighbour IPs
-    neigh_str: str = (
-        original_cfg.get("network_args", {})
-        .get("neighbors", "")
-        .strip()
-    )
-    # Extract plain IPs (ignore :port if present)
-    requested_ips = {
-        re.split(r":", entry)[0]
-        for entry in neigh_str.split()
-        if entry
-    }
+    # 5 · (May be removed) Check neighbour reachability via Tailscale
+    neigh_str = original_cfg.get("network_args", {}).get("neighbors", "").strip()
+    requested_ips: Set[str] = {re.split(r":", n)[0] for n in neigh_str.split() if n}
 
     if requested_ips:
         try:
             ts_out = subprocess.run(
                 ["tailscale", "status", "--json"],
-                capture_output=True,
-                text=True,
-                check=True,
+                capture_output=True, text=True, check=True,
             )
             ts_status = json.loads(ts_out.stdout)
-            reachable_ips = set(ts_status.get("Self", {}).get("TailscaleIPs", []))
+            reachable: Set[str] = set(ts_status.get("Self", {}).get("TailscaleIPs", []))
             for peer in ts_status.get("Peer", {}).values():
-                reachable_ips.update(peer.get("TailscaleIPs", []))
+                reachable.update(peer.get("TailscaleIPs", []))
         except Exception as exc:
-            raise HTTPException(
-                status_code=400,
-                detail=f"Could not verify neighbours via Tailscale: {exc}",
-            )
+            _json_abort(400, f"Could not verify neighbours via Tailscale: {exc}")
 
-        missing = sorted(ip for ip in requested_ips if ip not in reachable_ips)
+        missing = sorted(ip for ip in requested_ips if ip not in reachable)
         if missing:
-            raise HTTPException(
-                status_code=400,
-                detail=f"Neighbour IP(s) not reachable via Tailscale: {', '.join(missing)}",
-            )
+            _json_abort(400, f"Neighbour IP(s) not reachable: {', '.join(missing)}")
 
-    # Remove old .json / .h5 files
-    for fname in os.listdir(CONFIG_FOLDER):
-        if fname.endswith((".json", ".h5")):
+    # 6 · Clean previous JSON/H5 artefacts
+    for fn in os.listdir(CONFIG_FOLDER):
+        if fn.endswith((".json", ".h5")):
             try:
-                os.remove(os.path.join(CONFIG_FOLDER, fname))
+                os.remove(os.path.join(CONFIG_FOLDER, fn))
             except OSError:
                 pass
-            
-    # Check if files were removed
-    for fname in os.listdir(CONFIG_FOLDER):
-        if fname.endswith((".json", ".h5")):
-            raise HTTPException(
-                status_code=400,
-                detail=f"Could not delete old file: {fname}",
-            )
+    if any(fn.endswith((".json", ".h5")) for fn in os.listdir(CONFIG_FOLDER)):
+        _json_abort(400, "Could not delete old JSON/H5 files.")
 
-    # Save the patched JSON 
-    json_dest = os.path.join(CONFIG_FOLDER, config.filename)
+    # 7 · Persist patched JSON
+    json_dest = os.path.join(CONFIG_FOLDER, config_up.filename)
     with open(json_dest, "wb") as dst:
-        dst.write(json.dumps(original_cfg, indent=2).encode("utf-8"))
+        dst.write(json.dumps(original_cfg, indent=2).encode())
 
-    # Save the datasets
-    saved_files: list[str] = [config.filename]
-    for uploaded in (global_test, train_set):
-        dst_path = os.path.join(CONFIG_FOLDER, uploaded.filename)
-        with open(dst_path, "wb") as dst:
-            dst.write(uploaded.file.read())
-        saved_files.append(uploaded.filename)
-        print (f"Saved {uploaded.filename} to {dst_path}")
+    # 8 · Persist datasets
+    saved = [config_up.filename]
+    for up in (global_test, train_set):
+        dst = os.path.join(CONFIG_FOLDER, up.filename)
+        up.save(dst)
+        saved.append(up.filename)
 
-    # Purge all *.log files 
+    # 9 · Purge previous log files
     for root, _, files in os.walk(LOGS_FOLDER):
-        for fname in files:
-            if fname.endswith(".log"):
+        for fn in files:
+            if fn.endswith(".log"):
                 try:
-                    os.remove(os.path.join(root, fname))
+                    os.remove(os.path.join(root, fn))
                 except OSError:
                     pass
-    
-    # Check if files were removed
-    for root, _, files in os.walk(LOGS_FOLDER):
-        for fname in files:
-            if fname.endswith(".log"):
-                raise HTTPException(
-                    status_code=400,
-                    detail=f"Could not delete old file: {fname}",
-                )
+    if any(fn.endswith(".log") for _, _, fns in os.walk(LOGS_FOLDER) for fn in fns):
+        _json_abort(400, "Could not delete old log files.")
 
-    return saved_files
+    return jsonify(saved), 201
+
+# ─────────────────────────────────────────────────────────────────────────────
+#  ENTRY-POINT
+# -----------------------------------------------------------------------------
+if __name__ == "__main__":
+    # Local testing:  python main.py
+    app.run(host="0.0.0.0", port=8000, debug=False)

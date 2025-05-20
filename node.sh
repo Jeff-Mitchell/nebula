@@ -1,75 +1,166 @@
-#!/bin/bash
-set -e  # Exit immediately if any command fails
+#!/usr/bin/env bash
+###############################################################################
+# Provision *once* (or update safely) a Raspberry Pi node that will:
+#
+#   • run inside a DietPi / Debian 12 “Bookworm” ARM64 image
+#   • join a Tailscale network
+#   • clone the *Nebula-DFL* repository (or update it if already there)
+#   • create a per-project Python 3.11 virtual-env with **uv**
+#   • serve `main.py` with **Gunicorn + Flask** on port ${APP_PORT}
+#
+# Every section is **idempotent**: re-running the script will skip work that is
+# already done and only apply missing pieces.
+#
+# Usage ────────────────────────────────────────────────────────────────────────
+#   ./idempotent_node.sh               # run locally on the Pi (as dietpi user)
+#
+###############################################################################
+set -euo pipefail
 
-# Ask for sudo password once at the beginning
-sudo -v
+###############################################################################
+# USER CONFIGURATION
+###############################################################################
+AUTH_KEY="tskey-auth-k26BCauJup11CNTRL-Ytj6n6t6dNCK7nhdDhY4NC8VvsBC2Xvc"  # ← EDIT
+REPO_URL="https://github.com/CyberDataLab/nebula.git"
+REPO_BRANCH="physical-deployment"
+APP_PORT=8000                     # Gunicorn listen port
+PY_VERSION="3.11.7"               # exact CPython build to install with `uv`
+VENV_DIR=".venv"                  # venv folder inside the repo
+###############################################################################
 
-################################################################################
-# 1. Remove duplicate entries for bookworm-backports if they exist
-################################################################################
-if [ -f /etc/apt/sources.list.d/backports.list ]; then
-  echo "🧹 Removing duplicate bookworm-backports entry..."
-  sudo rm /etc/apt/sources.list.d/backports.list
+sudo -v  # cache sudo credentials once
+
+###############################################################################
+# 0 ▸ TIME & CLOCK ────────────────────────────────────────────────────────────
+# Synchronise the RTC/NTP early to avoid “Release file … not valid yet” apt
+# errors when the Pi’s clock is far in the past.
+###############################################################################
+echo "· Syncing system clock with NTP …"
+sudo timedatectl set-ntp true
+sudo timedatectl set-timezone Europe/Madrid
+for _ in {1..15}; do
+  timedatectl | grep -q "System clock synchronized: yes" && break
+  sleep 1
+done
+
+###############################################################################
+# 1 ▸ APT SOURCE CLEAN-UP ─────────────────────────────────────────────────────
+# DietPi sometimes duplicates entries; remove known offenders so that
+# `apt-get update` stays quiet.
+###############################################################################
+for list in \
+  /etc/apt/sources.list.d/backports.list \
+  /etc/apt/sources.list.d/dietpi-tailscale.list
+do
+  [[ -f "${list}" ]] && sudo rm -f "${list}"
+done
+
+###############################################################################
+# 2 ▸ TAILSCALE REPOSITORY  (one-off) ─────────────────────────────────────────
+###############################################################################
+TS_LIST="/etc/apt/sources.list.d/tailscale.list"
+if [[ ! -f "${TS_LIST}" ]]; then
+  echo "· Adding Tailscale APT repository …"
+  curl -fsSL https://pkgs.tailscale.com/stable/debian/bookworm.gpg |
+    sudo tee /usr/share/keyrings/tailscale-archive-keyring.asc >/dev/null
+  echo "deb [signed-by=/usr/share/keyrings/tailscale-archive-keyring.asc] \
+https://pkgs.tailscale.com/stable/debian bookworm main" |
+    sudo tee "${TS_LIST}" >/dev/null
 fi
 
-################################################################################
-# 2. Add the official Tailscale repository (signed and stable)
-################################################################################
-curl -fsSL https://pkgs.tailscale.com/stable/debian/bookworm.gpg | \
-  sudo tee /usr/share/keyrings/tailscale-archive-keyring.asc >/dev/null
-
-echo "deb [signed-by=/usr/share/keyrings/tailscale-archive-keyring.asc] https://pkgs.tailscale.com/stable/debian bookworm main" | \
-  sudo tee /etc/apt/sources.list.d/tailscale.list
-
-################################################################################
-# 3. Update and install essential packages and dependencies
-################################################################################
+###############################################################################
+# 3 ▸ BASE PACKAGES ───────────────────────────────────────────────────────────
+###############################################################################
+echo "· Updating APT cache and installing base packages …"
 sudo apt-get update
-sudo apt-get install -y \
-  tzdata curl net-tools iproute2 iputils-ping \
-  build-essential gcc g++ clang git make cmake \
-  tailscale \
-  python3.11 python3.11-venv
+sudo DEBIAN_FRONTEND=noninteractive \
+  apt-get install -y --no-install-recommends \
+    tzdata curl net-tools iproute2 iputils-ping \
+    build-essential gcc g++ clang git make cmake \
+    python3.11 python3.11-venv tailscale
 
-################################################################################
-# 4. Set system timezone to Europe/Madrid
-################################################################################
-sudo ln -fs /usr/share/zoneinfo/Europe/Madrid /etc/localtime
-sudo dpkg-reconfigure -f noninteractive tzdata
+###############################################################################
+# 4 ▸ ENSURE systemd DBus (DietPi ≠ systemd by default) ──────────────────────
+###############################################################################
+SYSTEMCTL_OK=false
+if command -v systemctl &>/dev/null; then
+  if ! systemctl is-system-running &>/dev/null; then
+    echo "· Installing dbus so that systemctl can talk to systemd …"
+    sudo apt-get install -y --no-install-recommends dbus
+    sudo systemctl unmask systemd-logind.service 2>/dev/null || true
+    sudo systemctl start  systemd-logind.service 2>/dev/null || true
+    sudo systemctl restart dbus.service          2>/dev/null || true
+    sleep 2
+  fi
+  systemctl is-system-running &>/dev/null && SYSTEMCTL_OK=true
+fi
+${SYSTEMCTL_OK} || echo "⚠ systemctl unavailable — Tailscale service will not be enabled"
 
-################################################################################
-# 5. Connect to Tailscale VPN using a valid auth key (it lasts 90 days)
-################################################################################
-# 🔐 IMPORTANT: Replace this with a valid reusable auth key
-sudo tailscale up --auth-key=tskey-auth-k26BCauJup11CNTRL-Ytj6n6t6dNCK7nhdDhY4NC8VvsBC2Xvc
-sudo systemctl enable tailscaled
+###############################################################################
+# 5 ▸ TAILSCALE UP  (idempotent) ──────────────────────────────────────────────
+###############################################################################
+if ! tailscale status --json &>/dev/null; then
+  echo "· Connecting to Tailscale …"
+  sudo tailscale up --reset --auth-key="${AUTH_KEY}"
+fi
+${SYSTEMCTL_OK} && sudo systemctl enable tailscaled 2>/dev/null || true
 
-################################################################################
-# 6. Set Python 3.11 as the default system Python
-################################################################################
+###############################################################################
+# 6 ▸ PYTHON 3.11 AS DEFAULT ──────────────────────────────────────────────────
+###############################################################################
 sudo update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.11 2
-sudo update-alternatives --install /usr/bin/python python /usr/bin/python3 1
+sudo update-alternatives --install /usr/bin/python  python  /usr/bin/python3     1
 
-################################################################################
-# 7. Clone the NEBULA repository if it doesn't already exist
-################################################################################
-if [ ! -d "nebula" ]; then
-  git clone https://github.com/CyberDataLab/nebula.git -b physical-deployment
+###############################################################################
+# 7 ▸ CLONE / UPDATE REPOSITORY ───────────────────────────────────────────────
+###############################################################################
+if [[ ! -d nebula ]]; then
+  echo "· Cloning repository ${REPO_URL} (${REPO_BRANCH}) …"
+  git clone --depth=1 --branch "${REPO_BRANCH}" "${REPO_URL}" nebula
+fi
+cd nebula
+git remote set-url origin "${REPO_URL}"   # in case the URL changed
+git fetch origin "${REPO_BRANCH}" --depth=1
+git reset --hard "origin/${REPO_BRANCH}"
+sudo chown -R "$(id -un):$(id -gn)" .
+
+###############################################################################
+# 8 ▸ UV & VENV ───────────────────────────────────────────────────────────────
+###############################################################################
+if ! command -v uv &>/dev/null; then
+  echo "· Installing UV package manager …"
+  curl -fsSL https://astral.sh/uv/install.sh | sh
+  export PATH="${HOME}/.local/bin:${PATH}"
 fi
 
-cd nebula
-sudo chown -R "$(whoami)":"$(whoami)" .
+if [[ ! -d "${VENV_DIR}" ]]; then
+  echo "· Creating Python ${PY_VERSION} virtual-env with uv …"
+  uv python install "${PY_VERSION}"
+  uv python pin     "${PY_VERSION}"
+  uv venv "${VENV_DIR}"
+fi
 
-################################################################################
-# 8. Install UV and create a Python 3.11.7 virtual environment
-################################################################################
-curl -fsSL https://astral.sh/uv/install.sh | sh
-uv python install 3.11.7
-uv python pin 3.11.7
+# Activate venv
+# shellcheck disable=SC1090
+source "${VENV_DIR}/bin/activate"
+
+# Install project core dependencies (from pyproject.toml’s [tool.uv] groups)
 uv sync --group core
 
-################################################################################
-# 9. Activate the virtual environment and run the FastAPI backend
-################################################################################
-source .venv/bin/activate
-fastapi run main.py
+###############################################################################
+# 9 ▸ RUNTIME DEPS (Flask + Gunicorn) ─────────────────────────────────────────
+###############################################################################
+uv pip install --upgrade --no-cache-dir \
+  "Flask>=3.0,<4.0" "gunicorn>=22.0"
+
+###############################################################################
+# 10 ▸ START – OR SKIP IF ALREADY RUNNING ─────────────────────────────────────
+###############################################################################
+if pgrep -f "gunicorn .* main:app" &>/dev/null; then
+  echo "✔ Gunicorn is already running – nothing to do."
+  exit 0
+fi
+
+echo "· Launching Gunicorn (Flask) on port ${APP_PORT} …"
+export FLASK_APP=main.py
+exec gunicorn -w 1 -b "0.0.0.0:${APP_PORT}" "main:app"
