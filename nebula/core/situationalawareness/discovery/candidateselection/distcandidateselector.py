@@ -2,9 +2,10 @@ from nebula.core.situationalawareness.discovery.candidateselection.candidatesele
 from nebula.core.utils.locker import Locker
 from nebula.core.eventmanager import EventManager
 from nebula.core.nebulaevents import GPSEvent
+import logging
 
 class DistanceCandidateSelector(CandidateSelector):
-    MAX_DISTANCE_THRESHOLD = 200
+    MAX_DISTANCE_THRESHOLD = 300
     MIN_DISTANCE_THRESHOLD = 100
 
     def __init__(self):
@@ -34,7 +35,7 @@ class DistanceCandidateSelector(CandidateSelector):
                     if candidate[0] in self.nodes_distances and
                     self.nodes_distances[candidate[0]][0] < self.MAX_DISTANCE_THRESHOLD
                 ]
-                cdts = self.candidates.copy()
+                logging.info(f"Nodes availables: {nodes_available}")
         return (nodes_available, [])
     
     async def remove_candidates(self):

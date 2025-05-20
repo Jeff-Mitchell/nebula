@@ -266,8 +266,6 @@ class Connection:
             logging.exception(f"Error sending data: {e}")
             if self.direct:
                 await self.reconnect()
-            if self.direct:
-                await self.reconnect()
 
     def _prepare_data(self, data: Any, pb: bool, encoding_type: str) -> tuple[bytes, bytes]:
         if pb:

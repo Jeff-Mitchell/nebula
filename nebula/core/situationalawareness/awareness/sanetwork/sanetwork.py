@@ -48,7 +48,7 @@ class SANetwork(SAMComponent):
         )
         self._sar = config["sar"]  # sar
         self._addr = config["addr"]  # addr
-        self._neighbor_policy = factory_NeighborPolicy(self._neighbor_policy)
+        self._neighbor_policy = factory_NeighborPolicy("distance")#self._neighbor_policy)
         self._restructure_process_lock = Locker(name="restructure_process_lock")
         self._restructure_cooldown = 0
         self._verbose = config["verbose"]  # verbose

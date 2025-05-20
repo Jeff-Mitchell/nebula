@@ -5,8 +5,7 @@ from nebula.core.eventmanager import EventManager
 from nebula.core.nebulaevents import GPSEvent
 
 class DistanceNeighborPolicy(NeighborPolicy):
-    MAX_DISTANCE_THRESHOLD = 200
-    MIN_DISTANCE_THRESHOLD = 100
+    MAX_DISTANCE_THRESHOLD = 300
 
     def __init__(self):
         self.max_neighbors = None
@@ -49,7 +48,7 @@ class DistanceNeighborPolicy(NeighborPolicy):
                 closest_nodes: set[str] = {
                     nodo_id
                     for nodo_id, (distancia, _) in self.nodes_distances.items()
-                    if distancia < self.MIN_DISTANCE_THRESHOLD
+                    if distancia < self.MAX_DISTANCE_THRESHOLD
                 }
                 available_nodes = closest_nodes.difference(self.neighbors)
                 logging.info(f"Available neighbors based on distance: {available_nodes}")
@@ -133,6 +132,7 @@ class DistanceNeighborPolicy(NeighborPolicy):
                     for nodo_id, (distancia, _) in self.nodes_distances.items()
                     if distancia < self.MAX_DISTANCE_THRESHOLD-20
                 }
+                logging.info(f"Closest nodes: {closest_nodes}, neighbors: {self.neighbors}")
                 available_nodes = closest_nodes.difference(self.neighbors)
                 logging.info(f"Available neighbors based on distance: {available_nodes}")
                 return available_nodes
@@ -163,7 +163,7 @@ class DistanceNeighborPolicy(NeighborPolicy):
                     if distancia > self.MAX_DISTANCE_THRESHOLD
                 }
                 distant_nodes = self.neighbors.intersection(distant_nodes)
-                logging.info(f"Available neighbors based on distance: {distant_nodes}")
+                logging.info(f"Remove neighbors based on distance: {distant_nodes}")
         return distant_nodes
 
     def stricted_topology_status(stricted_topology: bool):
