@@ -70,7 +70,7 @@ const MobilityManager = {
             
             L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
                 attribution: '&copy; <a href="https://enriquetomasmb.com">enriquetomasmb.com</a>',
-                maxZoom: 18,
+                maxZoom: 15,
             }).addTo(this.map);
 
             this.addInitialMarker();
@@ -255,7 +255,7 @@ const MobilityManager = {
         // Set mobility settings
         document.getElementById("networkSimulation").checked = config.network_simulation,
         document.getElementById("mobilitySelect").value = config.mobilityType || "both";
-        document.getElementById("radiusFederation").value = config.radiusFederation || 100;
+        document.getElementById("radiusFederation").value = config.radiusFederation || 500;
         document.getElementById("schemeMobilitySelect").value = config.schemeMobility || "random";
         document.getElementById("roundFrequency").value = config.roundFrequency || 1;
         document.getElementById("mobileParticipantsPercent").value = config.mobileParticipantsPercent || 100;
@@ -293,7 +293,7 @@ const MobilityManager = {
         document.getElementById("latitude").value = "38.023522";
         document.getElementById("longitude").value = "-1.174389";
         document.getElementById("mobilitySelect").value = "both";
-        document.getElementById("radiusFederation").value = "100";
+        document.getElementById("radiusFederation").value = "500";
         document.getElementById("schemeMobilitySelect").value = "random";
         document.getElementById("roundFrequency").value = "1";
         document.getElementById("mobileParticipantsPercent").value = "100";
