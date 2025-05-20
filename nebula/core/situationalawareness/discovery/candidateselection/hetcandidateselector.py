@@ -8,14 +8,14 @@ class HETCandidateSelector(CandidateSelector):
         self.loss, self.weight_distance, self.weight_hetereogeneity = (0, 0.2, 0.8)
         self.candidates_lock = Locker(name="candidates_lock")
         
-    def set_config(self, config):
+    async def set_config(self, config):
         """
         Args:
             config contains values to evaluate suitability of candidades
         """
         self.loss, self.weight_distance, self.weight_hetereogeneity = config    
     
-    def add_candidate(self, candidate):
+    async def add_candidate(self, candidate):
         """
         Args:
             candidate is compound of three data:
@@ -29,7 +29,7 @@ class HETCandidateSelector(CandidateSelector):
         self.candidates.append((addr, n_neighbors, hv))
         self.candidates_lock.release()
       
-    def select_candidates(self):
+    async def select_candidates(self):
         """
             Calculate suitability of candidates and sort them, then return
             the average number of candidates calculated using info from federation nodes
@@ -44,19 +44,19 @@ class HETCandidateSelector(CandidateSelector):
         n = n if n > 0 else len(bc)
         return [addr for addr, _ in bc[:n]]
     
-    def remove_candidates(self):
+    async def remove_candidates(self):
         self.candidates_lock.acquire()
         self.candidates = []
         self.candidates_lock.release()
     
-    def any_candidate(self):
+    async def any_candidate(self):
         self.candidates_lock.acquire()
         any = True if len(self.candidates) > 0 else False
         self.candidates_lock.release()
         return any
     
     #TODO hay q descontar los vecinos propios ya establecidos
-    def __calculate_ideal_neighbors(self):
+    async def __calculate_ideal_neighbors(self):
         """
         Returns:
             Average number of neighbors in candidate nodes
@@ -67,7 +67,7 @@ class HETCandidateSelector(CandidateSelector):
             average_neighbors = sum(n_neighbors) / len(n_neighbors) if n_neighbors else 0
         return average_neighbors
         
-    def __calculate_hetereogeneity(self, loss):
+    async def __calculate_hetereogeneity(self, loss):
         """
             Calculate dataset heterogeneity between self.dataset and candidate.dataset using current loss value,
             assuming the models are close enough to show good results
@@ -77,7 +77,7 @@ class HETCandidateSelector(CandidateSelector):
         else:
             return abs((self.loss-loss))
 
-    def __suitability_function(self):
+    async def __suitability_function(self):
         """
             Calculate suitability using hetereogeneity value and position on candidate.list. The reason to use that position is
             because we assume that better candidates in terms of distance/quality would be in first positions of the list, and slower

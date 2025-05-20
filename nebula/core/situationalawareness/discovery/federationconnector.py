@@ -107,7 +107,7 @@ class FederationConnector(ISADiscovery):
         await EventManager.get_instance().subscribe(("model", "update"), self._model_update_callback)
         
         logging.info("Building candidate selector configuration..")
-        self.candidate_selector.set_config([0, 0.5, 0.5])
+        await self.candidate_selector.set_config([0, 0.5, 0.5])
         # self.engine.trainer.get_loss(), self.config.participant["molibity_args"]["weight_distance"], self.config.participant["molibity_args"]["weight_het"]
              
     """
@@ -174,7 +174,7 @@ class FederationConnector(ISADiscovery):
         nfe = NodeFoundEvent(node)
         await EventManager.get_instance().publish_node_event(nfe)
 
-    def accept_model_offer(self, source, decoded_model, rounds, round, epochs, n_neighbors, loss):
+    async def accept_model_offer(self, source, decoded_model, rounds, round, epochs, n_neighbors, loss):
         """
         Evaluate and possibly accept a model offer from a remote source.
 
@@ -195,7 +195,7 @@ class FederationConnector(ISADiscovery):
             model_accepted = self.model_handler.accept_model(decoded_model)
             self.model_handler.set_config(config=(rounds, round, epochs, self))
             if model_accepted:
-                self.candidate_selector.add_candidate((source, n_neighbors, loss))
+                await self.candidate_selector.add_candidate((source, n_neighbors, loss))
                 return True
         else:
             return False
@@ -203,9 +203,9 @@ class FederationConnector(ISADiscovery):
     async def get_trainning_info(self):
         return await self.model_handler.get_model(None)
 
-    def _add_candidate(self, source, n_neighbors, loss):
+    async def _add_candidate(self, source, n_neighbors, loss):
         if not self.accept_candidates_lock.locked():
-            self.candidate_selector.add_candidate((source, n_neighbors, loss))
+            await self.candidate_selector.add_candidate((source, n_neighbors, loss))
 
     async def _stop_not_selected_connections(self, rejected: set = {}):
         """
@@ -247,7 +247,7 @@ class FederationConnector(ISADiscovery):
 
         self.late_connection_process_lock.acquire()
         best_candidates = []
-        self.candidate_selector.remove_candidates()
+        await self.candidate_selector.remove_candidates()
         await self._clear_pending_confirmations()
 
         # find federation and send discover
@@ -262,7 +262,7 @@ class FederationConnector(ISADiscovery):
         # acquire lock to not accept late candidates
         self.accept_candidates_lock.acquire()
 
-        if self.candidate_selector.any_candidate():
+        if await self.candidate_selector.any_candidate():
             if self._verbose: logging.info("Candidates found to connect to...")
             # create message to send to candidates selected
             if not connected:
@@ -270,7 +270,7 @@ class FederationConnector(ISADiscovery):
             else:
                 msg = self.cm.create_message("connection", "restructure")
 
-            best_candidates, rejected_candidates = self.candidate_selector.select_candidates()
+            best_candidates, rejected_candidates = await self.candidate_selector.select_candidates()
             if self._verbose: logging.info(f"Candidates | {[addr for addr, _, _ in best_candidates]}")
             try:
                 for addr, _, _ in best_candidates:
@@ -282,7 +282,7 @@ class FederationConnector(ISADiscovery):
                 
             self.accept_candidates_lock.release()
             self.late_connection_process_lock.release()
-            self.candidate_selector.remove_candidates()
+            await self.candidate_selector.remove_candidates()
             logging.info("🌐  Ending late connection process..")
         # if no candidates, repeat process
         else:
@@ -445,7 +445,7 @@ class FederationConnector(ISADiscovery):
         if self._still_waiting_for_candidates():
             try:
                 model_compressed = message.parameters
-                if self.accept_model_offer(
+                if await self.accept_model_offer(
                     source,
                     model_compressed,
                     message.rounds,
@@ -472,7 +472,7 @@ class FederationConnector(ISADiscovery):
         if self._still_waiting_for_candidates():
             n_neighbors = message.n_neighbors
             loss = message.loss
-            self._add_candidate(source, n_neighbors, loss)
+            await self._add_candidate(source, n_neighbors, loss)
 
     async def _link_connect_to_callback(self, source, message):
         logging.info(f"🔗  handle_link_message | Trigger | Received connect_to message from {source}")

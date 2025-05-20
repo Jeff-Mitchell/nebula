@@ -7,15 +7,15 @@ class FCCandidateSelector(CandidateSelector):
         self.candidates = []
         self.candidates_lock = Locker(name="candidates_lock")
         
-    def set_config(self, config):
+    async def set_config(self, config):
         pass    
     
-    def add_candidate(self, candidate):
+    async def add_candidate(self, candidate):
         self.candidates_lock.acquire()
         self.candidates.append(candidate)
         self.candidates_lock.release()
       
-    def select_candidates(self):
+    async def select_candidates(self):
         """
             In Fully-Connected topology all candidates should be selected
         """
@@ -24,12 +24,12 @@ class FCCandidateSelector(CandidateSelector):
         self.candidates_lock.release()
         return (cdts, [])
     
-    def remove_candidates(self):
+    async def remove_candidates(self):
         self.candidates_lock.acquire()
         self.candidates = []
         self.candidates_lock.release()
 
-    def any_candidate(self):
+    async def any_candidate(self):
         self.candidates_lock.acquire()
         any = True if len(self.candidates) > 0 else False
         self.candidates_lock.release()

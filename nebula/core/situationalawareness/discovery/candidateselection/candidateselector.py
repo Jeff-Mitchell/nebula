@@ -4,7 +4,7 @@ from typing import Type
 class CandidateSelector(ABC):
     
     @abstractmethod 
-    def set_config(self, config):
+    async def set_config(self, config):
         """
         Configure internal parameters for the candidate selection strategy.
         
@@ -14,7 +14,7 @@ class CandidateSelector(ABC):
         pass
     
     @abstractmethod 
-    def add_candidate(self, candidate):
+    async def add_candidate(self, candidate):
         """
         Add a new candidate to the internal pool of potential selections.
         
@@ -24,7 +24,7 @@ class CandidateSelector(ABC):
         pass
     
     @abstractmethod 
-    def select_candidates(self):
+    async def select_candidates(self):
         """
         Apply the selection logic to choose the best candidates from the internal pool.
         
@@ -34,14 +34,14 @@ class CandidateSelector(ABC):
         pass
     
     @abstractmethod 
-    def remove_candidates(self):
+    async def remove_candidates(self):
         """
         Remove one or more candidates from the pool based on internal rules or external decisions.
         """
         pass
     
     @abstractmethod 
-    def any_candidate(self):
+    async def any_candidate(self):
         """
         Check whether there are any candidates currently available in the internal pool.
         
@@ -55,12 +55,14 @@ def factory_CandidateSelector(selector) -> CandidateSelector:
     from nebula.core.situationalawareness.discovery.candidateselection.fccandidateselector import FCCandidateSelector
     from nebula.core.situationalawareness.discovery.candidateselection.hetcandidateselector import HETCandidateSelector
     from nebula.core.situationalawareness.discovery.candidateselection.ringcandidateselector import RINGCandidateSelector
+    from nebula.core.situationalawareness.discovery.candidateselection.distcandidateselector import DistanceCandidateSelector
     
     options = {
         "ring": RINGCandidateSelector,
         "fully": FCCandidateSelector,
         "random": STDandidateSelector,
-        "het": HETCandidateSelector,  
+        "het": HETCandidateSelector,
+        "distance": DistanceCandidateSelector,   
     } 
     
     cs = options.get(selector, FCCandidateSelector)

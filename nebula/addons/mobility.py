@@ -58,15 +58,15 @@ class Mobility:
         self.round_frequency = int(self.config.participant["mobility_args"]["round_frequency"])
         # Protocol to change connections based on distance
         self.max_distance_with_direct_connections = 300  # meters
-        self.max_movement_random_strategy = 100  # meters
-        self.max_movement_nearest_strategy = 100  # meters
+        self.max_movement_random_strategy = 20  # meters
+        self.max_movement_nearest_strategy = 20  # meters
         self.max_initiate_approximation = self.max_distance_with_direct_connections * 1.2
         # Logging box with mobility information
         mobility_msg = f"Mobility: {self.mobility}\nMobility type: {self.mobility_type}\nRadius federation: {self.radius_federation}\nScheme mobility: {self.scheme_mobility}\nEach {self.round_frequency} rounds"
         print_msg_box(msg=mobility_msg, indent=2, title="Mobility information")
         self._nodes_distances = {}
         self._nodes_distances_lock = Locker("nodes_distances_lock", async_lock=True)
-        self._verbose = verbose
+        self._verbose = True#verbose
 
     @cached_property
     def cm(self):

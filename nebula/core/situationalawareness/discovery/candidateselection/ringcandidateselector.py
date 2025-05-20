@@ -9,10 +9,10 @@ class RINGCandidateSelector(CandidateSelector):
         self._rejected_candidates = []
         self.candidates_lock = Locker(name="candidates_lock")
         
-    def set_config(self, config):
+    async def set_config(self, config):
         pass    
     
-    def add_candidate(self, candidate):
+    async def add_candidate(self, candidate):
         """
             To avoid topology problems select 1st candidate found
         """
@@ -23,7 +23,7 @@ class RINGCandidateSelector(CandidateSelector):
         #     self._rejected_candidates.append(candidate)
         self.candidates_lock.release()
       
-    def select_candidates(self):
+    async def select_candidates(self):
         self.candidates_lock.acquire()
         cdts = []
 
@@ -42,12 +42,12 @@ class RINGCandidateSelector(CandidateSelector):
         self.candidates_lock.release()
         return (cdts, not_cdts)
     
-    def remove_candidates(self):
+    async def remove_candidates(self):
         self.candidates_lock.acquire()
         self._candidates = []
         self.candidates_lock.release()
 
-    def any_candidate(self):
+    async def any_candidate(self):
         self.candidates_lock.acquire()
         any = True if len(self._candidates) > 0 else False
         self.candidates_lock.release()

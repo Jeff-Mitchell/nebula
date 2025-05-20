@@ -131,7 +131,7 @@ class DistanceNeighborPolicy(NeighborPolicy):
                 closest_nodes: set[str] = {
                     nodo_id
                     for nodo_id, (distancia, _) in self.nodes_distances.items()
-                    if distancia < self.MIN_DISTANCE_THRESHOLD
+                    if distancia < self.MAX_DISTANCE_THRESHOLD-20
                 }
                 available_nodes = closest_nodes.difference(self.neighbors)
                 logging.info(f"Available neighbors based on distance: {available_nodes}")
