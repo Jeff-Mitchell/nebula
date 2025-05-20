@@ -5,7 +5,7 @@ from nebula.core.nebulaevents import GPSEvent
 import logging
 
 class DistanceCandidateSelector(CandidateSelector):
-    MAX_DISTANCE_THRESHOLD = 100
+    MAX_DISTANCE_THRESHOLD = 200
     MIN_DISTANCE_THRESHOLD = 100
 
     def __init__(self):

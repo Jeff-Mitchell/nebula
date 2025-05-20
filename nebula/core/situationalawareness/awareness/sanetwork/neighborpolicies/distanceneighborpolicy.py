@@ -5,7 +5,7 @@ from nebula.core.eventmanager import EventManager
 from nebula.core.nebulaevents import GPSEvent
 
 class DistanceNeighborPolicy(NeighborPolicy):
-    MAX_DISTANCE_THRESHOLD = 100
+    MAX_DISTANCE_THRESHOLD = 200
 
     def __init__(self):
         self.max_neighbors = None

@@ -1,7 +1,7 @@
 from typing import TYPE_CHECKING
 
 from nebula.addons.functions import print_msg_box
-from nebula.addons.GPS.gpsmodule import factory_gpsmodule
+from nebula.addons.gps.gpsmodule import factory_gpsmodule
 from nebula.addons.mobility import Mobility
 from nebula.addons.networksimulation.networksimulator import factory_network_simulator
 
