@@ -289,9 +289,9 @@ class FederationConnector(ISADiscovery):
             if self._verbose: logging.info("❗️  No Candidates found...")
             self.accept_candidates_lock.release()
             self.late_connection_process_lock.release()
-            if not connected:
-                if self._verbose: logging.info("❗️  repeating process...")
-                await self.start_late_connection_process(connected, msg_type, addrs_known)
+            # if not connected:
+            #     if self._verbose: logging.info("❗️  repeating process...")
+            #     await self.start_late_connection_process(connected, msg_type, addrs_known)
 
 
     """                                                     ##############################
@@ -341,9 +341,7 @@ class FederationConnector(ISADiscovery):
             await self.cm.send_message(source, conf_msg)
 
             ct_actions, df_actions = await self._get_actions()
-            logging.info("voy a mostrar acciones en respuesta a late connect")
             if len(ct_actions):
-                logging.info("1 acciones")
                 logging.info(f"{ct_actions}")
                 cnt_msg = self.cm.create_message("link", "connect_to", addrs=ct_actions)
                 await self.cm.send_message(source, cnt_msg)
