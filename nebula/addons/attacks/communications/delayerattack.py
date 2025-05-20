@@ -3,6 +3,7 @@ import logging
 from functools import wraps
 
 from nebula.addons.attacks.communications.communicationattack import CommunicationAttack
+from nebula.core.network.communications import CommunicationsManager
 
 
 class DelayerAttack(CommunicationAttack):
@@ -32,7 +33,7 @@ class DelayerAttack(CommunicationAttack):
 
         super().__init__(
             engine,
-            engine._cm,
+            CommunicationsManager.get_instance(),
             "send_model",
             round_start,
             round_stop,

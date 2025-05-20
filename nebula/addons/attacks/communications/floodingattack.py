@@ -1,9 +1,8 @@
-import asyncio
 import logging
 from functools import wraps
-import time
 
 from nebula.addons.attacks.communications.communicationattack import CommunicationAttack
+from nebula.core.network.communications import CommunicationsManager
 
 
 class FloodingAttack(CommunicationAttack):
@@ -35,8 +34,8 @@ class FloodingAttack(CommunicationAttack):
 
         super().__init__(
             engine,
-            engine._cm,
-            "send_model",
+            CommunicationsManager.get_instance(),
+            "send_message",
             round_start,
             round_stop,
             attack_interval,

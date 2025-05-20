@@ -1,27 +1,42 @@
 import hashlib
 import logging
 import traceback
-from typing import TYPE_CHECKING
 
 from nebula.core.nebulaevents import MessageEvent
 from nebula.core.network.actions import factory_message_action, get_action_name_from_value, get_actions_names
 from nebula.core.pb import nebula_pb2
 
-if TYPE_CHECKING:
-    from nebula.core.network.communications import CommunicationsManager
-
 
 class MessagesManager:
-    def __init__(self, addr, config, cm: "CommunicationsManager"):
+    def __init__(self, addr, config):
         self.addr = addr
         self.config = config
-        self.cm = cm
+        self._cm = None
         self._message_templates = {}
         self._define_message_templates()
+
+    @property
+    def cm(self):
+        if not self._cm:
+            from nebula.core.network.communications import CommunicationsManager
+
+            self._cm = CommunicationsManager.get_instance()
+            return self._cm
+        else:
+            return self._cm
 
     def _define_message_templates(self):
         # Dictionary that maps message types to their required parameters and default values
         self._message_templates = {
+            "offer": {
+                "parameters": ["action", "n_neighbors", "loss", "parameters", "rounds", "round", "epochs"],
+                "defaults": {
+                    "parameters": None,
+                    "rounds": 1,
+                    "round": -1,
+                    "epochs": 1,
+                },
+            },
             "connection": {"parameters": ["action"], "defaults": {}},
             "discovery": {
                 "parameters": ["action", "latitude", "longitude"],
@@ -50,11 +65,11 @@ class MessagesManager:
                 },
             },
             "reputation": {
-                "parameters": ["node_id", "score", "round", "action"],
-                "defaults": {
-                    "round": None,
-                },
+                "parameters": ["action", "reputation", "defendant", "verdict"],
+                "defaults": {"reputation":"", "defendant": "", "verdict": ""},
             },
+            "discover": {"parameters": ["action"], "defaults": {}},
+            "link": {"parameters": ["action", "addrs"], "defaults": {}},
             # Add additional message types here
         }
 

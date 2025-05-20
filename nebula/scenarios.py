@@ -16,11 +16,7 @@ import tensorboard_reducer as tbr
 from nebula.addons.blockchain.blockchain_deployer import BlockchainDeployer
 from nebula.addons.topologymanager import TopologyManager
 from nebula.config.config import Config
-from nebula.core.datasets.cifar10.cifar10 import CIFAR10Dataset
-from nebula.core.datasets.cifar100.cifar100 import CIFAR100Dataset
-from nebula.core.datasets.emnist.emnist import EMNISTDataset
-from nebula.core.datasets.fashionmnist.fashionmnist import FashionMNISTDataset
-from nebula.core.datasets.mnist.mnist import MNISTDataset
+from nebula.core.datasets.nebuladataset import factory_nebuladataset
 from nebula.core.utils.certificate import generate_ca_certificate, generate_certificate
 from nebula.utils import DockerUtils, FileUtils
 
@@ -77,6 +73,7 @@ class Scenario:
         latitude,
         longitude,
         mobility,
+        network_simulation,
         mobility_type,
         radius_federation,
         scheme_mobility,
@@ -200,6 +197,7 @@ class Scenario:
         self.latitude = latitude
         self.longitude = longitude
         self.mobility = mobility
+        self.network_simulation = network_simulation
         self.mobility_type = mobility_type
         self.radius_federation = radius_federation
         self.scheme_mobility = scheme_mobility
@@ -532,6 +530,7 @@ class ScenarioManagement:
 
             participant_config["network_args"]["ip"] = node_config["ip"]
             participant_config["network_args"]["port"] = int(node_config["port"])
+            participant_config["network_args"]["simulation"] = self.scenario.network_simulation
             participant_config["device_args"]["idx"] = node_config["id"]
             participant_config["device_args"]["start"] = node_config["start"]
             participant_config["device_args"]["role"] = node_config["role"]
@@ -780,7 +779,7 @@ class ScenarioManagement:
                     ).encode()
                 ).hexdigest()
                 participant_config["mobility_args"]["additional_node"]["status"] = True
-                participant_config["mobility_args"]["additional_node"]["round_start"] = additional_participant["round"]
+                participant_config["mobility_args"]["additional_node"]["time_start"] = additional_participant["time"]
 
                 # used for late creation nodes
                 participant_config["mobility_args"]["late_creation"] = True
@@ -796,58 +795,16 @@ class ScenarioManagement:
         # Splitting dataset
         dataset_name = self.scenario.dataset
         dataset = None
-        if dataset_name == "MNIST":
-            dataset = MNISTDataset(
-                num_classes=10,
-                partitions_number=self.n_nodes,
-                iid=self.scenario.iid,
-                partition=self.scenario.partition_selection,
-                partition_parameter=self.scenario.partition_parameter,
-                seed=42,
-                config_dir=self.config_dir,
-            )
-        elif dataset_name == "FashionMNIST":
-            dataset = FashionMNISTDataset(
-                num_classes=10,
-                partitions_number=self.n_nodes,
-                iid=self.scenario.iid,
-                partition=self.scenario.partition_selection,
-                partition_parameter=self.scenario.partition_parameter,
-                seed=42,
-                config_dir=self.config_dir,
-            )
-        elif dataset_name == "EMNIST":
-            dataset = EMNISTDataset(
-                num_classes=47,
-                partitions_number=self.n_nodes,
-                iid=self.scenario.iid,
-                partition=self.scenario.partition_selection,
-                partition_parameter=self.scenario.partition_parameter,
-                seed=42,
-                config_dir=self.config_dir,
-            )
-        elif dataset_name == "CIFAR10":
-            dataset = CIFAR10Dataset(
-                num_classes=10,
-                partitions_number=self.n_nodes,
-                iid=self.scenario.iid,
-                partition=self.scenario.partition_selection,
-                partition_parameter=self.scenario.partition_parameter,
-                seed=42,
-                config_dir=self.config_dir,
-            )
-        elif dataset_name == "CIFAR100":
-            dataset = CIFAR100Dataset(
-                num_classes=100,
-                partitions_number=self.n_nodes,
-                iid=self.scenario.iid,
-                partition=self.scenario.partition_selection,
-                partition_parameter=self.scenario.partition_parameter,
-                seed=42,
-                config_dir=self.config_dir,
-            )
-        else:
-            raise ValueError(f"Dataset {dataset_name} not supported")
+        dataset = factory_nebuladataset(
+            dataset_name,
+            num_classes=10,
+            partitions_number=self.n_nodes + additional_nodes,
+            iid=self.scenario.iid,
+            partition=self.scenario.partition_selection,
+            partition_parameter=self.scenario.partition_parameter,
+            seed=42,
+            config_dir=self.config_dir,
+        )
 
         logging.info(f"Splitting {dataset_name} dataset...")
         dataset.initialize_dataset()

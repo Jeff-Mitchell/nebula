@@ -10,11 +10,11 @@ import aiohttp
 import psutil
 
 if TYPE_CHECKING:
-    from nebula.core.network.communications import CommunicationsManager
+    pass
 
 
 class Reporter:
-    def __init__(self, config, trainer, cm: "CommunicationsManager"):
+    def __init__(self, config, trainer):
         """
         Initializes the reporter module for sending periodic updates to a dashboard controller.
 
@@ -48,9 +48,9 @@ class Reporter:
             - Initializes both current and accumulated metrics for traffic monitoring.
         """
         logging.info("Starting reporter module")
+        self._cm = None
         self.config = config
         self.trainer = trainer
-        self.cm = cm
         self.frequency = self.config.participant["reporter_args"]["report_frequency"]
         self.grace_time = self.config.participant["reporter_args"]["grace_time_reporter"]
         self.data_queue = asyncio.Queue()
@@ -67,6 +67,16 @@ class Reporter:
         self.acc_bytes_recv = 0
         self.acc_packets_sent = 0
         self.acc_packets_recv = 0
+
+    @property
+    def cm(self):
+        if not self._cm:
+            from nebula.core.network.communications import CommunicationsManager
+
+            self._cm = CommunicationsManager.get_instance()
+            return self._cm
+        else:
+            return self._cm
 
     async def enqueue_data(self, name, value):
         """
