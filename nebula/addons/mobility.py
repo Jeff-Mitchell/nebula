@@ -57,7 +57,7 @@ class Mobility:
         self.scheme_mobility = self.config.participant["mobility_args"]["scheme_mobility"]
         self.round_frequency = int(self.config.participant["mobility_args"]["round_frequency"])
         # Protocol to change connections based on distance
-        self.max_distance_with_direct_connections = 300  # meters
+        self.max_distance_with_direct_connections = 150  # meters
         self.max_movement_random_strategy = 50  # meters
         self.max_movement_nearest_strategy = 50  # meters
         self.max_initiate_approximation = self.max_distance_with_direct_connections * 1.2

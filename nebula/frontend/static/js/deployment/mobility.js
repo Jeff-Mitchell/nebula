@@ -196,6 +196,7 @@ const MobilityManager = {
                 latitude: parseFloat(document.getElementById("latitude").value),
                 longitude: parseFloat(document.getElementById("longitude").value)
             },
+            network_simulation: document.getElementById("networkSimulation").checked,
             mobilityType: document.getElementById("mobilitySelect").value,
             radiusFederation: parseInt(document.getElementById("radiusFederation").value),
             schemeMobility: document.getElementById("schemeMobilitySelect").value,
@@ -252,6 +253,7 @@ const MobilityManager = {
         }
 
         // Set mobility settings
+        document.getElementById("networkSimulation").checked = config.network_simulation,
         document.getElementById("mobilitySelect").value = config.mobilityType || "both";
         document.getElementById("radiusFederation").value = config.radiusFederation || 100;
         document.getElementById("schemeMobilitySelect").value = config.schemeMobility || "random";

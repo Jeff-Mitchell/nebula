@@ -52,7 +52,7 @@ class FederationConnector(ISADiscovery):
         self._cm = None
         self.config = engine.get_config()
         logging.info("Initializing Candidate Selector")
-        self._candidate_selector = factory_CandidateSelector("distance")#self._selector)
+        self._candidate_selector = factory_CandidateSelector(self._selector)
         logging.info("Initializing Model Handler")
         self._model_handler = factory_ModelHandler(model_handler)
         self._update_neighbors_lock = Locker(name="_update_neighbors_lock", async_lock=True)

@@ -89,7 +89,7 @@ class SAReasoner(ISAReasoner):
         self._suggestion_buffer = SuggestionBuffer(self._arbitrator_notification, verbose=True)
         self._communciation_manager = CommunicationsManager.get_instance()
         self._sys_monitor = SystemMonitor()
-        arb_pol = config.participant["situational_awareness"]["sa_reasoner"]["arbitatrion_policy"]
+        arb_pol = config.participant["situational_awareness"]["sa_reasoner"]["arbitration_policy"]
         self._arbitatrion_policy = factory_arbitration_policy(arb_pol, True)
         self._sa_components: dict[str, SAMComponent] = {}
         self._sa_discovery: ISADiscovery = None

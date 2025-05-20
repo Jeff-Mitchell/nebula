@@ -109,6 +109,7 @@ const ScenarioManager = (function() {
             weight_num_messages: window.ReputationManager.getReputationConfig().weight_num_messages || 0.25,
             weight_fraction_params_changed: window.ReputationManager.getReputationConfig().weight_fraction_params_changed || 0.25,
             mobility: window.MobilityManager.getMobilityConfig().enabled || false,
+            network_simulation: window.MobilityManager.getMobilityConfig().network_simulation || false,
             mobility_type: window.MobilityManager.getMobilityConfig().mobilityType || "random",
             radius_federation: window.MobilityManager.getMobilityConfig().radiusFederation || 1000,
             scheme_mobility: window.MobilityManager.getMobilityConfig().schemeMobility || "random",
@@ -206,6 +207,7 @@ const ScenarioManager = (function() {
         if (scenario.mobility) {
             window.MobilityManager.setMobilityConfig({
                 enabled: scenario.mobility,
+                network_simulation: scenario.network_simulation,
                 mobilityType: scenario.mobility_type,
                 radiusFederation: scenario.radius_federation,
                 schemeMobility: scenario.scheme_mobility,
