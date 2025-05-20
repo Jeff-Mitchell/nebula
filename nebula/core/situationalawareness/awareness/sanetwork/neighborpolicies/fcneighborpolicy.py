@@ -12,7 +12,7 @@ class FCNeighborPolicy(NeighborPolicy):
         self.neighbors_lock = Locker(name="neighbors_lock")
         self.nodes_known_lock = Locker(name="nodes_known_lock")
         
-    def need_more_neighbors(self):
+    async def need_more_neighbors(self):
         """
             Fully connected network requires to be connected to all devices, therefore,
             if there are more nodes known that self.neighbors, more neighbors are required
@@ -22,7 +22,7 @@ class FCNeighborPolicy(NeighborPolicy):
         self.neighbors_lock.release()
         return need_more
     
-    def set_config(self, config):
+    async def set_config(self, config):
         """
         Args:
             config[0] -> list of self neighbors
@@ -47,7 +47,7 @@ class FCNeighborPolicy(NeighborPolicy):
         self.neighbors_lock.release()
         return ac
     
-    def meet_node(self, node):
+    async def meet_node(self, node):
         """
             Update the list of nodes known on federation
         """
@@ -57,7 +57,7 @@ class FCNeighborPolicy(NeighborPolicy):
             self.nodes_known.add(node)
         self.nodes_known_lock.release()
         
-    def get_nodes_known(self, neighbors_too=False, neighbors_only=False):     
+    async def get_nodes_known(self, neighbors_too=False, neighbors_only=False):     
         if neighbors_only:
             self.neighbors_lock.acquire()
             no = self.neighbors.copy()
@@ -73,7 +73,7 @@ class FCNeighborPolicy(NeighborPolicy):
         self.nodes_known_lock.release()
         return nk     
     
-    def forget_nodes(self, nodes, forget_all=False):
+    async def forget_nodes(self, nodes, forget_all=False):
         self.nodes_known_lock.acquire()
         if forget_all:
             self.nodes_known.clear()
@@ -82,7 +82,7 @@ class FCNeighborPolicy(NeighborPolicy):
                 self.nodes_known.discard(node)
         self.nodes_known_lock.release()
         
-    def get_actions(self): 
+    async def get_actions(self): 
         """
             return list of actions to do in response to connection
                 - First list represents addrs argument to LinkMessage to connect to
@@ -91,17 +91,17 @@ class FCNeighborPolicy(NeighborPolicy):
         return [self._connect_to(), self._disconnect_from()]
           
     
-    def _disconnect_from(self):
+    async def _disconnect_from(self):
         return ""
     
-    def _connect_to(self):
+    async def _connect_to(self):
         ct = ""
         self.neighbors_lock.acquire()
         ct = " ".join(self.neighbors)
         self.neighbors_lock.release()
         return ct
     
-    def update_neighbors(self, node, remove=False):
+    async def update_neighbors(self, node, remove=False):
         if node == self.addr:
             return
         self.neighbors_lock.acquire()
@@ -116,11 +116,15 @@ class FCNeighborPolicy(NeighborPolicy):
             logging.info(f"Add neighbor | addr: {node}")
         self.neighbors_lock.release()
 
-    def any_leftovers_neighbors(self):
+    async def any_leftovers_neighbors(self):
         return False
 
     async def get_neighbors_to_remove(self):
         return set()
+    
+    async def get_posible_neighbors(self):
+        """Return set of posible neighbors to connect to."""
+        return await self.get_nodes_known(neighbors_too=False)
 
-    def stricted_topology_status(stricted_topology: bool):
+    async def stricted_topology_status(stricted_topology: bool):
         pass 

@@ -11,13 +11,13 @@ class STARNeighborPolicy(NeighborPolicy):
         self.nodes_known_lock = Locker(name="nodes_known_lock")
         self.addr = ""
         
-    def need_more_neighbors(self):
+    async def need_more_neighbors(self):
         self.neighbors_lock.acquire()
         need_more = len(self.neighbors) < self.max_neighbors
         self.neighbors_lock.release()
         return need_more
     
-    def set_config(self, config):
+    async def set_config(self, config):
         """
         Args:
             config[0] -> list of self neighbors, in this case, the star point
@@ -39,12 +39,12 @@ class STARNeighborPolicy(NeighborPolicy):
         ac = joining
         return ac
     
-    def meet_node(self, node):
+    async def meet_node(self, node):
         self.nodes_known_lock.acquire()
         self.nodes_known.add(node)
         self.nodes_known_lock.release()
         
-    def forget_nodes(self, nodes, forget_all=False):
+    async def forget_nodes(self, nodes, forget_all=False):
         self.nodes_known_lock.acquire()
         if forget_all:
             self.nodes_known.clear()
@@ -53,7 +53,7 @@ class STARNeighborPolicy(NeighborPolicy):
                 self.nodes_known.discard(node)
         self.nodes_known_lock.release()
         
-    def get_nodes_known(self, neighbors_too=False, neighbors_only=False):
+    async def get_nodes_known(self, neighbors_too=False, neighbors_only=False):
         self.nodes_known_lock.acquire()
         nk = self.nodes_known.copy()
         if not neighbors_too:
@@ -63,7 +63,7 @@ class STARNeighborPolicy(NeighborPolicy):
         self.nodes_known_lock.release()
         return nk 
         
-    def get_actions(self): 
+    async def get_actions(self): 
         """
             return list of actions to do in response to connection
                 - First list represents addrs argument to LinkMessage to connect to
@@ -78,8 +78,12 @@ class STARNeighborPolicy(NeighborPolicy):
         self.neighbors_lock.release()
         return [ct_actions, df_actions]
     
-    def update_neighbors(self, node, remove=False):
+    async def update_neighbors(self, node, remove=False):
         pass
 
-    def stricted_topology_status(stricted_topology: bool):
+    async def stricted_topology_status(stricted_topology: bool):
         pass
+
+    async def get_posible_neighbors(self):
+        """Return set of posible neighbors to connect to."""
+        return await self.get_nodes_known(neighbors_too=False)

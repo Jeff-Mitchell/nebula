@@ -86,7 +86,7 @@ class SANetwork(SAMComponent):
             await self.cm.start_external_connection_service(run_service=False)
 
         logging.info("Building neighbor policy configuration..")
-        self.np.set_config([
+        await self.np.set_config([
             await self.cm.get_addrs_current_connections(only_direct=True, myself=False),
             await self.cm.get_addrs_current_connections(only_direct=False, only_undirected=False, myself=False),
             self._addr,
@@ -111,20 +111,20 @@ class SANetwork(SAMComponent):
         node_addr = await nfe.get_event_data()
         if self._verbose:
             logging.info(f"Processing Node Found Event, node addr: {node_addr}")
-        self.np.meet_node(node_addr)
+        await self.np.meet_node(node_addr)
 
     async def _process_update_neighbor_event(self, une: UpdateNeighborEvent):
         node_addr, removed = await une.get_event_data()
         if self._verbose:
             logging.info(f"Processing Update Neighbor Event, node addr: {node_addr}, remove: {removed}")
-        self.np.update_neighbors(node_addr, removed)
+        await self.np.update_neighbors(node_addr, removed)
 
-    def meet_node(self, node):
+    async def meet_node(self, node):
         if node != self._addr:
-            self.np.meet_node(node)
+            await self.np.meet_node(node)
 
-    def get_nodes_known(self, neighbors_too=False, neighbors_only=False):
-        return self.np.get_nodes_known(neighbors_too, neighbors_only)
+    async def get_nodes_known(self, neighbors_too=False, neighbors_only=False):
+        return await self.np.get_nodes_known(neighbors_too, neighbors_only)
 
     async def neighbors_left(self):
         return len(await self.cm.get_addrs_current_connections(only_direct=True, myself=False)) > 0
@@ -133,11 +133,11 @@ class SANetwork(SAMComponent):
         accepted = await self.np.accept_connection(source, joining)
         return accepted
 
-    def need_more_neighbors(self):
-        return self.np.need_more_neighbors()
+    async def need_more_neighbors(self):
+        return await self.np.need_more_neighbors()
 
-    def get_actions(self):
-        return self.np.get_actions()
+    async def get_actions(self):
+        return await self.np.get_actions()
 
     """                                                     ###############################
                                                             # EXTERNAL CONNECTION SERVICE #
@@ -177,28 +177,23 @@ class SANetwork(SAMComponent):
 
     def get_restructure_process_lock(self):
         return self._restructure_process_lock
+    
+    async def _distance_topology(self):
+        if await self.np.need_more_neighbors():
+            pass
 
     async def _analize_topology_robustness(self):
         logging.info("🔄 Analizing node network robustness...")
         if not self._restructure_process_lock.locked():
-            #TODO remove
-            ip, _ = self._addr.split(":")
-            # Obtener el último octeto y luego su último dígito
-            last_digit = ip.split(".")[-1][-1]
-            if self.sar.cm.engine.get_round() == 20 and last_digit == "9":
-                asyncio.create_task(self.stop_connections_with_federation())
-                await self.sana.notify_all_suggestions_done(RoundEndEvent) #TODO remove
-                return
             if not await self.neighbors_left():
                 if self._verbose:
                     logging.info("No Neighbors left | reconnecting with Federation")
                 await self.sana.create_and_suggest_action(SACommandAction.RECONNECT, self.reconnect_to_federation, None)
-                #await self.sana.notify_all_suggestions_done(RoundEndEvent) #TODO remove
-            elif self.np.need_more_neighbors() and self._restructure_available():
+            elif await self.np.need_more_neighbors() and self._restructure_available():
                 if self._verbose:
                     logging.info("Insufficient Robustness | Upgrading robustness | Searching for more connections")
                 self._update_restructure_cooldown()
-                possible_neighbors = self.np.get_nodes_known(neighbors_too=False)
+                possible_neighbors = await self.np.get_posible_neighbors()
                 possible_neighbors = await self.cm.apply_restrictions(possible_neighbors)
                 if not possible_neighbors:
                     if self._verbose:
@@ -208,7 +203,7 @@ class SANetwork(SAMComponent):
                 await self.sana.create_and_suggest_action(
                     SACommandAction.SEARCH_CONNECTIONS, self.upgrade_connection_robustness, possible_neighbors
                 )
-            elif self.np.any_leftovers_neighbors():
+            elif await self.np.any_leftovers_neighbors():
                 nodes_to_remove = await self.np.get_neighbors_to_remove()
                 if self._verbose:
                     logging.info(f"Excess neighbors | removing: {list(nodes_to_remove)}")
@@ -231,7 +226,7 @@ class SANetwork(SAMComponent):
         self._restructure_process_lock.acquire()
         await self.cm.clear_restrictions()
         # If we got some refs, try to reconnect to them
-        if len(self.np.get_nodes_known()) > 0:
+        if len(await self.np.get_nodes_known()) > 0:
             if self._verbose:
                 logging.info("Reconnecting | Addrs availables")
             await self.sar.sad.start_late_connection_process(
@@ -261,7 +256,7 @@ class SANetwork(SAMComponent):
     async def stop_connections_with_federation(self):
         await asyncio.sleep(10)
         logging.info("### DISCONNECTING FROM FEDERATON ###")
-        neighbors = self.np.get_nodes_known(neighbors_only=True)
+        neighbors = await self.np.get_nodes_known(neighbors_only=True)
         for n in neighbors:
             await self.cm.add_to_blacklist(n)
         for n in neighbors:
@@ -274,14 +269,14 @@ class SANetwork(SAMComponent):
         await asyncio.sleep(self.NEIGHBOR_VERIFICATION_TIMEOUT)
         logging.info("Verifyng all connections were stablished") 
         nodes_to_forget = nodes.copy()
-        neighbors = self.np.get_nodes_known(neighbors_only=True)
+        neighbors = await self.np.get_nodes_known(neighbors_only=True)
         if neighbors:
             nodes_to_forget.difference_update(neighbors)
         logging.info(f"Connections dont stablished: {nodes_to_forget}")
         self.forget_nodes(nodes_to_forget)
 
     async def forget_nodes(self, nodes_to_forget):
-        self.np.forget_nodes(nodes_to_forget)
+        await self.np.forget_nodes(nodes_to_forget)
 
     """                                                     ###############################
                                                             #       SA NETWORK AGENT      #

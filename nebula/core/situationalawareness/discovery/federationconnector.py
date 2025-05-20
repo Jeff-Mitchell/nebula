@@ -154,8 +154,8 @@ class FederationConnector(ISADiscovery):
         async with self.discarded_offers_addr_lock:
             self.discarded_offers_addr.append(addr_discarded)
 
-    def _get_actions(self):
-        return self.sar.get_actions()
+    async def _get_actions(self):
+        return await self.sar.get_actions()
 
     async def _register_late_neighbor(self, addr, joinning_federation=False):
         if self._verbose: logging.info(f"Registering | late neighbor: {addr}, joining: {joinning_federation}")
@@ -340,7 +340,7 @@ class FederationConnector(ISADiscovery):
             conf_msg = self.cm.create_message("connection", "late_connect")
             await self.cm.send_message(source, conf_msg)
 
-            ct_actions, df_actions = self._get_actions()
+            ct_actions, df_actions = await self._get_actions()
             logging.info("voy a mostrar acciones en respuesta a late connect")
             if len(ct_actions):
                 logging.info("1 acciones")
@@ -379,7 +379,7 @@ class FederationConnector(ISADiscovery):
             conf_msg = self.cm.create_message("connection", "restructure")
             await self.cm.send_message(source, conf_msg)
 
-            ct_actions, df_actions = self._get_actions()
+            ct_actions, df_actions = await self._get_actions()
             if len(ct_actions):
                 cnt_msg = self.cm.create_message("link", "connect_to", addrs=ct_actions)
                 await self.cm.send_message(source, cnt_msg)

@@ -141,14 +141,14 @@ class SAReasoner(ISAReasoner):
                                                             ###############################
     """
 
-    def get_nodes_known(self, neighbors_too=False, neighbors_only=False):
-        return self.san.get_nodes_known(neighbors_too, neighbors_only)
+    async def get_nodes_known(self, neighbors_too=False, neighbors_only=False):
+        return await self.san.get_nodes_known(neighbors_too, neighbors_only)
 
     async def accept_connection(self, source, joining=False):
         return await self.san.accept_connection(source, joining)
 
-    def get_actions(self):
-        return self.san.get_actions()
+    async def get_actions(self):
+        return await self.san.get_actions()
 
     """                                                     ###############################
                                                             #         ARBITRATION         #

@@ -4,17 +4,22 @@ from typing import Type
 class NeighborPolicy(ABC):
     
     @abstractmethod 
-    def set_config(self, config):
+    async def set_config(self, config):
         """Set internal configuration parameters for the neighbor policy, typically from a shared configuration object."""
         pass
     
     @abstractmethod 
-    def need_more_neighbors(self):
+    async def need_more_neighbors(self):
         """Return True if the current node requires additional neighbors to fulfill its connectivity policy."""
         pass
 
+    @abstractmethod
+    async def get_posible_neighbors(self):
+        """Return set of posible neighbors to connect to."""
+        pass
+
     @abstractmethod 
-    def any_leftovers_neighbors(self):
+    async def any_leftovers_neighbors(self):
         """Return True if there are any neighbors that are no longer needed or should be replaced."""
         pass
 
@@ -38,12 +43,12 @@ class NeighborPolicy(ABC):
         pass
     
     @abstractmethod
-    def get_actions(self):
+    async def get_actions(self):
         """Return a list of actions (e.g., add or remove neighbors) that should be executed to maintain the policy."""
         pass
 
     @abstractmethod
-    def meet_node(self, node):
+    async def meet_node(self, node):
         """
         Register the discovery or interaction with a new node.
         
@@ -53,7 +58,7 @@ class NeighborPolicy(ABC):
         pass
     
     @abstractmethod
-    def forget_nodes(self, nodes, forget_all=False):
+    async def forget_nodes(self, nodes, forget_all=False):
         """
         Remove the specified nodes from internal memory.
         
@@ -64,7 +69,7 @@ class NeighborPolicy(ABC):
         pass
     
     @abstractmethod
-    def get_nodes_known(self, neighbors_too=False, neighbors_only=False):
+    async def get_nodes_known(self, neighbors_too=False, neighbors_only=False):
         """
         Retrieve a list of nodes known by the current policy.
         
@@ -78,7 +83,7 @@ class NeighborPolicy(ABC):
         pass
     
     @abstractmethod
-    def update_neighbors(self, node, remove=False):
+    async def update_neighbors(self, node, remove=False):
         """
         Add or remove a neighbor in the current neighbor set.
         
@@ -89,7 +94,7 @@ class NeighborPolicy(ABC):
         pass
 
     @abstractmethod
-    def stricted_topology_status(stricted_topology: bool):
+    async def stricted_topology_status(stricted_topology: bool):
         """
         Update the policy with the current strict topology status.
         
