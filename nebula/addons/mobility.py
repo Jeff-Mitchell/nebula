@@ -58,8 +58,8 @@ class Mobility:
         self.round_frequency = int(self.config.participant["mobility_args"]["round_frequency"])
         # Protocol to change connections based on distance
         self.max_distance_with_direct_connections = 300  # meters
-        self.max_movement_random_strategy = 20  # meters
-        self.max_movement_nearest_strategy = 20  # meters
+        self.max_movement_random_strategy = 40  # meters
+        self.max_movement_nearest_strategy = 40  # meters
         self.max_initiate_approximation = self.max_distance_with_direct_connections * 1.2
         # Logging box with mobility information
         mobility_msg = f"Mobility: {self.mobility}\nMobility type: {self.mobility_type}\nRadius federation: {self.radius_federation}\nScheme mobility: {self.scheme_mobility}\nEach {self.round_frequency} rounds"
@@ -242,9 +242,9 @@ class Mobility:
             longitude = self.config.participant["mobility_args"]["longitude"]
 
         self.config.participant["mobility_args"]["latitude"] = latitude
-        self.config.participant["mobility_args"]["longitude"] = latitude
+        self.config.participant["mobility_args"]["longitude"] = longitude
         if self._verbose: logging.info(f"📍  New geo location: {latitude}, {longitude}")
-        cle = ChangeLocationEvent(latitude, latitude)
+        cle = ChangeLocationEvent(latitude, longitude)
         asyncio.create_task(EventManager.get_instance().publish_addonevent(cle))
 
     async def change_geo_location(self):
