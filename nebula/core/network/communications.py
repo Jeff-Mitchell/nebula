@@ -260,8 +260,7 @@ class CommunicationsManager:
         if neighbors:
             addrs.difference_update(neighbors)
 
-        logging.info(f"neighbors: {neighbors} | addr filtered: {addrs}")
-
+        #logging.info(f"neighbors: {neighbors} | addr filtered: {addrs}")
         discovers_sent = 0
         connections_made = set()
         if addrs:

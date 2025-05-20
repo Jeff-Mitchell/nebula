@@ -24,10 +24,10 @@ class BlackList:
      
     async def apply_restrictions(self, nodes) -> set | None:
         nodes_allowed = await self.verify_allowed_nodes(nodes)
-        logging.info(f"nodes allowed after appliying blacklist restricttions: {nodes_allowed}")
+        #logging.info(f"nodes allowed after appliying blacklist restricttions: {nodes_allowed}")
         if nodes_allowed:
             nodes_allowed = await self.verify_not_recently_disc(nodes_allowed)
-            logging.info(f"nodes allowed after seen recently disconnection restrictions: {nodes_allowed}")
+            #logging.info(f"nodes allowed after seen recently disconnection restrictions: {nodes_allowed}")
         return nodes_allowed
     
     async def clear_restrictions(self):
@@ -152,7 +152,7 @@ class BlackList:
         nodes_not_listed = nodes
         self._recently_disconnected_lock.acquire_async()
         rec_disc = self._recently_disconnected
-        logging.info(f"recently disconencted nodes: {rec_disc}")
+        #logging.info(f"recently disconencted nodes: {rec_disc}")
         if rec_disc:
             nodes_not_listed = nodes.difference(rec_disc)
         self._recently_disconnected_lock.release_async()
