@@ -85,6 +85,12 @@ class Scenario:
         additional_participants,
         schema_additional_participants,
         random_topology_probability,
+        with_sa,
+        strict_topology,
+        sad_candidate_selector,
+        sad_model_handler,
+        sar_arbitration_policy,
+        sar_neighbor_policy
     ):
         """
         Initialize the scenario.
@@ -144,6 +150,12 @@ class Scenario:
             additional_participants (list): List of additional participants.
             schema_additional_participants (str): Schema for additional participants.
             random_topology_probability (float): Probability for random topology.
+            with_sa (bool) : Indicator if Situational Awareness is used.
+            strict_topology (bool) : 
+            sad_candidate_selector (str) :
+            sad_model_handler (str) :
+            sar_arbitration_policy (str) :
+            sar_neighbor_policy (str) :
         """
         self.scenario_title = scenario_title
         self.scenario_description = scenario_description
@@ -196,6 +208,12 @@ class Scenario:
         self.additional_participants = additional_participants
         self.schema_additional_participants = schema_additional_participants
         self.random_topology_probability = random_topology_probability
+        self.with_sa = with_sa
+        self.strict_topology = strict_topology
+        self.sad_candidate_selector = sad_candidate_selector
+        self.sad_model_handler = sad_model_handler
+        self.sar_arbitration_policy = sar_arbitration_policy
+        self.sar_neighbor_policy = sar_neighbor_policy
 
     def attack_node_assign(
         self,
@@ -557,6 +575,26 @@ class ScenarioManagement:
             participant_config["mobility_args"]["round_frequency"] = self.scenario.round_frequency
             participant_config["reporter_args"]["report_status_data_queue"] = self.scenario.report_status_data_queue
             participant_config["mobility_args"]["topology_type"] = self.scenario.topology
+            if self.scenario.with_sa:
+                participant_config["situational_awareness"] = {
+                    "strict_topology": self.scenario.strict_topology,
+                    "sa_discovery": {
+                        "candidate_selector": self.scenario.sad_candidate_selector,
+                        "model_handler": self.scenario.sad_model_handler,
+                        "verbose": True
+                    },
+                    "sa_reasoner": {
+                        "arbitration_policy": self.scenario.sar_arbitration_policy,
+                        "verbose": True,
+                        "sar_components": {
+                            "sa_network": True
+                        },
+                        "sa_network": {
+                            "neighbor_policy": self.scenario.sar_neighbor_policy,
+                            "verbose": True
+                        }
+                    }
+                }
 
             with open(participant_file, "w") as f:
                 json.dump(participant_config, f, sort_keys=False, indent=2)

@@ -4,6 +4,7 @@ import TopologyManager from './topology.js';
 import AttackManager from './attack.js';
 import MobilityManager from './mobility.js';
 import ReputationManager from './reputation.js';
+import SaManager from './situational-awareness.js';
 import GraphSettings from './graph-settings.js';
 import Utils from './utils.js';
 
@@ -27,6 +28,7 @@ const DeploymentManager = (function() {
         AttackManager.initializeEventListeners();
         MobilityManager.initializeMobility();
         ReputationManager.initializeReputationSystem();
+        SaManager.initializeSa();
         GraphSettings.initializeDistanceControls();
         
         // Make modules globally available
@@ -35,6 +37,7 @@ const DeploymentManager = (function() {
         window.AttackManager = AttackManager;
         window.MobilityManager = MobilityManager;
         window.ReputationManager = ReputationManager;
+        window.SaManager = SaManager;
         window.GraphSettings = GraphSettings;
         window.DeploymentManager = DeploymentManager;
         window.Utils = Utils;
@@ -52,7 +55,7 @@ const DeploymentManager = (function() {
         window.addEventListener("resize", handleResize);
         window.addEventListener("click", handleOutsideClick);
         setupDatasetListeners();
-        setupInputValidation();
+        //setupInputValidation();
     }
 
     function handleResize() {

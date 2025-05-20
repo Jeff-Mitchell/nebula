@@ -134,14 +134,33 @@ const MobilityManager = {
 
     setupAdditionalParticipants() {
         document.getElementById("additionalParticipants").addEventListener("change", function() {
-            const container = document.getElementById("additional-participants-items");
-            container.innerHTML = "";
-
-            for (let i = 0; i < this.value; i++) {
-                const participantItem = this.createParticipantItem(i);
-                container.appendChild(participantItem);
+            if(this.value > 0) {
+                document.getElementById("connectionDelaytitle").style.display = "block";
+                document.getElementById("connectionDelayDiv").style.display = "block";
+            } else {
+                document.getElementById("connectionDelaytitle").style.display = "none";
+                document.getElementById("connectionDelayDiv").style.display = "none";
             }
-        }.bind(this));
+        });
+
+        document.getElementById("connectionDelaySwitch").addEventListener("change", function() {          
+            if(this.checked) {
+                document.getElementById("connectionDelay").style.display = "inline";
+                $(".additional-participant-item").remove();
+            } else {
+                document.getElementById("connectionDelay").style.display = "none";
+                
+                //Generate additional participants
+                const container = document.getElementById("additional-participants-items");
+                container.innerHTML = "";
+                
+                let additionalParticipants = document.getElementById("additionalParticipants");
+                for (let i = 0; i < additionalParticipants.value; i++) {
+                    const participantItem = MobilityManager.createParticipantItem(i);
+                    container.appendChild(participantItem);
+                }
+            }
+        });
     },
 
     createParticipantItem(index) {
@@ -151,6 +170,7 @@ const MobilityManager = {
 
         const heading = document.createElement("h5");
         heading.textContent = `Round of deployment (participant ${index + 1})`;
+        heading.classList.add("step-title")
         
         const input = document.createElement("input");
         input.type = "number";

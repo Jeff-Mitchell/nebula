@@ -117,6 +117,18 @@ const ScenarioManager = (function() {
             random_geo: window.MobilityManager.getMobilityConfig().randomGeo || false,
             latitude: window.MobilityManager.getMobilityConfig().location.latitude || 0,
             longitude: window.MobilityManager.getMobilityConfig().location.longitude || 0,
+            //with_sa : window.SaManager.getSaConfig().with_sa || false,
+            with_sa: window.MobilityManager.getMobilityConfig().enabled || false,
+            //strict_topology: window.SaManager.getSaConfig().strict_topology.checked,
+            strict_topology: false,
+            //sad_candidate_selector: window.SaManager.getSaConfig().sad_candidate_selector.value || "Distance",
+            sad_candidate_selector: "Distance",
+            //sad_model_handler:  window.SaManager.getSaConfig().sad_model_handler.value || "std",
+            sad_model_handler: "std",
+            // sar_arbitration_policy: window.SaManager.getSaConfig().sar_arbitration_policy.value || "sap",
+            sar_arbitration_policy: "sap",
+            //sar_neighbor_policy: window.SaManager.getSaConfig().sar_neighbor_policy.value || "Distance",
+            sar_neighbor_policy: "Distance",
             random_topology_probability: document.getElementById("random-probability").value || 0.5,
             network_subnet: "172.20.0.0/16",
             network_gateway: "172.20.0.1",
@@ -219,6 +231,16 @@ const ScenarioManager = (function() {
                 weight_fraction_params_changed: scenario.weight_fraction_params_changed
             });
         }
+        if (scenario.with_sa) {
+            window.SaManager.setSaConfig({
+                with_sa: scenario.with_sa,
+                strict_topology: scenario.strict_topology,
+                sad_candidate_selector: scenario.sad_candidate_selector,
+                sad_model_handler: scenario.sad_model_handler,
+                sar_arbitration_policy: scenario.sar_arbitration_policy,
+                sar_neighbor_policy: scenario.sar_neighbor_policy
+            });
+        }
 
         // Trigger necessary events
         document.getElementById("federationArchitecture").dispatchEvent(new Event('change'));
@@ -316,6 +338,9 @@ const ScenarioManager = (function() {
         }
         if (window.ReputationManager) {
             window.ReputationManager.resetReputationConfig();
+        }
+        if (window.SaManager) {
+            window.SaManager.resetSaConfig();
         }
 
         // Trigger necessary events

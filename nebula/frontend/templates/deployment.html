@@ -576,8 +576,8 @@
                         </div>
                     </div>
                 </div>
-               <!-- Advanced Defense -->
-               <div class="form-group row container-shadow tiny grey">
+                <!-- Advanced Defense -->
+                <div class="form-group row container-shadow tiny grey">
                     <h5 class="step-number">Defense <i class="fa fa-wrench"></i>
                     </h5>
                     <h5 class="step-title">Enable/Disable Reputation</h5>
@@ -714,12 +714,87 @@
                                 placeholder="Number of additional participants" min="0" value="0"
                                 style="display: inline; width: 80%">
                         </div>
+                        <h5 class="step-title" id="connectionDelaytitle" style="display: none;">Same connection delay</h5>
+                        <div class="form-check form-switch" id="connectionDelayDiv" style="display: none; margin-left: 23px; margin-bottom: 20px;">
+                            <input class="form-check-input" type="checkbox" id="connectionDelaySwitch" checked style="display: inline; width: 80px; height: 30px; margin-right: 20px;">
+                            <input type="number" class="form-control" id="connectionDelay"
+                                placeholder="Connection delay" min="1" value="1"
+                                style="display: inline; width: 10%">
+                            <small id="connectionDelayHelp" class="form-text text-muted">
+                                <i id="connectionDelayHelpIcon" class="fa fa-info-circle" style="cursor: pointer;"></i>
+                            </small>
+                        </div>
                         <div id="additional-participants-items"></div>
                         <h5 class="step-title">Schema of deployment</h5>
                         <div class="form-check form-check-inline">
                             <select class="form-control" id="schemaAdditionalParticipantsSelect"
                                 name="schemaAdditionalParticipants" style="display: inline" disabled>
                                 <option value="random" selected>Random</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <!-- Situational awareness -->
+                <div class="form-group row container-shadow tiny grey" style="display: none;">
+                    <h5 class="step-number">Situtational Awareness <i class="fa fa-binoculars"></i>
+                        <input type="checkbox" id="sa-lock" onchange="lock()" style="display: none;">
+                        <label for="sa-lock" class="icon-container" style="float: right;">
+                            <i class="fa fa-lock"></i>
+                        </label>
+                    </h5>
+                    <h5 class="step-title">Enable/Disable SA</h5>
+                    <div class="form-check form-switch" style="margin-left: 23px;">
+                        <input class="form-check-input" type="checkbox" id="situationalAwarenessSwitch" style="display: inline; width: 80px; height: 30px;" checked>
+                    </div>
+                    <div id="sa-settings" style="margin-top: 10px; display:block;">
+                        <h5 class="step-title">Strict Topology</h5>
+                        <div class="form-check form-switch" style="margin-left: 23px;">
+                            <input class="form-check-input" type="checkbox" id="StrictTopologySwitch" style="display: inline; width: 80px; height: 30px;">
+                        </div>
+                    </div>
+                    <div id="sa-discovery-settings" style="margin-top: 10px; display:bock;">
+                        <hr class="styled">
+                        <h5 class="step-title">SA Discovery</h5>
+                        <div id="SADiscovery-options" style="display: block;">
+                            <h5 class="step-title"><span style="font-weight:500;">Candidate Selector</span></h5>
+                            <div class="form-check form-check-inline">
+                                <select class="form-control" id="candidate-selector-select"
+                                    style="display: inline; width:100%">
+                                    <option selected>Distance</option>
+                                    <option>Random</option>
+                                    <option>Ring</option>
+                                    <option>Fully</option>
+                                </select>
+                            </div>
+                            <h5 class="step-title"><span style="font-weight:500;">Model Handler</span></h5>
+                            <div class="form-check form-check-inline">
+                                <select class="form-control" id="model-handler-select"
+                                    style="display: inline; width:100%">
+                                    <option selected>std</option>
+                                    <option>default</option>
+                                    <option>aggregator</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="sa-reasoner-settings" style="margin-top: 10px; display:block;">
+                        <hr class="styled">
+                        <h5 class="step-title">SA Reasoner</h5>
+                        <h5 class="step-title"><span style="font-weight:500;">Arbitration Policy</span></h5>
+                        <div class="form-check form-check-inline">
+                            <select class="form-control" id="arbitration-policy-select"
+                                style="display: inline; width:100%">
+                                <option selected>sap</option>
+                            </select>
+                        </div>
+                        <h5 class="step-title" style="margin-top: 20px;"><span style="font-weight:500;">Neighbor Policy</span></h5>
+                        <div class="form-check form-check-inline">
+                            <select class="form-control" id="neighbor-policy-select"
+                                style="display: inline; width:100%">
+                                <option selected>Distance</option>
+                                <option>Random</option>
+                                <option>Ring</option>
+                                <option>Fully</option>
                             </select>
                         </div>
                     </div>
