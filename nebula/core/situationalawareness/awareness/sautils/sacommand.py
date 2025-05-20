@@ -164,6 +164,9 @@ class ConnectivityCommand(SACommand):
 
     async def conflicts_with(self, other: "ConnectivityCommand") -> bool:
         """Determines if two commands conflict with each other."""
+        if await self._owner.get_agent() == await other._owner.get_agent():
+            return False
+        
         if self._target == other._target:
             conflict_pairs = [
                 {SACommandAction.DISCONNECT, SACommandAction.DISCONNECT},
