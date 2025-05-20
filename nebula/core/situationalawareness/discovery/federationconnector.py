@@ -125,7 +125,7 @@ class FederationConnector(ISADiscovery):
     async def _add_pending_connection_confirmation(self, addr):
         async with self._update_neighbors_lock:
             async with self.pending_confirmation_from_nodes_lock:
-                if addr not in self.sar.get_nodes_known(neighbors_only=True):
+                if addr not in await self.sar.get_nodes_known(neighbors_only=True):
                     logging.info(f"Addition | pending connection confirmation from: {addr}")
                     self.pending_confirmation_from_nodes.add(addr)
 

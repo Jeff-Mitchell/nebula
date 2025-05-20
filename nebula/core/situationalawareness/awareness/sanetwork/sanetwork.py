@@ -179,6 +179,7 @@ class SANetwork(SAMComponent):
         return self._restructure_process_lock
     
     async def _analize_topology_robustness(self):
+        #TODO update the way of checking
         logging.info("🔄 Analizing node network robustness...")
         if not self._restructure_process_lock.locked():
             if not await self.neighbors_left():

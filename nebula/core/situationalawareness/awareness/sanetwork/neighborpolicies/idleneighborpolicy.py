@@ -88,7 +88,7 @@ class IDLENeighborPolicy(NeighborPolicy):
                 - First list represents addrs argument to LinkMessage to connect to
                 - Second one represents the same but for disconnect from LinkMessage
         """ 
-        return [self._connect_to(), self._disconnect_from()]
+        return [await self._connect_to(), await self._disconnect_from()]
           
     
     async def _disconnect_from(self):
