@@ -9,8 +9,9 @@ from nebula.core.network.communications import CommunicationsManager
 
 class Trial():
     TRIAL_DURATION = 20
-    def __init__(self, defendant):
+    def __init__(self, defendant, n_jury):
         self._defendant = defendant
+        self._jury: int = n_jury
         self._verdicts: list[ReputationCategory] = list()
         self._verdicts_lock = Locker("verdicts_lock", async_lock=True)
         self._final_judgment = asyncio.get_event_loop().create_future()
@@ -31,8 +32,14 @@ class Trial():
     async def receive_verdict(self, verdict: ReputationCategory):
         async with self._verdicts_lock:
             self._verdicts.append(verdict)
+            n_verdicts = len(self._verdicts)
+        if n_verdicts == self._jury:
+            await self._make_sentence()
             
-    async def get_judgment(self):
+    async def _make_sentence(self):
+        pass  
+            
+    async def get_judgment(self) -> asyncio.Future:
         return self._final_judgment
             
 class TrialPolicy():
@@ -111,7 +118,6 @@ class CollaborativeReputation():
         async with self._social_expectations_lock:
                 if remove:
                     self.se.pop(node, None)
-                    #TODO check open trials
                     async with self._open_trials_lock:
                         if node in self.ot:
                             await self.ot[node].force_stop_trial()
