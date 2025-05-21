@@ -1,5 +1,5 @@
 from nebula.core.utils.locker import Locker
-from collections import deque, defaultdict
+from collections import deque, defaultdict, Counter
 import logging
 import asyncio
 from nebula.core.eventmanager import EventManager
@@ -37,7 +37,12 @@ class Trial():
             await self._make_sentence()
             
     async def _make_sentence(self):
-        pass  
+        vote_count = Counter(self._verdicts)
+        if vote_count:
+            most_common_category, _ = vote_count.most_common(1)[0]
+            self._final_judgment.set_result(most_common_category)
+        else:
+            self._final_judgment.set_result(None)  
             
     async def get_judgment(self) -> asyncio.Future:
         return self._final_judgment
