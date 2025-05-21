@@ -29,7 +29,6 @@ class DistanceCandidateSelector(CandidateSelector):
     async def select_candidates(self):
         async with self.candidates_lock:
             async with self.nodes_distances_lock:
-                # Filtrar candidatos cuya ID está en nodes_distances y su distancia < MAX_DISTANCE_THRESHOLD
                 nodes_available = [
                     candidate for candidate in self.candidates
                     if candidate[0] in self.nodes_distances and
