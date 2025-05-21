@@ -109,8 +109,6 @@ class SANetwork(SAMComponent):
 
     async def _process_node_found_event(self, nfe: NodeFoundEvent):
         node_addr = await nfe.get_event_data()
-        if self._verbose:
-            logging.info(f"Processing Node Found Event, node addr: {node_addr}")
         await self.np.meet_node(node_addr)
 
     async def _process_update_neighbor_event(self, une: UpdateNeighborEvent):

@@ -1,5 +1,6 @@
 from nebula.core.situationalawareness.awareness.sanetwork.neighborpolicies.neighborpolicy import NeighborPolicy
 from nebula.core.utils.locker import Locker
+import logging
 
 class STARNeighborPolicy(NeighborPolicy):
         
@@ -41,7 +42,9 @@ class STARNeighborPolicy(NeighborPolicy):
     
     async def meet_node(self, node):
         self.nodes_known_lock.acquire()
-        self.nodes_known.add(node)
+        if node != self.addr:
+            if not node in self.nodes_known: logging.info(f"Update nodes known | addr: {node}")
+            self.nodes_known.add(node)
         self.nodes_known_lock.release()
         
     async def forget_nodes(self, nodes, forget_all=False):

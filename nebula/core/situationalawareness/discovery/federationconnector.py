@@ -15,8 +15,8 @@ from functools import cached_property
 if TYPE_CHECKING:
     from nebula.core.engine import Engine
 
-RESTRUCTURE_COOLDOWN = 5
 OFFER_TIMEOUT = 7
+PENDING_CONFIRMATION_TTL = 30
 
 class FederationConnector(ISADiscovery):
     """
@@ -123,19 +123,26 @@ class FederationConnector(ISADiscovery):
         return not self.accept_candidates_lock.locked() and self.late_connection_process_lock.locked()
 
     async def _add_pending_connection_confirmation(self, addr):
+        added = False
         async with self._update_neighbors_lock:
             async with self.pending_confirmation_from_nodes_lock:
                 if addr not in await self.sar.get_nodes_known(neighbors_only=True):
-                    logging.info(f"Addition | pending connection confirmation from: {addr}")
-                    self.pending_confirmation_from_nodes.add(addr)
+                    if not addr in self.pending_confirmation_from_nodes:
+                        logging.info(f"Addition | pending connection confirmation from: {addr}")
+                        self.pending_confirmation_from_nodes.add(addr)
+                        added = True
+        if added:
+            await self._clear_pending_confirmations(node=addr)
 
     async def _remove_pending_confirmation_from(self, addr):
         async with self.pending_confirmation_from_nodes_lock:
             self.pending_confirmation_from_nodes.discard(addr)
 
-    async def _clear_pending_confirmations(self):
+    async def _clear_pending_confirmations(self, node):
+        await asyncio.sleep(PENDING_CONFIRMATION_TTL)
         async with self.pending_confirmation_from_nodes_lock:
-            self.pending_confirmation_from_nodes.clear()
+            if node in self.pending_confirmation_from_nodes:
+                self.pending_confirmation_from_nodes.discard(node)
 
     async def _waiting_confirmation_from(self, addr):
         async with self.pending_confirmation_from_nodes_lock:
@@ -248,7 +255,6 @@ class FederationConnector(ISADiscovery):
         self.late_connection_process_lock.acquire()
         best_candidates = []
         await self.candidate_selector.remove_candidates()
-        await self._clear_pending_confirmations()
 
         # find federation and send discover
         discovers_sent, connections_stablished = await self.cm.stablish_connection_to_federation(msg_type, addrs_known)
@@ -276,7 +282,6 @@ class FederationConnector(ISADiscovery):
                 for addr, _, _ in best_candidates:
                     await self._add_pending_connection_confirmation(addr)
                     await self.cm.send_message(addr, msg)
-                    await asyncio.sleep(1)
             except asyncio.CancelledError:
                 if self._verbose: logging.info("Error during stablishment")
                 
