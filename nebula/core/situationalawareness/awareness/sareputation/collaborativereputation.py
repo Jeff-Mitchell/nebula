@@ -6,6 +6,7 @@ from nebula.core.eventmanager import EventManager
 from nebula.core.nebulaevents import UpdateNeighborEvent
 from nebula.core.situationalawareness.awareness.sareputation.sareputation import ThreatCategory, ReputationCategory, reputation_category
 from nebula.core.network.communications import CommunicationsManager
+import numpy as np
 
 class Trial():
     TRIAL_DURATION = 20
@@ -185,13 +186,18 @@ class CollaborativeReputation():
                 await new_trial.init_trial()
                 opened = True
         if opened: await self._start_trial_to_node(node)
-        
-    
-    async def _analize_suitability(self, reputations: list):
-        pass
-        
+            
     async def get_social_state(self):
+        """Function to calculate social suitability state and suitability score"""
+        suitable = False
+        suitable_score = 0
         async with self._social_expectations_lock:           
-            last_reputations_received = [rep[-1] for rep in self.se.values() if rep]
-            #suitable
-    
+            last_reputations_received = [rep[-1] for rep in self.se.values() if rep and len(rep) > 0]
+            
+        if last_reputations_received:
+            suitable = all(lrr > ReputationCategory.TRUSTED.value for lrr in last_reputations_received)
+            if suitable:
+                suitable_score = np.mean(last_reputations_received)
+                return (suitable, suitable_score)
+        else:
+            return (False, 0)
