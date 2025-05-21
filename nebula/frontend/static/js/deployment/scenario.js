@@ -119,7 +119,7 @@ const ScenarioManager = (function() {
             latitude: window.MobilityManager.getMobilityConfig().location.latitude || 0,
             longitude: window.MobilityManager.getMobilityConfig().location.longitude || 0,
             with_sa : window.SaManager.getSaConfig().with_sa || false,
-            strict_topology: window.SaManager.getSaConfig().strict_topology.checked,
+            strict_topology: window.SaManager.getSaConfig().strict_topology || false,
             sad_candidate_selector: window.SaManager.getSaConfig().sad_candidate_selector.value || "Distance",
             sad_model_handler:  window.SaManager.getSaConfig().sad_model_handler.value || "std",
             sar_arbitration_policy: window.SaManager.getSaConfig().sar_arbitration_policy.value || "sap",
