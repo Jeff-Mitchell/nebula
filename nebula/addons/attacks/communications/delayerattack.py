@@ -57,7 +57,7 @@ class DelayerAttack(CommunicationAttack):
         def decorator(func):
             @wraps(func)
             async def wrapper(*args, **kwargs):
-                if len(args) > 1:
+                if len(args) == 4 and args[3] == "model":
                     dest_addr = args[1]
                     if dest_addr in self.targets:
                         logging.info(f"[DelayerAttack] Delaying model propagation to {dest_addr} by {delay} seconds")
