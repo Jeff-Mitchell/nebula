@@ -27,7 +27,7 @@ class Trial():
     async def _close_trial(self):
         asyncio.sleep(self._trial_duration)
         async with self._verdicts_lock:
-            pass
+            await self._make_sentence()
     
     async def receive_verdict(self, verdict: ReputationCategory):
         async with self._verdicts_lock:
@@ -38,11 +38,14 @@ class Trial():
             
     async def _make_sentence(self):
         vote_count = Counter(self._verdicts)
-        if vote_count:
-            most_common_category, _ = vote_count.most_common(1)[0]
-            self._final_judgment.set_result(most_common_category)
-        else:
-            self._final_judgment.set_result(None)  
+        if not vote_count:
+            self._final_judgment.set_result(None)
+            return
+
+        max_votes = max(vote_count.values())
+        top_categories = [cat for cat, count in vote_count.items() if count == max_votes]       # Draw situation
+        final_category = min(top_categories)                                                    # Get lower category 
+        self._final_judgment.set_result(final_category) 
             
     async def get_judgment(self) -> asyncio.Future:
         return self._final_judgment
@@ -183,4 +186,12 @@ class CollaborativeReputation():
                 opened = True
         if opened: await self._start_trial_to_node(node)
         
+    
+    async def _analize_suitability(self, reputations: list):
+        pass
+        
+    async def get_social_state(self):
+        async with self._social_expectations_lock:           
+            last_reputations_received = [rep[-1] for rep in self.se.values() if rep]
+            #suitable
     

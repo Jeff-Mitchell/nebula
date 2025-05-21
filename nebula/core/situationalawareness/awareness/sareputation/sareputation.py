@@ -1,5 +1,5 @@
 from nebula.core.situationalawareness.awareness.sareasoner import SAMComponent
-from enum import Enum
+from enum import Enum, IntEnum
 
 """                                                     ##############################
                                                         #           THREATS          #
@@ -31,12 +31,30 @@ class PotencialThreat():
                                                         ##############################
 """
 
-class ReputationCategory(Enum):
-    HIGH_TRUSTED = "high_trusted"
-    TRUSTED = "trusted"
-    RESPECTED = "respected"
-    SUSPICIOUS = "suspicious"
-    MALICIOUS = "malicious"
+class ReputationCategory(IntEnum):
+    MALICIOUS = 0
+    SUSPICIOUS = 1
+    RESPECTED = 2
+    TRUSTED = 3
+    HIGH_TRUSTED = 4
+
+    @property
+    def label(self):
+        return _LABELS[self]
+        
+_LABELS = {
+    ReputationCategory.HIGH_TRUSTED: "high_trusted",
+    ReputationCategory.TRUSTED: "trusted",
+    ReputationCategory.RESPECTED: "respected",
+    ReputationCategory.SUSPICIOUS: "suspicious",
+    ReputationCategory.MALICIOUS: "malicious",
+}
+
+_LABEL_TO_CATEGORY = {label: cat for cat, label in _LABELS.items()}
+
+@staticmethod
+def reputation_category(rep_label: str):
+    return _LABEL_TO_CATEGORY.get(rep_label)
 
 class ReputationThreshold(Enum): # Reputational thresholds
     HIGH_TRUSTED = 0.9
@@ -44,11 +62,6 @@ class ReputationThreshold(Enum): # Reputational thresholds
     RESPECTED = 0.6
     SUSPICIOUS = 0.5
     MALICIOUS = 0.0
-    
-@staticmethod
-def reputation_category(rep_cat: str):
-    rep_category = next((cat for cat in ReputationCategory if cat.value == rep_cat), None)
-    return rep_category
 
 class ReputationScore():
     def __init__(self, target, reputation_score):

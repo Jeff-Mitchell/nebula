@@ -55,6 +55,13 @@ class ConsistencyReputation():
     async def get_suspicious_nodes(self):
         async with self._suspicious_nodes_lock:
             return self._suspicious_nodes.copy()
+        
+    async def get_scores(self, historical=False):
+        if historical:
+            return self.cs.copy()
+        else:
+            last_scores = {node: scores[-1] for node,scores in self.cs.items()}
+            return last_scores
               
     async def _process_update_neighbor_event(self, une: UpdateNeighborEvent):
         node, remove = await une.get_event_data()
@@ -76,13 +83,6 @@ class ConsistencyReputation():
                 similarity = self._calculate_model_similarity(self_model, updates[node][0])
                 self.hs[node].append(similarity)
 
-    async def get_scores(self, historical=False):
-        if historical:
-            return self.cs.copy()
-        else:
-            last_scores = {node: scores[-1] for node,scores in self.cs.items()}
-            return last_scores
-        
     def _calculate_model_similarity(self, model1: OrderedDict, model2: OrderedDict):
         return cosine_metric(model1=model1, model2=model2, similarity=True)
     
@@ -121,17 +121,14 @@ class ConsistencyReputation():
     def _compute_score(self, similarities: list[float]) -> float:
         if not similarities:
             return 0.0
-
-        # Última similitud observada
+        
         latest_similarity = similarities[-1]
 
-        # Base score (cuánto se acerca a la similitud esperada)
         if latest_similarity >= self.SIMILARITY_THRESHOLD:
             base_score = 1.0
         else:
             base_score = latest_similarity / self.SIMILARITY_THRESHOLD
 
-        # Pesos por defecto
         similarity_weight = self.DEFAULT_SIMILARITY_WEIGHT
         consistency_weight = self.DEFAULT_CONSISTENCY_WEIGHT
         stability_weight = self.DEFAULT_STABILITY_WEIGHT
@@ -147,25 +144,24 @@ class ConsistencyReputation():
             consistency_weight = self.ADVANCED_CONSISTENCY_WEIGHT
             stability_weight = self.ADVANCED_STABILITY_WEIGHT
 
-            # --- Consistencia temporal (varianza) ---
+            # --- Temporal consistency (varianza) ---
             var = np.var(similarities)
             temporal_consistency = 1.0 - min(var, 1.0)
 
-            # --- Tendencia (slope) ---
+            # --- Tendency (slope) ---
             x = list(range(len(similarities)))
             slope, _, _, _, _ = linregress(x, similarities)
             if slope < 0:
                 trend_penalty = min(abs(slope), 0.2)
             elif slope > 0:
-                # Refuerzo positivo si la tendencia es creciente
-                base_score += min(slope, 0.2)
+                base_score += min(slope, 0.2)   # Positive reinforcement
 
-            # --- Estabilidad local (diferencia entre actualizaciones consecutivas) ---
+            # --- Local stability (Diference between consecutive updates) ---
             diffs = [abs(similarities[i] - similarities[i - 1]) for i in range(1, len(similarities))]
             avg_fluctuation = np.mean(diffs)
             local_stability_score = 1.0 - min(avg_fluctuation, 1.0)
 
-            # --- Cálculo final ---
+            # --- Final score ---
             final_score = (
                 similarity_weight * base_score +
                 consistency_weight * temporal_consistency +
