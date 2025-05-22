@@ -4,12 +4,13 @@ import logging
 import asyncio
 from nebula.core.eventmanager import EventManager
 from nebula.core.nebulaevents import UpdateNeighborEvent
-from nebula.core.situationalawareness.awareness.sareputation.sareputation import ThreatCategory, ReputationCategory, reputation_category
+from nebula.core.situationalawareness.awareness.sareputation.sareputation import ThreatCategory, ReputationCategory
 from nebula.core.network.communications import CommunicationsManager
 import numpy as np
 
 class Trial():
-    TRIAL_DURATION = 20
+    TRIAL_DURATION = 30
+    
     def __init__(self, defendant, n_jury):
         self._defendant = defendant
         self._jury: int = n_jury
@@ -17,7 +18,7 @@ class Trial():
         self._verdicts_lock = Locker("verdicts_lock", async_lock=True)
         self._final_judgment = asyncio.get_event_loop().create_future()
         self._trial_duration = None
-        
+    
     async def init_trial(self, timeout=None):
         self._trial_duration = timeout if timeout else self.TRIAL_DURATION
         
@@ -80,23 +81,24 @@ class CollaborativeReputation():
     def __init__(self):
         self._trials_recently_received: int = 0
         self._nodes_on_trial = set()
-        self._social_expectations: dict[str, deque[ReputationCategory]] = defaultdict(deque)
+        self._social_expectations: dict[str, deque[ReputationCategory]] = defaultdict(deque)            # Reputation received from neighbors
         self._social_expectations_lock = Locker("social_expectations_lock", async_lock=True)
-        self._social_reputations: dict[str, ReputationCategory] = defaultdict(ReputationCategory)
+        self._social_reputations: dict[str, ReputationCategory] = defaultdict(ReputationCategory)       # Reputation calculated
         self._social_reputations_lock = Locker("social_reputations", async_lock=True)
         self._trial_policy = TrialPolicy()
         self._open_trials: dict[str, Trial] = defaultdict(Trial)
         self._open_trials_lock = Locker("open_trials_lock", async_lock=True)
+        self._cm = CommunicationsManager.get_instance()
         self._verbose = True
         
     @property
     def se(self):
-        """Social Expectations"""
+        """Social Expectations. Self reputation received from neighbors"""
         return self._social_expectations
     
     @property
     def sr(self):
-        """Social Reputations"""
+        """Social Reputations. Neighbors final reputation calculated"""
         return self._social_reputations
     
     @property
@@ -108,6 +110,11 @@ class CollaborativeReputation():
     def ot(self):
         """Open Trials"""
         return self._open_trials
+    
+    @property
+    def cm(self):
+        """Communication Manager"""
+        return self._cm
         
     async def init(self, neighbor_list):
         for node in neighbor_list:
@@ -136,7 +143,7 @@ class CollaborativeReputation():
         
     async def _process_share_reputation_message(self, source, message):
         rep_value = message.reputation 
-        rep_category = reputation_category(rep_value)
+        rep_category = ReputationCategory.reputation_category(rep_value)
         async with self._social_expectations_lock:
             self.se[source].append(rep_category)    
     
@@ -153,7 +160,7 @@ class CollaborativeReputation():
             
     async def _process_submit_verdict_message(self, source, message):
         verdict = message.verdict
-        verdict = reputation_category(verdict)
+        verdict = ReputationCategory.reputation_category(verdict)
         async with self._open_trials_lock:
             if source in self.ot:
                 await self.ot.get(source).receive_verdict(verdict)
@@ -163,15 +170,22 @@ class CollaborativeReputation():
     async def _start_trial_to_node(self, node):
         start_trial_message = CommunicationsManager.get_instance().create_message("reputation", "start_trial", defendant=node)
         await CommunicationsManager.get_instance().send_message_to_neighbors(start_trial_message)
-            
-    async def update_social_reputations(self, reputations: dict[str, ReputationCategory]):
-        async with self._social_reputations_lock:
-            self._social_reputations = reputations
-    
+           
     """                                                 ##################################
                                                         #         FUNCTIONALITIES        #
                                                         ##################################
     """    
+          
+    async def update_social_reputations(self, reputations: dict[str, ReputationCategory]):
+        async with self._social_reputations_lock:
+            self._social_reputations = reputations
+            
+    async def share_reputations(self):
+        async with self._social_reputations_lock:
+            for node, rep in self.sr.items():
+                #TODO create and send message
+                share_reputation_message = self.cm.create_message("reputation", "share", rep)
+    
             
     async def close_trial(self, node):
         async with self._open_trials_lock:

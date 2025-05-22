@@ -1,9 +1,8 @@
 from nebula.core.utils.locker import Locker
-from collections import deque, OrderedDict
+from collections import deque, OrderedDict, defaultdict
 import logging
 import numpy as np
 from scipy.stats import linregress
-from collections import defaultdict
 from nebula.core.utils.helper import cosine_metric
 from nebula.core.eventmanager import EventManager
 from nebula.core.nebulaevents import AggregationEvent, UpdateNeighborEvent
@@ -26,7 +25,7 @@ class ConsistencyReputation():
     
     def __init__(self, config):
         self._addr = config["addr"]
-        self._verbose = config["verbose"]
+        self._verbose = True # config["verbose"]
         self._historical_similarities: dict[str, deque[float]] = defaultdict(deque)
         self._historical_similarities_lock = Locker("historical_similarities_lock", async_lock=True)
         self._consistency_scores: dict[str, deque[float]] = defaultdict(deque)
@@ -36,10 +35,12 @@ class ConsistencyReputation():
         
     @property
     def hs(self):
+        """Historical similarities"""
         return self._historical_similarities
     
     @property
     def cs(self):
+        """Consistency scores"""
         return self._consistency_scores
         
     async def init(self, neighbor_list):
@@ -86,7 +87,7 @@ class ConsistencyReputation():
     def _calculate_model_similarity(self, model1: OrderedDict, model2: OrderedDict):
         return cosine_metric(model1=model1, model2=model2, similarity=True)
     
-    async def analize_malice(self, node, score):
+    async def _analize_malice(self, node, score):
         potencial_threat = None
         if score <= self.SCORE_THRESHOLD_MALICIOUS:
             potencial_threat = PotencialThreat(node, ThreatCategory.MODEL_POISSONING)
@@ -112,9 +113,10 @@ class ConsistencyReputation():
                     self.cs[node].append(score)
                     reputation_scores[node] = score
 
-        if self._verbose:
-            for node, score in reputation_scores.items():
-                logging.info(f"Node {node} consistency score: {score:.4f}")
+        
+        for node, score in reputation_scores.items():
+            if self._verbose:logging.info(f"Node {node} consistency score: {score:.4f}")
+            await self._analize_malice(node, score)
         
         return reputation_scores
 
@@ -167,6 +169,7 @@ class ConsistencyReputation():
                 consistency_weight * temporal_consistency +
                 stability_weight * local_stability_score
             )
+            if self._verbose: logging.info(f"Metrics | base score: {base_score} | temp consistency:  {temporal_consistency} | stability: {local_stability_score}")
             if self._verbose: logging.info(f"Similarity score: {similarity_weight * base_score} | Consistency score: {consistency_weight * temporal_consistency} | Stability score: {stability_weight * local_stability_score} | Tren penalty: {trend_penalty}")
             final_score = max(0.0, final_score - trend_penalty)
                     
