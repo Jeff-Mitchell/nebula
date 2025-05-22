@@ -4,6 +4,7 @@ import os
 import time
 
 import docker
+import socket
 
 from nebula.addons.attacks.attacks import create_attack
 from nebula.addons.functions import print_msg_box
@@ -594,22 +595,19 @@ class Engine:
         if self.config.participant["scenario_args"]["controller"] != "nebula-test":
             result = await self.reporter.report_scenario_finished()
             if result:
+                logging.info("Scenario finished reported succesfully")
                 pass
             else:
                 logging.error("Error reporting scenario finished")
-
-        efe = ExperimentFinishEvent()
-        await EventManager.get_instance().publish_node_event(efe)
-        logging.info("Checking if all my connections reached the total rounds...")
-        while not self.cm.check_finished_experiment():
-            await asyncio.sleep(1)
 
         await asyncio.sleep(5)
 
         # Kill itself
         if self.config.participant["scenario_args"]["deployment"] == "docker":
             try:
-                self.client.containers.get(self.docker_id).stop()
+                self.docker_id = socket.gethostname()
+                logging.info(f"docker id: {self.docker_id} killing docker")
+                self.client.containers.get(self.docker_id).kill()
             except Exception as e:
                 print(f"Error stopping Docker container with ID {self.docker_id}: {e}")
 
