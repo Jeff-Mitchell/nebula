@@ -17,6 +17,7 @@ from nebula.core.nebulaevents import (
     RoundStartEvent,
     UpdateNeighborEvent,
     UpdateReceivedEvent,
+    ExperimentFinishEvent
 )
 from nebula.core.network.communications import CommunicationsManager
 from nebula.core.situationalawareness.situationalawareness import SituationalAwareness
@@ -597,6 +598,8 @@ class Engine:
             else:
                 logging.error("Error reporting scenario finished")
 
+        efe = ExperimentFinishEvent()
+        await EventManager.get_instance().publish_node_event(efe)
         logging.info("Checking if all my connections reached the total rounds...")
         while not self.cm.check_finished_experiment():
             await asyncio.sleep(1)

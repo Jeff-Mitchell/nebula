@@ -852,6 +852,7 @@ class CommunicationsManager:
         return self.engine.learning_cycle_finished()
 
     def check_finished_experiment(self):
+        logging.info(f"Number of existing connections: {len(self.connections.values())}")
         return all(
             conn.get_federated_round() == self.config.participant["scenario_args"]["rounds"] - 1
             for conn in self.connections.values()

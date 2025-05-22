@@ -6,7 +6,7 @@ from scipy.stats import linregress
 from nebula.core.utils.helper import cosine_metric
 from nebula.core.eventmanager import EventManager
 from nebula.core.nebulaevents import AggregationEvent, UpdateNeighborEvent
-from nebula.core.situationalawareness.awareness.sareputation.sareputation import ThreatCategory, PotencialThreat
+from nebula.core.situationalawareness.awareness.sareputation.utils import ThreatCategory, PotencialThreat
 
 class ConsistencyReputation():
     MAX_HISTORIC_SIZE = 20

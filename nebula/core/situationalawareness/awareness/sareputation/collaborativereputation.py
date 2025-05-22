@@ -4,7 +4,7 @@ import logging
 import asyncio
 from nebula.core.eventmanager import EventManager
 from nebula.core.nebulaevents import UpdateNeighborEvent
-from nebula.core.situationalawareness.awareness.sareputation.sareputation import ThreatCategory, ReputationCategory
+from nebula.core.situationalawareness.awareness.sareputation.utils import ThreatCategory, ReputationCategory
 from nebula.core.network.communications import CommunicationsManager
 import numpy as np
 
@@ -183,10 +183,9 @@ class CollaborativeReputation():
     async def share_reputations(self):
         async with self._social_reputations_lock:
             for node, rep in self.sr.items():
-                #TODO create and send message
-                share_reputation_message = self.cm.create_message("reputation", "share", rep)
-    
-            
+                share_reputation_message = self.cm.create_message("reputation", "share", rep.label())
+                asyncio.create_task(self.cm.send_message(node, share_reputation_message))
+      
     async def close_trial(self, node):
         async with self._open_trials_lock:
             self.ot.pop(node)
