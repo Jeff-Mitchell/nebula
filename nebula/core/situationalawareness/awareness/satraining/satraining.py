@@ -10,10 +10,32 @@ from nebula.core.eventmanager import EventManager
 RESTRUCTURE_COOLDOWN = 5    
     
 class SATraining(SAMComponent):
-    def __init__(
-        self,
-        config
-    ):
+    """
+    SATraining is a Situational Awareness (SA) component responsible for enhancing
+    the training process in Distributed Federated Learning (DFL) environments
+    by leveraging context-awareness and environmental knowledge.
+
+    This component dynamically instantiates a training policy based on the configuration,
+    allowing the system to adapt training strategies depending on the local topology,
+    node behavior, or environmental constraints.
+
+    Attributes:
+        _config (dict): Configuration dictionary containing parameters and references.
+        _sar (SAReasoner): Reference to the shared situational reasoner.
+        _trainning_policy: Instantiated training policy strategy.
+    """
+    
+    def __init__(self, config):
+        """
+        Initialize the SATraining component with a given configuration.
+
+        Args:
+            config (dict): Configuration dictionary containing:
+                - 'addr': Node address.
+                - 'verbose': Verbosity flag.
+                - 'sar': Reference to the SAReasoner instance.
+                - 'training_policy': Training policy name to be used.
+        """
         print_msg_box(
             msg=f"Starting Training SA\nTraining policy: {training_policy}",
             indent=2,
@@ -29,18 +51,32 @@ class SATraining(SAMComponent):
 
     @property
     def sar(self):
+        """
+        Returns the current instance of the SAReasoner.
+        """
         return self._sar
 
     @property
     def tp(self):
+        """
+        Returns the currently active training policy instance.
+        """
         return self._trainning_policy    
 
     async def init(self):
+        """
+        Initialize the training policy with the current known neighbors from the SAReasoner.
+        This setup enables the policy to make informed decisions based on local topology.
+        """
         config = {}
         config["nodes"] = set(self.sar.get_nodes_known(neighbors_only=True)) 
         await self.tp.init(config)
 
     async def sa_component_actions(self):
+        """
+        Periodically called action of the SA component to evaluate the current scenario.
+        This invokes the evaluation logic defined in the training policy to adapt behavior.
+        """
         logging.info("SA Trainng evaluating current scenario")
         asyncio.create_task(self.tp.get_evaluation_results())
 
