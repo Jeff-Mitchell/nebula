@@ -37,11 +37,11 @@ class QDSTrainingPolicy(TrainingPolicy):
         async with self._nodes_lock:
             nodes = config["nodes"]
             self._nodes : dict[str, tuple[deque, int]] = {node_id: (deque(maxlen=self.MAX_HISTORIC_SIZE), 0) for node_id in nodes}
-        await EventManager.get_instance().subscribe_node_event(AggregationEvent, self.process_aggregation_event)
-        await EventManager.get_instance().subscribe_node_event(UpdateNeighborEvent, self.update_neighbors)
+        await EventManager.get_instance().subscribe_node_event(AggregationEvent, self._process_aggregation_event)
+        await EventManager.get_instance().subscribe_node_event(UpdateNeighborEvent, self._update_neighbors)
         await self.register_sa_agent()
 
-    async def update_neighbors(self, une: UpdateNeighborEvent):
+    async def _update_neighbors(self, une: UpdateNeighborEvent):
         node, remove = await une.get_event_data()
         async with self._nodes_lock:
             if remove:
@@ -50,7 +50,7 @@ class QDSTrainingPolicy(TrainingPolicy):
                 if not node in self._nodes:
                     self._nodes.update({node : (deque(maxlen=self.MAX_HISTORIC_SIZE), 0)})
 
-    async def process_aggregation_event(self, agg_ev : AggregationEvent):
+    async def _process_aggregation_event(self, agg_ev : AggregationEvent):
         if self._verbose: logging.info("Processing aggregation event")
         (updates, expected_nodes, missing_nodes) = await agg_ev.get_event_data()
         self._round_missing_nodes = missing_nodes
@@ -67,7 +67,7 @@ class QDSTrainingPolicy(TrainingPolicy):
                 else:
                     self._nodes[addr] = (deque_history, 0)                  # Reset inactive counter
                     
-                #TODO hacerlo solo para los q no se está utilizando la ultima update guardada                       
+                #TODO Do it for the ones not using the last update received cause they are missing this round                      
                 (model,_) = updt
                 (self_model, _) = self_updt 
                 cos_sim = cosine_metric(self_model, model, similarity=True)
