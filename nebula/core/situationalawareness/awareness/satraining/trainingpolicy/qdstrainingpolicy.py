@@ -13,6 +13,15 @@ import math
 
 # "Quality-Driven Selection"    (QDS)
 class QDSTrainingPolicy(TrainingPolicy):
+    """
+    Implements a Quality-Driven Selection (QDS) strategy for training in DFL.
+    
+    This policy tracks the cosine similarity of neighbor model updates over time,
+    and detects nodes that are inactive or provide redundant updates.
+    Based on these evaluations, the policy suggests disconnecting such nodes
+    to promote better model convergence and network efficiency.
+    """
+    
     MAX_HISTORIC_SIZE = 10
     SIMILARITY_THRESHOLD = 0.73
     INACTIVE_THRESHOLD = 3
@@ -20,6 +29,14 @@ class QDSTrainingPolicy(TrainingPolicy):
     CHECK_COOLDOWN = 10000
 
     def __init__(self, config : dict):
+        """
+        Initializes the QDS training policy.
+        
+        Args:
+            config (dict): Configuration dictionary with keys:
+                - "addr": Local node address.
+                - "verbose": Boolean flag for logging verbosity.
+        """
         self._addr = config["addr"]
         self._verbose = config["verbose"]
         self._nodes : dict[str, tuple[deque, int]] = {}
@@ -34,6 +51,12 @@ class QDSTrainingPolicy(TrainingPolicy):
         return "QDS"
 
     async def init(self, config):
+        """
+        Initializes the internal state and subscribes to necessary events.
+
+        Args:
+            config (dict): Must contain a 'nodes' set representing known neighbors.
+        """
         async with self._nodes_lock:
             nodes = config["nodes"]
             self._nodes : dict[str, tuple[deque, int]] = {node_id: (deque(maxlen=self.MAX_HISTORIC_SIZE), 0) for node_id in nodes}
@@ -42,6 +65,12 @@ class QDSTrainingPolicy(TrainingPolicy):
         await self.register_sa_agent()
 
     async def _update_neighbors(self, une: UpdateNeighborEvent):
+        """
+        Updates the internal list of neighbors based on topology changes.
+
+        Args:
+            une (UpdateNeighborEvent): Event containing added/removed neighbor information.
+        """
         node, remove = await une.get_event_data()
         async with self._nodes_lock:
             if remove:
@@ -51,6 +80,12 @@ class QDSTrainingPolicy(TrainingPolicy):
                     self._nodes.update({node : (deque(maxlen=self.MAX_HISTORIC_SIZE), 0)})
 
     async def _process_aggregation_event(self, agg_ev : AggregationEvent):
+        """
+        Processes an AggregationEvent and updates similarity/inactivity metrics.
+
+        Args:
+            agg_ev (AggregationEvent): Aggregation event with model updates and missing nodes.
+        """
         if self._verbose: logging.info("Processing aggregation event")
         (updates, expected_nodes, missing_nodes) = await agg_ev.get_event_data()
         self._round_missing_nodes = missing_nodes
@@ -75,11 +110,23 @@ class QDSTrainingPolicy(TrainingPolicy):
         self._evaluation_results = await self.evaluate()
         
     async def _get_nodes(self):
+        """
+        Safely returns a copy of the current node tracking dictionary.
+
+        Returns:
+            dict: A copy of the internal node state.
+        """
         async with self._nodes_lock:
             nodes = self._nodes.copy()
         return nodes    
     
     async def evaluate(self):
+        """
+        Evaluates the current neighbor set to determine inactive or redundant nodes.
+
+        Returns:
+            set: A set of node addresses suggested for disconnection.
+        """
         if self._grace_rounds:  # Grace rounds
             self._grace_rounds -= 1
             if self._verbose: logging.info("Grace time hasnt finished...")
@@ -130,6 +177,11 @@ class QDSTrainingPolicy(TrainingPolicy):
         return result
     
     async def get_evaluation_results(self):
+        """
+        Triggers suggested actions based on last evaluation results.
+
+        Suggests disconnection from nodes marked as inactive or redundant.
+        """
         if self._check_done:
             for node_discarded in self._evaluation_results:
                 args = (node_discarded, False, True)

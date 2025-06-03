@@ -69,7 +69,7 @@ class SATraining(SAMComponent):
         This setup enables the policy to make informed decisions based on local topology.
         """
         config = {}
-        config["nodes"] = set(self.sar.get_nodes_known(neighbors_only=True)) 
+        config["nodes"] = set(await self.sar.get_nodes_known(neighbors_only=True)) 
         await self.tp.init(config)
 
     async def sa_component_actions(self):
