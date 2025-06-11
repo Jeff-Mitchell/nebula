@@ -9,10 +9,10 @@
         <meta name="description" content="NEBULA: A Platform for Decentralized Federated Learning">
       
       
-        <meta name="author" content="Enrique Tomás Martínez Beltrán">
+        <meta name="author" content="Enrique Tomás Martínez Beltrán, Alberto Huertas Celdrán, Alejandro Avilés Serrano, Fernando Torres Vega">
       
       
-        <link rel="canonical" href="https://nebula.enriquetomasmb.com/api/addons/attacks/dataset/labelflipping/">
+        <link rel="canonical" href="https://docs.nebula-dfl.com/api/addons/attacks/dataset/labelflipping/">
       
       
         <link rel="prev" href="../datasetattack/">
@@ -351,6 +351,25 @@
     
   
   Changelog
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../../../commercial-faq/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Commercial FAQ
 
       </a>
     </li>
@@ -1025,10 +1044,82 @@
   
 </li>
         
-          <li class="md-nav__item">
-  <a href="#nebula.addons.attacks.dataset.labelflipping.LabelFlippingAttack.labelFlipping" class="md-nav__link">
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#nebula.addons.attacks.dataset.labelflipping.LabelFlippingStrategy" class="md-nav__link">
     <span class="md-ellipsis">
-      labelFlipping
+      LabelFlippingStrategy
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="LabelFlippingStrategy">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#nebula.addons.attacks.dataset.labelflipping.LabelFlippingStrategy.flip_labels" class="md-nav__link">
+    <span class="md-ellipsis">
+      flip_labels
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#nebula.addons.attacks.dataset.labelflipping.NonTargetedLabelFlippingStrategy" class="md-nav__link">
+    <span class="md-ellipsis">
+      NonTargetedLabelFlippingStrategy
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="NonTargetedLabelFlippingStrategy">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#nebula.addons.attacks.dataset.labelflipping.NonTargetedLabelFlippingStrategy.flip_labels" class="md-nav__link">
+    <span class="md-ellipsis">
+      flip_labels
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#nebula.addons.attacks.dataset.labelflipping.TargetedLabelFlippingStrategy" class="md-nav__link">
+    <span class="md-ellipsis">
+      TargetedLabelFlippingStrategy
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="TargetedLabelFlippingStrategy">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#nebula.addons.attacks.dataset.labelflipping.TargetedLabelFlippingStrategy.__init__" class="md-nav__link">
+    <span class="md-ellipsis">
+      __init__
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#nebula.addons.attacks.dataset.labelflipping.TargetedLabelFlippingStrategy.flip_labels" class="md-nav__link">
+    <span class="md-ellipsis">
+      flip_labels
     </span>
   </a>
   
@@ -1218,210 +1309,6 @@
   
   
   
-    
-    
-    
-    
-      
-      
-    
-    
-    <li class="md-nav__item md-nav__item--nested">
-      
-        
-        
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5_1_1_2" >
-        
-          
-          <div class="md-nav__link md-nav__container">
-            <a href="../../../blockchain/" class="md-nav__link ">
-              
-  
-  
-  <span class="md-ellipsis">
-    blockchain
-    
-  </span>
-  
-
-            </a>
-            
-              
-              <label class="md-nav__link " for="__nav_5_1_1_2" id="__nav_5_1_1_2_label" tabindex="0">
-                <span class="md-nav__icon md-icon"></span>
-              </label>
-            
-          </div>
-        
-        <nav class="md-nav" data-md-level="4" aria-labelledby="__nav_5_1_1_2_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_5_1_1_2">
-            <span class="md-nav__icon md-icon"></span>
-            blockchain
-          </label>
-          <ul class="md-nav__list" data-md-scrollfix>
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../../blockchain/blockchain_deployer/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    blockchain_deployer
-    
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../../blockchain/chaincode/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    chaincode
-    
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../../blockchain/geth/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    geth
-    
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    
-    
-    
-    
-      
-      
-    
-    
-    <li class="md-nav__item md-nav__item--nested">
-      
-        
-        
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5_1_1_2_4" >
-        
-          
-          <div class="md-nav__link md-nav__container">
-            <a href="../../../blockchain/oracle/" class="md-nav__link ">
-              
-  
-  
-  <span class="md-ellipsis">
-    oracle
-    
-  </span>
-  
-
-            </a>
-            
-              
-              <label class="md-nav__link " for="__nav_5_1_1_2_4" id="__nav_5_1_1_2_4_label" tabindex="0">
-                <span class="md-nav__icon md-icon"></span>
-              </label>
-            
-          </div>
-        
-        <nav class="md-nav" data-md-level="5" aria-labelledby="__nav_5_1_1_2_4_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_5_1_1_2_4">
-            <span class="md-nav__icon md-icon"></span>
-            oracle
-          </label>
-          <ul class="md-nav__list" data-md-scrollfix>
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../../blockchain/oracle/app/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    app
-    
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-          </ul>
-        </nav>
-      
-    </li>
-  
-
-              
-            
-          </ul>
-        </nav>
-      
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
     <li class="md-nav__item">
       <a href="../../../env/" class="md-nav__link">
         
@@ -1480,7 +1367,7 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5_1_1_5" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5_1_1_4" >
         
           
           <div class="md-nav__link md-nav__container">
@@ -1497,14 +1384,14 @@
             </a>
             
               
-              <label class="md-nav__link " for="__nav_5_1_1_5" id="__nav_5_1_1_5_label" tabindex="0">
+              <label class="md-nav__link " for="__nav_5_1_1_4" id="__nav_5_1_1_4_label" tabindex="0">
                 <span class="md-nav__icon md-icon"></span>
               </label>
             
           </div>
         
-        <nav class="md-nav" data-md-level="4" aria-labelledby="__nav_5_1_1_5_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_5_1_1_5">
+        <nav class="md-nav" data-md-level="4" aria-labelledby="__nav_5_1_1_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5_1_1_4">
             <span class="md-nav__icon md-icon"></span>
             gps
           </label>
@@ -1605,7 +1492,7 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5_1_1_7" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5_1_1_6" >
         
           
           <div class="md-nav__link md-nav__container">
@@ -1622,14 +1509,14 @@
             </a>
             
               
-              <label class="md-nav__link " for="__nav_5_1_1_7" id="__nav_5_1_1_7_label" tabindex="0">
+              <label class="md-nav__link " for="__nav_5_1_1_6" id="__nav_5_1_1_6_label" tabindex="0">
                 <span class="md-nav__icon md-icon"></span>
               </label>
             
           </div>
         
-        <nav class="md-nav" data-md-level="4" aria-labelledby="__nav_5_1_1_7_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_5_1_1_7">
+        <nav class="md-nav" data-md-level="4" aria-labelledby="__nav_5_1_1_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5_1_1_6">
             <span class="md-nav__icon md-icon"></span>
             networksimulation
           </label>
@@ -1730,7 +1617,7 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5_1_1_9" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5_1_1_8" >
         
           
           <div class="md-nav__link md-nav__container">
@@ -1747,14 +1634,14 @@
             </a>
             
               
-              <label class="md-nav__link " for="__nav_5_1_1_9" id="__nav_5_1_1_9_label" tabindex="0">
+              <label class="md-nav__link " for="__nav_5_1_1_8" id="__nav_5_1_1_8_label" tabindex="0">
                 <span class="md-nav__icon md-icon"></span>
               </label>
             
           </div>
         
-        <nav class="md-nav" data-md-level="4" aria-labelledby="__nav_5_1_1_9_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_5_1_1_9">
+        <nav class="md-nav" data-md-level="4" aria-labelledby="__nav_5_1_1_8_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5_1_1_8">
             <span class="md-nav__icon md-icon"></span>
             reputation
           </label>
@@ -1832,7 +1719,7 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5_1_1_11" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5_1_1_10" >
         
           
           <div class="md-nav__link md-nav__container">
@@ -1849,14 +1736,14 @@
             </a>
             
               
-              <label class="md-nav__link " for="__nav_5_1_1_11" id="__nav_5_1_1_11_label" tabindex="0">
+              <label class="md-nav__link " for="__nav_5_1_1_10" id="__nav_5_1_1_10_label" tabindex="0">
                 <span class="md-nav__icon md-icon"></span>
               </label>
             
           </div>
         
-        <nav class="md-nav" data-md-level="4" aria-labelledby="__nav_5_1_1_11_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_5_1_1_11">
+        <nav class="md-nav" data-md-level="4" aria-labelledby="__nav_5_1_1_10_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5_1_1_10">
             <span class="md-nav__icon md-icon"></span>
             trustworthiness
           </label>
@@ -1915,6 +1802,29 @@
   
   
     <li class="md-nav__item">
+      <a href="../../../trustworthiness/graphics/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    graphics
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../../trustworthiness/metric/" class="md-nav__link">
         
   
@@ -1944,6 +1854,29 @@
   
   <span class="md-ellipsis">
     pillar
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../trustworthiness/trustworthiness/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    trustworthiness
     
   </span>
   
@@ -2100,6 +2033,29 @@
   
   <span class="md-ellipsis">
     database
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../controller/http_helpers/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    http_helpers
     
   </span>
   
@@ -2290,29 +2246,6 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../core/aggregation/blockchainReputation/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    blockchainReputation
-    
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
       <a href="../../../../core/aggregation/fedavg/" class="md-nav__link">
         
   
@@ -2416,7 +2349,7 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5_1_3_2_7" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5_1_3_2_6" >
         
           
           <div class="md-nav__link md-nav__container">
@@ -2433,14 +2366,14 @@
             </a>
             
               
-              <label class="md-nav__link " for="__nav_5_1_3_2_7" id="__nav_5_1_3_2_7_label" tabindex="0">
+              <label class="md-nav__link " for="__nav_5_1_3_2_6" id="__nav_5_1_3_2_6_label" tabindex="0">
                 <span class="md-nav__icon md-icon"></span>
               </label>
             
           </div>
         
-        <nav class="md-nav" data-md-level="5" aria-labelledby="__nav_5_1_3_2_7_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_5_1_3_2_7">
+        <nav class="md-nav" data-md-level="5" aria-labelledby="__nav_5_1_3_2_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5_1_3_2_6">
             <span class="md-nav__icon md-icon"></span>
             updatehandlers
           </label>
@@ -4297,6 +4230,29 @@
   
   
   
+    <li class="md-nav__item">
+      <a href="../../../../core/noderole/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    noderole
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
     
     
     
@@ -4309,7 +4265,7 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5_1_3_10" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5_1_3_11" >
         
           
           <div class="md-nav__link md-nav__container">
@@ -4326,14 +4282,14 @@
             </a>
             
               
-              <label class="md-nav__link " for="__nav_5_1_3_10" id="__nav_5_1_3_10_label" tabindex="0">
+              <label class="md-nav__link " for="__nav_5_1_3_11" id="__nav_5_1_3_11_label" tabindex="0">
                 <span class="md-nav__icon md-icon"></span>
               </label>
             
           </div>
         
-        <nav class="md-nav" data-md-level="4" aria-labelledby="__nav_5_1_3_10_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_5_1_3_10">
+        <nav class="md-nav" data-md-level="4" aria-labelledby="__nav_5_1_3_11_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5_1_3_11">
             <span class="md-nav__icon md-icon"></span>
             pb
           </label>
@@ -4411,7 +4367,7 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5_1_3_12" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5_1_3_13" >
         
           
           <div class="md-nav__link md-nav__container">
@@ -4428,14 +4384,14 @@
             </a>
             
               
-              <label class="md-nav__link " for="__nav_5_1_3_12" id="__nav_5_1_3_12_label" tabindex="0">
+              <label class="md-nav__link " for="__nav_5_1_3_13" id="__nav_5_1_3_13_label" tabindex="0">
                 <span class="md-nav__icon md-icon"></span>
               </label>
             
           </div>
         
-        <nav class="md-nav" data-md-level="4" aria-labelledby="__nav_5_1_3_12_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_5_1_3_12">
+        <nav class="md-nav" data-md-level="4" aria-labelledby="__nav_5_1_3_13_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5_1_3_13">
             <span class="md-nav__icon md-icon"></span>
             situationalawareness
           </label>
@@ -4459,7 +4415,7 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5_1_3_12_1" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5_1_3_13_1" >
         
           
           <div class="md-nav__link md-nav__container">
@@ -4476,14 +4432,14 @@
             </a>
             
               
-              <label class="md-nav__link " for="__nav_5_1_3_12_1" id="__nav_5_1_3_12_1_label" tabindex="0">
+              <label class="md-nav__link " for="__nav_5_1_3_13_1" id="__nav_5_1_3_13_1_label" tabindex="0">
                 <span class="md-nav__icon md-icon"></span>
               </label>
             
           </div>
         
-        <nav class="md-nav" data-md-level="5" aria-labelledby="__nav_5_1_3_12_1_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_5_1_3_12_1">
+        <nav class="md-nav" data-md-level="5" aria-labelledby="__nav_5_1_3_13_1_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5_1_3_13_1">
             <span class="md-nav__icon md-icon"></span>
             awareness
           </label>
@@ -4507,7 +4463,7 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5_1_3_12_1_1" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5_1_3_13_1_1" >
         
           
           <div class="md-nav__link md-nav__container">
@@ -4524,14 +4480,14 @@
             </a>
             
               
-              <label class="md-nav__link " for="__nav_5_1_3_12_1_1" id="__nav_5_1_3_12_1_1_label" tabindex="0">
+              <label class="md-nav__link " for="__nav_5_1_3_13_1_1" id="__nav_5_1_3_13_1_1_label" tabindex="0">
                 <span class="md-nav__icon md-icon"></span>
               </label>
             
           </div>
         
-        <nav class="md-nav" data-md-level="6" aria-labelledby="__nav_5_1_3_12_1_1_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_5_1_3_12_1_1">
+        <nav class="md-nav" data-md-level="6" aria-labelledby="__nav_5_1_3_13_1_1_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5_1_3_13_1_1">
             <span class="md-nav__icon md-icon"></span>
             arbitrationpolicies
           </label>
@@ -4609,7 +4565,7 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5_1_3_12_1_2" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5_1_3_13_1_2" >
         
           
           <div class="md-nav__link md-nav__container">
@@ -4626,14 +4582,14 @@
             </a>
             
               
-              <label class="md-nav__link " for="__nav_5_1_3_12_1_2" id="__nav_5_1_3_12_1_2_label" tabindex="0">
+              <label class="md-nav__link " for="__nav_5_1_3_13_1_2" id="__nav_5_1_3_13_1_2_label" tabindex="0">
                 <span class="md-nav__icon md-icon"></span>
               </label>
             
           </div>
         
-        <nav class="md-nav" data-md-level="6" aria-labelledby="__nav_5_1_3_12_1_2_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_5_1_3_12_1_2">
+        <nav class="md-nav" data-md-level="6" aria-labelledby="__nav_5_1_3_13_1_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5_1_3_13_1_2">
             <span class="md-nav__icon md-icon"></span>
             sanetwork
           </label>
@@ -4657,7 +4613,7 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5_1_3_12_1_2_1" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5_1_3_13_1_2_1" >
         
           
           <div class="md-nav__link md-nav__container">
@@ -4674,14 +4630,14 @@
             </a>
             
               
-              <label class="md-nav__link " for="__nav_5_1_3_12_1_2_1" id="__nav_5_1_3_12_1_2_1_label" tabindex="0">
+              <label class="md-nav__link " for="__nav_5_1_3_13_1_2_1" id="__nav_5_1_3_13_1_2_1_label" tabindex="0">
                 <span class="md-nav__icon md-icon"></span>
               </label>
             
           </div>
         
-        <nav class="md-nav" data-md-level="7" aria-labelledby="__nav_5_1_3_12_1_2_1_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_5_1_3_12_1_2_1">
+        <nav class="md-nav" data-md-level="7" aria-labelledby="__nav_5_1_3_13_1_2_1_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5_1_3_13_1_2_1">
             <span class="md-nav__icon md-icon"></span>
             neighborpolicies
           </label>
@@ -4905,7 +4861,257 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5_1_3_12_1_4" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5_1_3_13_1_4" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../../../core/situationalawareness/awareness/satraining/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    satraining
+    
+  </span>
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_5_1_3_13_1_4" id="__nav_5_1_3_13_1_4_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="6" aria-labelledby="__nav_5_1_3_13_1_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5_1_3_13_1_4">
+            <span class="md-nav__icon md-icon"></span>
+            satraining
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../core/situationalawareness/awareness/satraining/satraining/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    satraining
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5_1_3_13_1_4_2" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../../../core/situationalawareness/awareness/satraining/trainingpolicy/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    trainingpolicy
+    
+  </span>
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_5_1_3_13_1_4_2" id="__nav_5_1_3_13_1_4_2_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="7" aria-labelledby="__nav_5_1_3_13_1_4_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5_1_3_13_1_4_2">
+            <span class="md-nav__icon md-icon"></span>
+            trainingpolicy
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../core/situationalawareness/awareness/satraining/trainingpolicy/bpstrainingpolicy/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    bpstrainingpolicy
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../core/situationalawareness/awareness/satraining/trainingpolicy/fastreboot/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    fastreboot
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../core/situationalawareness/awareness/satraining/trainingpolicy/htstrainingpolicy/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    htstrainingpolicy
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../core/situationalawareness/awareness/satraining/trainingpolicy/qdstrainingpolicy/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    qdstrainingpolicy
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../core/situationalawareness/awareness/satraining/trainingpolicy/trainingpolicy/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    trainingpolicy
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5_1_3_13_1_5" >
         
           
           <div class="md-nav__link md-nav__container">
@@ -4922,14 +5128,14 @@
             </a>
             
               
-              <label class="md-nav__link " for="__nav_5_1_3_12_1_4" id="__nav_5_1_3_12_1_4_label" tabindex="0">
+              <label class="md-nav__link " for="__nav_5_1_3_13_1_5" id="__nav_5_1_3_13_1_5_label" tabindex="0">
                 <span class="md-nav__icon md-icon"></span>
               </label>
             
           </div>
         
-        <nav class="md-nav" data-md-level="6" aria-labelledby="__nav_5_1_3_12_1_4_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_5_1_3_12_1_4">
+        <nav class="md-nav" data-md-level="6" aria-labelledby="__nav_5_1_3_13_1_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5_1_3_13_1_5">
             <span class="md-nav__icon md-icon"></span>
             sautils
           </label>
@@ -5061,7 +5267,7 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5_1_3_12_2" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5_1_3_13_2" >
         
           
           <div class="md-nav__link md-nav__container">
@@ -5078,14 +5284,14 @@
             </a>
             
               
-              <label class="md-nav__link " for="__nav_5_1_3_12_2" id="__nav_5_1_3_12_2_label" tabindex="0">
+              <label class="md-nav__link " for="__nav_5_1_3_13_2" id="__nav_5_1_3_13_2_label" tabindex="0">
                 <span class="md-nav__icon md-icon"></span>
               </label>
             
           </div>
         
-        <nav class="md-nav" data-md-level="5" aria-labelledby="__nav_5_1_3_12_2_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_5_1_3_12_2">
+        <nav class="md-nav" data-md-level="5" aria-labelledby="__nav_5_1_3_13_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5_1_3_13_2">
             <span class="md-nav__icon md-icon"></span>
             discovery
           </label>
@@ -5109,7 +5315,7 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5_1_3_12_2_1" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5_1_3_13_2_1" >
         
           
           <div class="md-nav__link md-nav__container">
@@ -5126,14 +5332,14 @@
             </a>
             
               
-              <label class="md-nav__link " for="__nav_5_1_3_12_2_1" id="__nav_5_1_3_12_2_1_label" tabindex="0">
+              <label class="md-nav__link " for="__nav_5_1_3_13_2_1" id="__nav_5_1_3_13_2_1_label" tabindex="0">
                 <span class="md-nav__icon md-icon"></span>
               </label>
             
           </div>
         
-        <nav class="md-nav" data-md-level="6" aria-labelledby="__nav_5_1_3_12_2_1_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_5_1_3_12_2_1">
+        <nav class="md-nav" data-md-level="6" aria-labelledby="__nav_5_1_3_13_2_1_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5_1_3_13_2_1">
             <span class="md-nav__icon md-icon"></span>
             candidateselection
           </label>
@@ -5303,7 +5509,7 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5_1_3_12_2_3" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5_1_3_13_2_3" >
         
           
           <div class="md-nav__link md-nav__container">
@@ -5320,14 +5526,14 @@
             </a>
             
               
-              <label class="md-nav__link " for="__nav_5_1_3_12_2_3" id="__nav_5_1_3_12_2_3_label" tabindex="0">
+              <label class="md-nav__link " for="__nav_5_1_3_13_2_3" id="__nav_5_1_3_13_2_3_label" tabindex="0">
                 <span class="md-nav__icon md-icon"></span>
               </label>
             
           </div>
         
-        <nav class="md-nav" data-md-level="6" aria-labelledby="__nav_5_1_3_12_2_3_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_5_1_3_12_2_3">
+        <nav class="md-nav" data-md-level="6" aria-labelledby="__nav_5_1_3_13_2_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5_1_3_13_2_3">
             <span class="md-nav__icon md-icon"></span>
             modelhandlers
           </label>
@@ -5490,7 +5696,7 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5_1_3_13" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5_1_3_14" >
         
           
           <div class="md-nav__link md-nav__container">
@@ -5507,14 +5713,14 @@
             </a>
             
               
-              <label class="md-nav__link " for="__nav_5_1_3_13" id="__nav_5_1_3_13_label" tabindex="0">
+              <label class="md-nav__link " for="__nav_5_1_3_14" id="__nav_5_1_3_14_label" tabindex="0">
                 <span class="md-nav__icon md-icon"></span>
               </label>
             
           </div>
         
-        <nav class="md-nav" data-md-level="4" aria-labelledby="__nav_5_1_3_13_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_5_1_3_13">
+        <nav class="md-nav" data-md-level="4" aria-labelledby="__nav_5_1_3_14_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5_1_3_14">
             <span class="md-nav__icon md-icon"></span>
             training
           </label>
@@ -5690,6 +5896,85 @@
   
   
   
+    
+    
+    
+    
+      
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5_1_5" >
+        
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../../../../physical/" class="md-nav__link ">
+              
+  
+  
+  <span class="md-ellipsis">
+    physical
+    
+  </span>
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_5_1_5" id="__nav_5_1_5_label" tabindex="0">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_5_1_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5_1_5">
+            <span class="md-nav__icon md-icon"></span>
+            physical
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../physical/api/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    api
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
     <li class="md-nav__item">
       <a href="../../../../utils/" class="md-nav__link">
         
@@ -5766,6 +6051,28 @@
   
 
     
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../../commercial-faq/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Commercial FAQ
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
   </ul>
 </nav>
                   </div>
@@ -5831,10 +6138,82 @@
   
 </li>
         
-          <li class="md-nav__item">
-  <a href="#nebula.addons.attacks.dataset.labelflipping.LabelFlippingAttack.labelFlipping" class="md-nav__link">
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#nebula.addons.attacks.dataset.labelflipping.LabelFlippingStrategy" class="md-nav__link">
     <span class="md-ellipsis">
-      labelFlipping
+      LabelFlippingStrategy
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="LabelFlippingStrategy">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#nebula.addons.attacks.dataset.labelflipping.LabelFlippingStrategy.flip_labels" class="md-nav__link">
+    <span class="md-ellipsis">
+      flip_labels
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#nebula.addons.attacks.dataset.labelflipping.NonTargetedLabelFlippingStrategy" class="md-nav__link">
+    <span class="md-ellipsis">
+      NonTargetedLabelFlippingStrategy
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="NonTargetedLabelFlippingStrategy">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#nebula.addons.attacks.dataset.labelflipping.NonTargetedLabelFlippingStrategy.flip_labels" class="md-nav__link">
+    <span class="md-ellipsis">
+      flip_labels
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#nebula.addons.attacks.dataset.labelflipping.TargetedLabelFlippingStrategy" class="md-nav__link">
+    <span class="md-ellipsis">
+      TargetedLabelFlippingStrategy
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="TargetedLabelFlippingStrategy">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#nebula.addons.attacks.dataset.labelflipping.TargetedLabelFlippingStrategy.__init__" class="md-nav__link">
+    <span class="md-ellipsis">
+      __init__
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#nebula.addons.attacks.dataset.labelflipping.TargetedLabelFlippingStrategy.flip_labels" class="md-nav__link">
+    <span class="md-ellipsis">
+      flip_labels
     </span>
   </a>
   
@@ -5876,11 +6255,13 @@
 <a id="nebula.addons.attacks.dataset.labelflipping"></a>
     <div class="doc doc-contents first">
 
-        <p>This module provides a function for label flipping in datasets, allowing for the simulation of label noise
-as a form of data poisoning. The main function modifies the labels of specific samples in a dataset based
-on a specified percentage and target conditions.</p>
-<p>Function:
-- labelFlipping: Flips the labels of a specified portion of a dataset to random values or to a specific target label.</p>
+        <p>This module provides classes for label flipping attacks in datasets, allowing for the simulation of label noise
+as a form of data poisoning. It implements both targeted and non-targeted label flipping attacks.</p>
+<p>Classes:
+- LabelFlippingAttack: Main attack class that implements the DatasetAttack interface
+- LabelFlippingStrategy: Abstract base class for label flipping strategies
+- TargetedLabelFlippingStrategy: Implementation for targeted label flipping
+- NonTargetedLabelFlippingStrategy: Implementation for non-targeted label flipping</p>
 
 
 
@@ -5915,9 +6296,7 @@ on a specified percentage and target conditions.</p>
               Bases: <code><a class="autorefs autorefs-internal" title="DatasetAttack (nebula.addons.attacks.dataset.datasetattack.DatasetAttack)" href="../datasetattack/#nebula.addons.attacks.dataset.datasetattack.DatasetAttack">DatasetAttack</a></code></p>
 
 
-        <p>Implements an attack that flips the labels of a portion of the training dataset.</p>
-<p>This attack alters the labels of certain data points in the training set to
-mislead the training process.</p>
+        <p>Implements a label flipping attack that can be either targeted or non-targeted.</p>
 
 
 
@@ -5927,89 +6306,585 @@ mislead the training process.</p>
 
               <details class="quote">
                 <summary>Source code in <code>nebula/addons/attacks/dataset/labelflipping.py</code></summary>
-                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 19</span>
-<span class="normal"> 20</span>
-<span class="normal"> 21</span>
-<span class="normal"> 22</span>
-<span class="normal"> 23</span>
-<span class="normal"> 24</span>
-<span class="normal"> 25</span>
-<span class="normal"> 26</span>
-<span class="normal"> 27</span>
-<span class="normal"> 28</span>
-<span class="normal"> 29</span>
-<span class="normal"> 30</span>
-<span class="normal"> 31</span>
-<span class="normal"> 32</span>
-<span class="normal"> 33</span>
-<span class="normal"> 34</span>
-<span class="normal"> 35</span>
-<span class="normal"> 36</span>
-<span class="normal"> 37</span>
-<span class="normal"> 38</span>
-<span class="normal"> 39</span>
-<span class="normal"> 40</span>
-<span class="normal"> 41</span>
-<span class="normal"> 42</span>
-<span class="normal"> 43</span>
-<span class="normal"> 44</span>
-<span class="normal"> 45</span>
-<span class="normal"> 46</span>
-<span class="normal"> 47</span>
-<span class="normal"> 48</span>
-<span class="normal"> 49</span>
-<span class="normal"> 50</span>
-<span class="normal"> 51</span>
-<span class="normal"> 52</span>
-<span class="normal"> 53</span>
-<span class="normal"> 54</span>
-<span class="normal"> 55</span>
-<span class="normal"> 56</span>
-<span class="normal"> 57</span>
-<span class="normal"> 58</span>
-<span class="normal"> 59</span>
-<span class="normal"> 60</span>
-<span class="normal"> 61</span>
-<span class="normal"> 62</span>
-<span class="normal"> 63</span>
-<span class="normal"> 64</span>
-<span class="normal"> 65</span>
-<span class="normal"> 66</span>
-<span class="normal"> 67</span>
-<span class="normal"> 68</span>
-<span class="normal"> 69</span>
-<span class="normal"> 70</span>
-<span class="normal"> 71</span>
-<span class="normal"> 72</span>
-<span class="normal"> 73</span>
-<span class="normal"> 74</span>
-<span class="normal"> 75</span>
-<span class="normal"> 76</span>
-<span class="normal"> 77</span>
-<span class="normal"> 78</span>
-<span class="normal"> 79</span>
-<span class="normal"> 80</span>
-<span class="normal"> 81</span>
-<span class="normal"> 82</span>
-<span class="normal"> 83</span>
-<span class="normal"> 84</span>
-<span class="normal"> 85</span>
-<span class="normal"> 86</span>
-<span class="normal"> 87</span>
-<span class="normal"> 88</span>
-<span class="normal"> 89</span>
-<span class="normal"> 90</span>
-<span class="normal"> 91</span>
-<span class="normal"> 92</span>
-<span class="normal"> 93</span>
-<span class="normal"> 94</span>
-<span class="normal"> 95</span>
-<span class="normal"> 96</span>
-<span class="normal"> 97</span>
-<span class="normal"> 98</span>
-<span class="normal"> 99</span>
-<span class="normal">100</span>
-<span class="normal">101</span>
+                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">146</span>
+<span class="normal">147</span>
+<span class="normal">148</span>
+<span class="normal">149</span>
+<span class="normal">150</span>
+<span class="normal">151</span>
+<span class="normal">152</span>
+<span class="normal">153</span>
+<span class="normal">154</span>
+<span class="normal">155</span>
+<span class="normal">156</span>
+<span class="normal">157</span>
+<span class="normal">158</span>
+<span class="normal">159</span>
+<span class="normal">160</span>
+<span class="normal">161</span>
+<span class="normal">162</span>
+<span class="normal">163</span>
+<span class="normal">164</span>
+<span class="normal">165</span>
+<span class="normal">166</span>
+<span class="normal">167</span>
+<span class="normal">168</span>
+<span class="normal">169</span>
+<span class="normal">170</span>
+<span class="normal">171</span>
+<span class="normal">172</span>
+<span class="normal">173</span>
+<span class="normal">174</span>
+<span class="normal">175</span>
+<span class="normal">176</span>
+<span class="normal">177</span>
+<span class="normal">178</span>
+<span class="normal">179</span>
+<span class="normal">180</span>
+<span class="normal">181</span>
+<span class="normal">182</span>
+<span class="normal">183</span>
+<span class="normal">184</span>
+<span class="normal">185</span>
+<span class="normal">186</span>
+<span class="normal">187</span>
+<span class="normal">188</span>
+<span class="normal">189</span>
+<span class="normal">190</span>
+<span class="normal">191</span>
+<span class="normal">192</span>
+<span class="normal">193</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">LabelFlippingAttack</span><span class="p">(</span><span class="n">DatasetAttack</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Implements a label flipping attack that can be either targeted or non-targeted.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">engine</span><span class="p">,</span> <span class="n">attack_params</span><span class="p">:</span> <span class="n">Dict</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Initialize the label flipping attack.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            engine: The engine managing the attack context</span>
+<span class="sd">            attack_params: Dictionary containing attack parameters</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">round_start</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">attack_params</span><span class="p">[</span><span class="s2">&quot;round_start_attack&quot;</span><span class="p">])</span>
+            <span class="n">round_stop</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">attack_params</span><span class="p">[</span><span class="s2">&quot;round_stop_attack&quot;</span><span class="p">])</span>
+            <span class="n">attack_interval</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">attack_params</span><span class="p">[</span><span class="s2">&quot;attack_interval&quot;</span><span class="p">])</span>
+        <span class="k">except</span> <span class="ne">KeyError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Missing required attack parameter: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Invalid value in attack_params. Ensure all values are integers.&quot;</span><span class="p">)</span>
+
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">engine</span><span class="p">,</span> <span class="n">round_start</span><span class="p">,</span> <span class="n">round_stop</span><span class="p">,</span> <span class="n">attack_interval</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">datamodule</span> <span class="o">=</span> <span class="n">engine</span><span class="o">.</span><span class="n">_trainer</span><span class="o">.</span><span class="n">datamodule</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">poisoned_percent</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">attack_params</span><span class="p">[</span><span class="s2">&quot;poisoned_sample_percent&quot;</span><span class="p">])</span>
+
+        <span class="c1"># Create the appropriate strategy based on whether the attack is targeted</span>
+        <span class="k">if</span> <span class="n">attack_params</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;targeted&quot;</span><span class="p">,</span> <span class="kc">False</span><span class="p">):</span>
+            <span class="n">target_label</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">attack_params</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;target_label&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="n">attack_params</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;targetLabel&quot;</span><span class="p">,</span> <span class="mi">4</span><span class="p">))</span>
+            <span class="n">target_changed_label</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span>
+                <span class="n">attack_params</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;target_changed_label&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="n">attack_params</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;targetChangedLabel&quot;</span><span class="p">,</span> <span class="mi">7</span><span class="p">)</span>
+            <span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">strategy</span> <span class="o">=</span> <span class="n">TargetedLabelFlippingStrategy</span><span class="p">(</span><span class="n">target_label</span><span class="p">,</span> <span class="n">target_changed_label</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">strategy</span> <span class="o">=</span> <span class="n">NonTargetedLabelFlippingStrategy</span><span class="p">()</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_malicious_dataset</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Creates a malicious dataset by flipping the labels of selected data points.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Dataset: The modified dataset with flipped labels</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">strategy</span><span class="o">.</span><span class="n">flip_labels</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">datamodule</span><span class="o">.</span><span class="n">train_set</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">datamodule</span><span class="o">.</span><span class="n">train_set_indices</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">poisoned_percent</span><span class="p">,</span>
+        <span class="p">)</span>
+</code></pre></div></td></tr></table></div>
+              </details>
+
+
+
+  <div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="nebula.addons.attacks.dataset.labelflipping.LabelFlippingAttack.__init__" class="doc doc-heading">
+            <code class="highlight language-python"><span class="fm">__init__</span><span class="p">(</span><span class="n">engine</span><span class="p">,</span> <span class="n">attack_params</span><span class="p">)</span></code>
+
+<a href="#nebula.addons.attacks.dataset.labelflipping.LabelFlippingAttack.__init__" class="headerlink" title="Permanent link">&para;</a></h3>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Initialize the label flipping attack.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>engine</code>
+            </td>
+            <td>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The engine managing the attack context</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>attack_params</code>
+            </td>
+            <td>
+                  <code><span title="typing.Dict">Dict</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Dictionary containing attack parameters</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+            <details class="quote">
+              <summary>Source code in <code>nebula/addons/attacks/dataset/labelflipping.py</code></summary>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">151</span>
+<span class="normal">152</span>
+<span class="normal">153</span>
+<span class="normal">154</span>
+<span class="normal">155</span>
+<span class="normal">156</span>
+<span class="normal">157</span>
+<span class="normal">158</span>
+<span class="normal">159</span>
+<span class="normal">160</span>
+<span class="normal">161</span>
+<span class="normal">162</span>
+<span class="normal">163</span>
+<span class="normal">164</span>
+<span class="normal">165</span>
+<span class="normal">166</span>
+<span class="normal">167</span>
+<span class="normal">168</span>
+<span class="normal">169</span>
+<span class="normal">170</span>
+<span class="normal">171</span>
+<span class="normal">172</span>
+<span class="normal">173</span>
+<span class="normal">174</span>
+<span class="normal">175</span>
+<span class="normal">176</span>
+<span class="normal">177</span>
+<span class="normal">178</span>
+<span class="normal">179</span>
+<span class="normal">180</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">engine</span><span class="p">,</span> <span class="n">attack_params</span><span class="p">:</span> <span class="n">Dict</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Initialize the label flipping attack.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        engine: The engine managing the attack context</span>
+<span class="sd">        attack_params: Dictionary containing attack parameters</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">round_start</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">attack_params</span><span class="p">[</span><span class="s2">&quot;round_start_attack&quot;</span><span class="p">])</span>
+        <span class="n">round_stop</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">attack_params</span><span class="p">[</span><span class="s2">&quot;round_stop_attack&quot;</span><span class="p">])</span>
+        <span class="n">attack_interval</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">attack_params</span><span class="p">[</span><span class="s2">&quot;attack_interval&quot;</span><span class="p">])</span>
+    <span class="k">except</span> <span class="ne">KeyError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Missing required attack parameter: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Invalid value in attack_params. Ensure all values are integers.&quot;</span><span class="p">)</span>
+
+    <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">engine</span><span class="p">,</span> <span class="n">round_start</span><span class="p">,</span> <span class="n">round_stop</span><span class="p">,</span> <span class="n">attack_interval</span><span class="p">)</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">datamodule</span> <span class="o">=</span> <span class="n">engine</span><span class="o">.</span><span class="n">_trainer</span><span class="o">.</span><span class="n">datamodule</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">poisoned_percent</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">attack_params</span><span class="p">[</span><span class="s2">&quot;poisoned_sample_percent&quot;</span><span class="p">])</span>
+
+    <span class="c1"># Create the appropriate strategy based on whether the attack is targeted</span>
+    <span class="k">if</span> <span class="n">attack_params</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;targeted&quot;</span><span class="p">,</span> <span class="kc">False</span><span class="p">):</span>
+        <span class="n">target_label</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">attack_params</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;target_label&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="n">attack_params</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;targetLabel&quot;</span><span class="p">,</span> <span class="mi">4</span><span class="p">))</span>
+        <span class="n">target_changed_label</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span>
+            <span class="n">attack_params</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;target_changed_label&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="n">attack_params</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;targetChangedLabel&quot;</span><span class="p">,</span> <span class="mi">7</span><span class="p">)</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">strategy</span> <span class="o">=</span> <span class="n">TargetedLabelFlippingStrategy</span><span class="p">(</span><span class="n">target_label</span><span class="p">,</span> <span class="n">target_changed_label</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">strategy</span> <span class="o">=</span> <span class="n">NonTargetedLabelFlippingStrategy</span><span class="p">()</span>
+</code></pre></div></td></tr></table></div>
+            </details>
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="nebula.addons.attacks.dataset.labelflipping.LabelFlippingAttack.get_malicious_dataset" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">get_malicious_dataset</span><span class="p">()</span></code>
+
+<a href="#nebula.addons.attacks.dataset.labelflipping.LabelFlippingAttack.get_malicious_dataset" class="headerlink" title="Permanent link">&para;</a></h3>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Creates a malicious dataset by flipping the labels of selected data points.</p>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+<th>Name</th>          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+<td><code>Dataset</code></td>            <td>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The modified dataset with flipped labels</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+            <details class="quote">
+              <summary>Source code in <code>nebula/addons/attacks/dataset/labelflipping.py</code></summary>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">182</span>
+<span class="normal">183</span>
+<span class="normal">184</span>
+<span class="normal">185</span>
+<span class="normal">186</span>
+<span class="normal">187</span>
+<span class="normal">188</span>
+<span class="normal">189</span>
+<span class="normal">190</span>
+<span class="normal">191</span>
+<span class="normal">192</span>
+<span class="normal">193</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">get_malicious_dataset</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Creates a malicious dataset by flipping the labels of selected data points.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        Dataset: The modified dataset with flipped labels</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">strategy</span><span class="o">.</span><span class="n">flip_labels</span><span class="p">(</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">datamodule</span><span class="o">.</span><span class="n">train_set</span><span class="p">,</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">datamodule</span><span class="o">.</span><span class="n">train_set_indices</span><span class="p">,</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">poisoned_percent</span><span class="p">,</span>
+    <span class="p">)</span>
+</code></pre></div></td></tr></table></div>
+            </details>
+    </div>
+
+</div>
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-class">
+
+
+
+<h2 id="nebula.addons.attacks.dataset.labelflipping.LabelFlippingStrategy" class="doc doc-heading">
+            <code>LabelFlippingStrategy</code>
+
+
+<a href="#nebula.addons.attacks.dataset.labelflipping.LabelFlippingStrategy" class="headerlink" title="Permanent link">&para;</a></h2>
+
+
+    <div class="doc doc-contents ">
+            <p class="doc doc-class-bases">
+              Bases: <code><span title="abc.ABC">ABC</span></code></p>
+
+
+        <p>Abstract base class for label flipping strategies.</p>
+
+
+
+
+
+
+
+              <details class="quote">
+                <summary>Source code in <code>nebula/addons/attacks/dataset/labelflipping.py</code></summary>
+                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">26</span>
+<span class="normal">27</span>
+<span class="normal">28</span>
+<span class="normal">29</span>
+<span class="normal">30</span>
+<span class="normal">31</span>
+<span class="normal">32</span>
+<span class="normal">33</span>
+<span class="normal">34</span>
+<span class="normal">35</span>
+<span class="normal">36</span>
+<span class="normal">37</span>
+<span class="normal">38</span>
+<span class="normal">39</span>
+<span class="normal">40</span>
+<span class="normal">41</span>
+<span class="normal">42</span>
+<span class="normal">43</span>
+<span class="normal">44</span>
+<span class="normal">45</span>
+<span class="normal">46</span>
+<span class="normal">47</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">LabelFlippingStrategy</span><span class="p">(</span><span class="n">ABC</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Abstract base class for label flipping strategies.&quot;&quot;&quot;</span>
+
+    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">flip_labels</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">dataset</span><span class="p">,</span>
+        <span class="n">indices</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span>
+        <span class="n">poisoned_percent</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;Dataset&quot;</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Abstract method to flip labels in the dataset.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            dataset: The dataset to modify</span>
+<span class="sd">            indices: List of indices to consider for flipping</span>
+<span class="sd">            poisoned_percent: Percentage of labels to change (0-100)</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Modified dataset with flipped labels</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">pass</span>
+</code></pre></div></td></tr></table></div>
+              </details>
+
+
+
+  <div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="nebula.addons.attacks.dataset.labelflipping.LabelFlippingStrategy.flip_labels" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">flip_labels</span><span class="p">(</span><span class="n">dataset</span><span class="p">,</span> <span class="n">indices</span><span class="p">,</span> <span class="n">poisoned_percent</span><span class="p">)</span></code>
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-abstractmethod"><code>abstractmethod</code></small>
+  </span>
+
+<a href="#nebula.addons.attacks.dataset.labelflipping.LabelFlippingStrategy.flip_labels" class="headerlink" title="Permanent link">&para;</a></h3>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Abstract method to flip labels in the dataset.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>dataset</code>
+            </td>
+            <td>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The dataset to modify</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>indices</code>
+            </td>
+            <td>
+                  <code><span title="list">list</span>[<span title="int">int</span>]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>List of indices to consider for flipping</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>poisoned_percent</code>
+            </td>
+            <td>
+                  <code><span title="float">float</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Percentage of labels to change (0-100)</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="torch.utils.data.Dataset">Dataset</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Modified dataset with flipped labels</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+            <details class="quote">
+              <summary>Source code in <code>nebula/addons/attacks/dataset/labelflipping.py</code></summary>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">29</span>
+<span class="normal">30</span>
+<span class="normal">31</span>
+<span class="normal">32</span>
+<span class="normal">33</span>
+<span class="normal">34</span>
+<span class="normal">35</span>
+<span class="normal">36</span>
+<span class="normal">37</span>
+<span class="normal">38</span>
+<span class="normal">39</span>
+<span class="normal">40</span>
+<span class="normal">41</span>
+<span class="normal">42</span>
+<span class="normal">43</span>
+<span class="normal">44</span>
+<span class="normal">45</span>
+<span class="normal">46</span>
+<span class="normal">47</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@abstractmethod</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">flip_labels</span><span class="p">(</span>
+    <span class="bp">self</span><span class="p">,</span>
+    <span class="n">dataset</span><span class="p">,</span>
+    <span class="n">indices</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span>
+    <span class="n">poisoned_percent</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;Dataset&quot;</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Abstract method to flip labels in the dataset.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        dataset: The dataset to modify</span>
+<span class="sd">        indices: List of indices to consider for flipping</span>
+<span class="sd">        poisoned_percent: Percentage of labels to change (0-100)</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        Modified dataset with flipped labels</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">pass</span>
+</code></pre></div></td></tr></table></div>
+            </details>
+    </div>
+
+</div>
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-class">
+
+
+
+<h2 id="nebula.addons.attacks.dataset.labelflipping.NonTargetedLabelFlippingStrategy" class="doc doc-heading">
+            <code>NonTargetedLabelFlippingStrategy</code>
+
+
+<a href="#nebula.addons.attacks.dataset.labelflipping.NonTargetedLabelFlippingStrategy" class="headerlink" title="Permanent link">&para;</a></h2>
+
+
+    <div class="doc doc-contents ">
+            <p class="doc doc-class-bases">
+              Bases: <code><a class="autorefs autorefs-internal" title="LabelFlippingStrategy (nebula.addons.attacks.dataset.labelflipping.LabelFlippingStrategy)" href="#nebula.addons.attacks.dataset.labelflipping.LabelFlippingStrategy">LabelFlippingStrategy</a></code></p>
+
+
+        <p>Implementation of non-targeted label flipping strategy.</p>
+
+
+
+
+
+
+
+              <details class="quote">
+                <summary>Source code in <code>nebula/addons/attacks/dataset/labelflipping.py</code></summary>
+                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">101</span>
 <span class="normal">102</span>
 <span class="normal">103</span>
 <span class="normal">104</span>
@@ -6050,76 +6925,26 @@ mislead the training process.</p>
 <span class="normal">139</span>
 <span class="normal">140</span>
 <span class="normal">141</span>
-<span class="normal">142</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">LabelFlippingAttack</span><span class="p">(</span><span class="n">DatasetAttack</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Implements an attack that flips the labels of a portion of the training dataset.</span>
+<span class="normal">142</span>
+<span class="normal">143</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">NonTargetedLabelFlippingStrategy</span><span class="p">(</span><span class="n">LabelFlippingStrategy</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Implementation of non-targeted label flipping strategy.&quot;&quot;&quot;</span>
 
-<span class="sd">    This attack alters the labels of certain data points in the training set to</span>
-<span class="sd">    mislead the training process.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-
-    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">engine</span><span class="p">,</span> <span class="n">attack_params</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Initializes the LabelFlippingAttack with the engine and attack parameters.</span>
-
-<span class="sd">        Args:</span>
-<span class="sd">            engine: The engine managing the attack context.</span>
-<span class="sd">            attack_params (dict): Parameters for the attack, including the percentage of</span>
-<span class="sd">                                  poisoned data, targeting options, and label specifications.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">try</span><span class="p">:</span>
-            <span class="n">round_start</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">attack_params</span><span class="p">[</span><span class="s2">&quot;round_start_attack&quot;</span><span class="p">])</span>
-            <span class="n">round_stop</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">attack_params</span><span class="p">[</span><span class="s2">&quot;round_stop_attack&quot;</span><span class="p">])</span>
-            <span class="n">attack_interval</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">attack_params</span><span class="p">[</span><span class="s2">&quot;attack_interval&quot;</span><span class="p">])</span>
-        <span class="k">except</span> <span class="ne">KeyError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Missing required attack parameter: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-        <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Invalid value in attack_params. Ensure all values are integers.&quot;</span><span class="p">)</span>
-
-        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">engine</span><span class="p">,</span> <span class="n">round_start</span><span class="p">,</span> <span class="n">round_stop</span><span class="p">,</span> <span class="n">attack_interval</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">datamodule</span> <span class="o">=</span> <span class="n">engine</span><span class="o">.</span><span class="n">_trainer</span><span class="o">.</span><span class="n">datamodule</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">poisoned_percent</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">attack_params</span><span class="p">[</span><span class="s2">&quot;poisoned_percent&quot;</span><span class="p">])</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">targeted</span> <span class="o">=</span> <span class="n">attack_params</span><span class="p">[</span><span class="s2">&quot;targeted&quot;</span><span class="p">]</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">target_label</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">attack_params</span><span class="p">[</span><span class="s2">&quot;target_label&quot;</span><span class="p">])</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">target_changed_label</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">attack_params</span><span class="p">[</span><span class="s2">&quot;target_changed_label&quot;</span><span class="p">])</span>
-
-    <span class="k">def</span><span class="w"> </span><span class="nf">labelFlipping</span><span class="p">(</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">flip_labels</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">dataset</span><span class="p">,</span>
-        <span class="n">indices</span><span class="p">,</span>
-        <span class="n">poisoned_percent</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
-        <span class="n">targeted</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
-        <span class="n">target_label</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span>
-        <span class="n">target_changed_label</span><span class="o">=</span><span class="mi">7</span><span class="p">,</span>
-    <span class="p">):</span>
+        <span class="n">indices</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span>
+        <span class="n">poisoned_percent</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;Dataset&quot;</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Flips the labels of a specified portion of a dataset to random values or to a specific target label.</span>
-
-<span class="sd">        This function modifies the labels of selected samples in the dataset based on the specified</span>
-<span class="sd">        poisoning percentage. Labels can be flipped either randomly or targeted to change from a specific</span>
-<span class="sd">        label to another specified label.</span>
+<span class="sd">        Flips labels randomly to different classes.</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            dataset (Dataset): The dataset containing training data, expected to be a PyTorch dataset</span>
-<span class="sd">                               with a `.targets` attribute.</span>
-<span class="sd">            indices (list of int): The list of indices in the dataset to consider for label flipping.</span>
-<span class="sd">            poisoned_percent (float, optional): The ratio of labels to change, expressed as a fraction</span>
-<span class="sd">                                                (0 &lt;= poisoned_percent &lt;= 1). Default is 0.</span>
-<span class="sd">            targeted (bool, optional): If True, flips only labels matching `target_label` to `target_changed_label`.</span>
-<span class="sd">                                       Default is False.</span>
-<span class="sd">            target_label (int, optional): The label to change when `targeted` is True. Default is 4.</span>
-<span class="sd">            target_changed_label (int, optional): The label to which `target_label` will be changed. Default is 7.</span>
+<span class="sd">            dataset: The dataset to modify</span>
+<span class="sd">            indices: List of indices to consider for flipping</span>
+<span class="sd">            poisoned_percent: Percentage of labels to change (0-100)</span>
 
 <span class="sd">        Returns:</span>
-<span class="sd">            Dataset: A deep copy of the original dataset with modified labels in `.targets`.</span>
-
-<span class="sd">        Raises:</span>
-<span class="sd">            ValueError: If `poisoned_percent` is not between 0 and 1, or if `flipping_percent` is invalid.</span>
-
-<span class="sd">        Notes:</span>
-<span class="sd">            - When not in targeted mode, labels are flipped for a random selection of indices based on the specified</span>
-<span class="sd">              `poisoned_percent`. The new label is chosen randomly from the existing classes.</span>
-<span class="sd">            - In targeted mode, labels that match `target_label` are directly changed to `target_changed_label`.</span>
+<span class="sd">            Modified dataset with flipped labels</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">new_dataset</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">dataset</span><span class="p">)</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">new_dataset</span><span class="o">.</span><span class="n">targets</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">):</span>
@@ -6127,53 +6952,23 @@ mislead the training process.</p>
         <span class="k">else</span><span class="p">:</span>
             <span class="n">new_dataset</span><span class="o">.</span><span class="n">targets</span> <span class="o">=</span> <span class="n">new_dataset</span><span class="o">.</span><span class="n">targets</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
 
-        <span class="c1"># logging.info(f&quot;[{self.__class__.__name__}] First 20 labels before flipping: {new_dataset.targets[:20]}&quot;)</span>
-        <span class="c1"># logging.info(f&quot;[{self.__class__.__name__}] First 20 indices before flipping: {indices[:20]}&quot;)</span>
+        <span class="n">num_indices</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">indices</span><span class="p">)</span>
+        <span class="n">num_flipped</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">poisoned_percent</span> <span class="o">*</span> <span class="n">num_indices</span> <span class="o">/</span> <span class="mf">100.0</span><span class="p">)</span>
 
-        <span class="k">if</span> <span class="ow">not</span> <span class="n">targeted</span><span class="p">:</span>
-            <span class="n">num_indices</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">indices</span><span class="p">)</span>
-            <span class="n">num_flipped</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">poisoned_percent</span> <span class="o">*</span> <span class="n">num_indices</span><span class="p">)</span>
-            <span class="k">if</span> <span class="n">num_indices</span> <span class="o">==</span> <span class="mi">0</span> <span class="ow">or</span> <span class="n">num_flipped</span> <span class="o">&gt;</span> <span class="n">num_indices</span><span class="p">:</span>
-                <span class="k">return</span>
-            <span class="n">flipped_indices</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="n">indices</span><span class="p">,</span> <span class="n">num_flipped</span><span class="p">)</span>
-            <span class="n">class_list</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">new_dataset</span><span class="o">.</span><span class="n">targets</span><span class="o">.</span><span class="n">tolist</span><span class="p">()))</span>
-            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">flipped_indices</span><span class="p">:</span>
-                <span class="n">current_label</span> <span class="o">=</span> <span class="n">new_dataset</span><span class="o">.</span><span class="n">targets</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">num_indices</span> <span class="o">==</span> <span class="mi">0</span> <span class="ow">or</span> <span class="n">num_flipped</span> <span class="o">&gt;</span> <span class="n">num_indices</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">new_dataset</span>
+
+        <span class="n">flipped_indices</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="n">indices</span><span class="p">,</span> <span class="n">num_flipped</span><span class="p">)</span>
+        <span class="n">class_list</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">new_dataset</span><span class="o">.</span><span class="n">targets</span><span class="o">.</span><span class="n">tolist</span><span class="p">()))</span>
+
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">flipped_indices</span><span class="p">:</span>
+            <span class="n">current_label</span> <span class="o">=</span> <span class="n">new_dataset</span><span class="o">.</span><span class="n">targets</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+            <span class="n">new_label</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="n">class_list</span><span class="p">)</span>
+            <span class="k">while</span> <span class="n">new_label</span> <span class="o">==</span> <span class="n">current_label</span><span class="p">:</span>
                 <span class="n">new_label</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="n">class_list</span><span class="p">)</span>
-                <span class="k">while</span> <span class="n">new_label</span> <span class="o">==</span> <span class="n">current_label</span><span class="p">:</span>
-                    <span class="n">new_label</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="n">class_list</span><span class="p">)</span>
-                <span class="n">new_dataset</span><span class="o">.</span><span class="n">targets</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">new_label</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">indices</span><span class="p">:</span>
-                <span class="k">if</span> <span class="nb">int</span><span class="p">(</span><span class="n">new_dataset</span><span class="o">.</span><span class="n">targets</span><span class="p">[</span><span class="n">i</span><span class="p">])</span> <span class="o">==</span> <span class="n">target_label</span><span class="p">:</span>
-                    <span class="n">new_dataset</span><span class="o">.</span><span class="n">targets</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">target_changed_label</span>
-
-            <span class="k">if</span> <span class="n">target_label</span> <span class="ow">in</span> <span class="n">new_dataset</span><span class="o">.</span><span class="n">targets</span><span class="p">:</span>
-                <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;[</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">] Target label </span><span class="si">{</span><span class="n">target_label</span><span class="si">}</span><span class="s2"> still present after flipping.&quot;</span><span class="p">)</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
-                    <span class="sa">f</span><span class="s2">&quot;[</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">] Target label </span><span class="si">{</span><span class="n">target_label</span><span class="si">}</span><span class="s2"> successfully flipped to </span><span class="si">{</span><span class="n">target_changed_label</span><span class="si">}</span><span class="s2">.&quot;</span>
-                <span class="p">)</span>
-
-        <span class="c1"># logging.info(f&quot;[{self.__class__.__name__}] First 20 labels after flipping: {new_dataset.targets[:20]}&quot;)</span>
+            <span class="n">new_dataset</span><span class="o">.</span><span class="n">targets</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">new_label</span>
 
         <span class="k">return</span> <span class="n">new_dataset</span>
-
-    <span class="k">def</span><span class="w"> </span><span class="nf">get_malicious_dataset</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Creates a malicious dataset by flipping the labels of selected data points.</span>
-
-<span class="sd">        Returns:</span>
-<span class="sd">            Dataset: The modified dataset with flipped labels.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">labelFlipping</span><span class="p">(</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">datamodule</span><span class="o">.</span><span class="n">train_set</span><span class="p">,</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">datamodule</span><span class="o">.</span><span class="n">train_set_indices</span><span class="p">,</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">poisoned_percent</span><span class="p">,</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">targeted</span><span class="p">,</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">target_label</span><span class="p">,</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">target_changed_label</span><span class="p">,</span>
-        <span class="p">)</span>
 </code></pre></div></td></tr></table></div>
               </details>
 
@@ -6192,207 +6987,15 @@ mislead the training process.</p>
 <div class="doc doc-object doc-function">
 
 
-<h3 id="nebula.addons.attacks.dataset.labelflipping.LabelFlippingAttack.__init__" class="doc doc-heading">
-            <code class="highlight language-python"><span class="fm">__init__</span><span class="p">(</span><span class="n">engine</span><span class="p">,</span> <span class="n">attack_params</span><span class="p">)</span></code>
+<h3 id="nebula.addons.attacks.dataset.labelflipping.NonTargetedLabelFlippingStrategy.flip_labels" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">flip_labels</span><span class="p">(</span><span class="n">dataset</span><span class="p">,</span> <span class="n">indices</span><span class="p">,</span> <span class="n">poisoned_percent</span><span class="p">)</span></code>
 
-<a href="#nebula.addons.attacks.dataset.labelflipping.LabelFlippingAttack.__init__" class="headerlink" title="Permanent link">&para;</a></h3>
-
-
-    <div class="doc doc-contents ">
-
-        <p>Initializes the LabelFlippingAttack with the engine and attack parameters.</p>
-
-
-<p><span class="doc-section-title">Parameters:</span></p>
-    <table>
-      <thead>
-        <tr>
-          <th>Name</th>
-          <th>Type</th>
-          <th>Description</th>
-          <th>Default</th>
-        </tr>
-      </thead>
-      <tbody>
-          <tr class="doc-section-item">
-            <td>
-                <code>engine</code>
-            </td>
-            <td>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>The engine managing the attack context.</p>
-              </div>
-            </td>
-            <td>
-                <em>required</em>
-            </td>
-          </tr>
-          <tr class="doc-section-item">
-            <td>
-                <code>attack_params</code>
-            </td>
-            <td>
-                  <code><span title="dict">dict</span></code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>Parameters for the attack, including the percentage of
-                  poisoned data, targeting options, and label specifications.</p>
-              </div>
-            </td>
-            <td>
-                <em>required</em>
-            </td>
-          </tr>
-      </tbody>
-    </table>
-
-
-            <details class="quote">
-              <summary>Source code in <code>nebula/addons/attacks/dataset/labelflipping.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">27</span>
-<span class="normal">28</span>
-<span class="normal">29</span>
-<span class="normal">30</span>
-<span class="normal">31</span>
-<span class="normal">32</span>
-<span class="normal">33</span>
-<span class="normal">34</span>
-<span class="normal">35</span>
-<span class="normal">36</span>
-<span class="normal">37</span>
-<span class="normal">38</span>
-<span class="normal">39</span>
-<span class="normal">40</span>
-<span class="normal">41</span>
-<span class="normal">42</span>
-<span class="normal">43</span>
-<span class="normal">44</span>
-<span class="normal">45</span>
-<span class="normal">46</span>
-<span class="normal">47</span>
-<span class="normal">48</span>
-<span class="normal">49</span>
-<span class="normal">50</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">engine</span><span class="p">,</span> <span class="n">attack_params</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Initializes the LabelFlippingAttack with the engine and attack parameters.</span>
-
-<span class="sd">    Args:</span>
-<span class="sd">        engine: The engine managing the attack context.</span>
-<span class="sd">        attack_params (dict): Parameters for the attack, including the percentage of</span>
-<span class="sd">                              poisoned data, targeting options, and label specifications.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">try</span><span class="p">:</span>
-        <span class="n">round_start</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">attack_params</span><span class="p">[</span><span class="s2">&quot;round_start_attack&quot;</span><span class="p">])</span>
-        <span class="n">round_stop</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">attack_params</span><span class="p">[</span><span class="s2">&quot;round_stop_attack&quot;</span><span class="p">])</span>
-        <span class="n">attack_interval</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">attack_params</span><span class="p">[</span><span class="s2">&quot;attack_interval&quot;</span><span class="p">])</span>
-    <span class="k">except</span> <span class="ne">KeyError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Missing required attack parameter: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-    <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Invalid value in attack_params. Ensure all values are integers.&quot;</span><span class="p">)</span>
-
-    <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">engine</span><span class="p">,</span> <span class="n">round_start</span><span class="p">,</span> <span class="n">round_stop</span><span class="p">,</span> <span class="n">attack_interval</span><span class="p">)</span>
-    <span class="bp">self</span><span class="o">.</span><span class="n">datamodule</span> <span class="o">=</span> <span class="n">engine</span><span class="o">.</span><span class="n">_trainer</span><span class="o">.</span><span class="n">datamodule</span>
-    <span class="bp">self</span><span class="o">.</span><span class="n">poisoned_percent</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">attack_params</span><span class="p">[</span><span class="s2">&quot;poisoned_percent&quot;</span><span class="p">])</span>
-    <span class="bp">self</span><span class="o">.</span><span class="n">targeted</span> <span class="o">=</span> <span class="n">attack_params</span><span class="p">[</span><span class="s2">&quot;targeted&quot;</span><span class="p">]</span>
-    <span class="bp">self</span><span class="o">.</span><span class="n">target_label</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">attack_params</span><span class="p">[</span><span class="s2">&quot;target_label&quot;</span><span class="p">])</span>
-    <span class="bp">self</span><span class="o">.</span><span class="n">target_changed_label</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">attack_params</span><span class="p">[</span><span class="s2">&quot;target_changed_label&quot;</span><span class="p">])</span>
-</code></pre></div></td></tr></table></div>
-            </details>
-    </div>
-
-</div>
-
-<div class="doc doc-object doc-function">
-
-
-<h3 id="nebula.addons.attacks.dataset.labelflipping.LabelFlippingAttack.get_malicious_dataset" class="doc doc-heading">
-            <code class="highlight language-python"><span class="n">get_malicious_dataset</span><span class="p">()</span></code>
-
-<a href="#nebula.addons.attacks.dataset.labelflipping.LabelFlippingAttack.get_malicious_dataset" class="headerlink" title="Permanent link">&para;</a></h3>
+<a href="#nebula.addons.attacks.dataset.labelflipping.NonTargetedLabelFlippingStrategy.flip_labels" class="headerlink" title="Permanent link">&para;</a></h3>
 
 
     <div class="doc doc-contents ">
 
-        <p>Creates a malicious dataset by flipping the labels of selected data points.</p>
-
-
-    <p><span class="doc-section-title">Returns:</span></p>
-    <table>
-      <thead>
-        <tr>
-<th>Name</th>          <th>Type</th>
-          <th>Description</th>
-        </tr>
-      </thead>
-      <tbody>
-          <tr class="doc-section-item">
-<td><code>Dataset</code></td>            <td>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>The modified dataset with flipped labels.</p>
-              </div>
-            </td>
-          </tr>
-      </tbody>
-    </table>
-
-
-            <details class="quote">
-              <summary>Source code in <code>nebula/addons/attacks/dataset/labelflipping.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">128</span>
-<span class="normal">129</span>
-<span class="normal">130</span>
-<span class="normal">131</span>
-<span class="normal">132</span>
-<span class="normal">133</span>
-<span class="normal">134</span>
-<span class="normal">135</span>
-<span class="normal">136</span>
-<span class="normal">137</span>
-<span class="normal">138</span>
-<span class="normal">139</span>
-<span class="normal">140</span>
-<span class="normal">141</span>
-<span class="normal">142</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">get_malicious_dataset</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Creates a malicious dataset by flipping the labels of selected data points.</span>
-
-<span class="sd">    Returns:</span>
-<span class="sd">        Dataset: The modified dataset with flipped labels.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">labelFlipping</span><span class="p">(</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">datamodule</span><span class="o">.</span><span class="n">train_set</span><span class="p">,</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">datamodule</span><span class="o">.</span><span class="n">train_set_indices</span><span class="p">,</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">poisoned_percent</span><span class="p">,</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">targeted</span><span class="p">,</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">target_label</span><span class="p">,</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">target_changed_label</span><span class="p">,</span>
-    <span class="p">)</span>
-</code></pre></div></td></tr></table></div>
-            </details>
-    </div>
-
-</div>
-
-<div class="doc doc-object doc-function">
-
-
-<h3 id="nebula.addons.attacks.dataset.labelflipping.LabelFlippingAttack.labelFlipping" class="doc doc-heading">
-            <code class="highlight language-python"><span class="n">labelFlipping</span><span class="p">(</span><span class="n">dataset</span><span class="p">,</span> <span class="n">indices</span><span class="p">,</span> <span class="n">poisoned_percent</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">targeted</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">target_label</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">target_changed_label</span><span class="o">=</span><span class="mi">7</span><span class="p">)</span></code>
-
-<a href="#nebula.addons.attacks.dataset.labelflipping.LabelFlippingAttack.labelFlipping" class="headerlink" title="Permanent link">&para;</a></h3>
-
-
-    <div class="doc doc-contents ">
-
-        <p>Flips the labels of a specified portion of a dataset to random values or to a specific target label.</p>
-<p>This function modifies the labels of selected samples in the dataset based on the specified
-poisoning percentage. Labels can be flipped either randomly or targeted to change from a specific
-label to another specified label.</p>
+        <p>Flips labels randomly to different classes.</p>
 
 
 <p><span class="doc-section-title">Parameters:</span></p>
@@ -6411,12 +7014,10 @@ label to another specified label.</p>
                 <code>dataset</code>
             </td>
             <td>
-                  <code><span title="Dataset">Dataset</span></code>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>The dataset containing training data, expected to be a PyTorch dataset
-               with a <code>.targets</code> attribute.</p>
+                <p>The dataset to modify</p>
               </div>
             </td>
             <td>
@@ -6428,11 +7029,11 @@ label to another specified label.</p>
                 <code>indices</code>
             </td>
             <td>
-                  <code>list of int</code>
+                  <code><span title="list">list</span>[<span title="int">int</span>]</code>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>The list of indices in the dataset to consider for label flipping.</p>
+                <p>List of indices to consider for flipping</p>
               </div>
             </td>
             <td>
@@ -6448,61 +7049,11 @@ label to another specified label.</p>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>The ratio of labels to change, expressed as a fraction
-                                (0 &lt;= poisoned_percent &lt;= 1). Default is 0.</p>
+                <p>Percentage of labels to change (0-100)</p>
               </div>
             </td>
             <td>
-                  <code>0</code>
-            </td>
-          </tr>
-          <tr class="doc-section-item">
-            <td>
-                <code>targeted</code>
-            </td>
-            <td>
-                  <code><span title="bool">bool</span></code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>If True, flips only labels matching <code>target_label</code> to <code>target_changed_label</code>.
-                       Default is False.</p>
-              </div>
-            </td>
-            <td>
-                  <code>False</code>
-            </td>
-          </tr>
-          <tr class="doc-section-item">
-            <td>
-                <code>target_label</code>
-            </td>
-            <td>
-                  <code><span title="int">int</span></code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>The label to change when <code>targeted</code> is True. Default is 4.</p>
-              </div>
-            </td>
-            <td>
-                  <code>4</code>
-            </td>
-          </tr>
-          <tr class="doc-section-item">
-            <td>
-                <code>target_changed_label</code>
-            </td>
-            <td>
-                  <code><span title="int">int</span></code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>The label to which <code>target_label</code> will be changed. Default is 7.</p>
-              </div>
-            </td>
-            <td>
-                  <code>7</code>
+                <em>required</em>
             </td>
           </tr>
       </tbody>
@@ -6513,28 +7064,6 @@ label to another specified label.</p>
     <table>
       <thead>
         <tr>
-<th>Name</th>          <th>Type</th>
-          <th>Description</th>
-        </tr>
-      </thead>
-      <tbody>
-          <tr class="doc-section-item">
-<td><code>Dataset</code></td>            <td>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>A deep copy of the original dataset with modified labels in <code>.targets</code>.</p>
-              </div>
-            </td>
-          </tr>
-      </tbody>
-    </table>
-
-
-<p><span class="doc-section-title">Raises:</span></p>
-    <table>
-      <thead>
-        <tr>
           <th>Type</th>
           <th>Description</th>
         </tr>
@@ -6542,11 +7071,11 @@ label to another specified label.</p>
       <tbody>
           <tr class="doc-section-item">
             <td>
-                  <code><span title="ValueError">ValueError</span></code>
+                  <code><span title="torch.utils.data.Dataset">Dataset</span></code>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>If <code>poisoned_percent</code> is not between 0 and 1, or if <code>flipping_percent</code> is invalid.</p>
+                <p>Modified dataset with flipped labels</p>
               </div>
             </td>
           </tr>
@@ -6554,70 +7083,9 @@ label to another specified label.</p>
     </table>
 
 
-<details class="notes" open>
-  <summary>Notes</summary>
-  <ul>
-<li>When not in targeted mode, labels are flipped for a random selection of indices based on the specified
-  <code>poisoned_percent</code>. The new label is chosen randomly from the existing classes.</li>
-<li>In targeted mode, labels that match <code>target_label</code> are directly changed to <code>target_changed_label</code>.</li>
-</ul>
-</details>
-
             <details class="quote">
               <summary>Source code in <code>nebula/addons/attacks/dataset/labelflipping.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 52</span>
-<span class="normal"> 53</span>
-<span class="normal"> 54</span>
-<span class="normal"> 55</span>
-<span class="normal"> 56</span>
-<span class="normal"> 57</span>
-<span class="normal"> 58</span>
-<span class="normal"> 59</span>
-<span class="normal"> 60</span>
-<span class="normal"> 61</span>
-<span class="normal"> 62</span>
-<span class="normal"> 63</span>
-<span class="normal"> 64</span>
-<span class="normal"> 65</span>
-<span class="normal"> 66</span>
-<span class="normal"> 67</span>
-<span class="normal"> 68</span>
-<span class="normal"> 69</span>
-<span class="normal"> 70</span>
-<span class="normal"> 71</span>
-<span class="normal"> 72</span>
-<span class="normal"> 73</span>
-<span class="normal"> 74</span>
-<span class="normal"> 75</span>
-<span class="normal"> 76</span>
-<span class="normal"> 77</span>
-<span class="normal"> 78</span>
-<span class="normal"> 79</span>
-<span class="normal"> 80</span>
-<span class="normal"> 81</span>
-<span class="normal"> 82</span>
-<span class="normal"> 83</span>
-<span class="normal"> 84</span>
-<span class="normal"> 85</span>
-<span class="normal"> 86</span>
-<span class="normal"> 87</span>
-<span class="normal"> 88</span>
-<span class="normal"> 89</span>
-<span class="normal"> 90</span>
-<span class="normal"> 91</span>
-<span class="normal"> 92</span>
-<span class="normal"> 93</span>
-<span class="normal"> 94</span>
-<span class="normal"> 95</span>
-<span class="normal"> 96</span>
-<span class="normal"> 97</span>
-<span class="normal"> 98</span>
-<span class="normal"> 99</span>
-<span class="normal">100</span>
-<span class="normal">101</span>
-<span class="normal">102</span>
-<span class="normal">103</span>
-<span class="normal">104</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">104</span>
 <span class="normal">105</span>
 <span class="normal">106</span>
 <span class="normal">107</span>
@@ -6639,43 +7107,39 @@ label to another specified label.</p>
 <span class="normal">123</span>
 <span class="normal">124</span>
 <span class="normal">125</span>
-<span class="normal">126</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">labelFlipping</span><span class="p">(</span>
+<span class="normal">126</span>
+<span class="normal">127</span>
+<span class="normal">128</span>
+<span class="normal">129</span>
+<span class="normal">130</span>
+<span class="normal">131</span>
+<span class="normal">132</span>
+<span class="normal">133</span>
+<span class="normal">134</span>
+<span class="normal">135</span>
+<span class="normal">136</span>
+<span class="normal">137</span>
+<span class="normal">138</span>
+<span class="normal">139</span>
+<span class="normal">140</span>
+<span class="normal">141</span>
+<span class="normal">142</span>
+<span class="normal">143</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">flip_labels</span><span class="p">(</span>
     <span class="bp">self</span><span class="p">,</span>
     <span class="n">dataset</span><span class="p">,</span>
-    <span class="n">indices</span><span class="p">,</span>
-    <span class="n">poisoned_percent</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
-    <span class="n">targeted</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
-    <span class="n">target_label</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span>
-    <span class="n">target_changed_label</span><span class="o">=</span><span class="mi">7</span><span class="p">,</span>
-<span class="p">):</span>
+    <span class="n">indices</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span>
+    <span class="n">poisoned_percent</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;Dataset&quot;</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Flips the labels of a specified portion of a dataset to random values or to a specific target label.</span>
-
-<span class="sd">    This function modifies the labels of selected samples in the dataset based on the specified</span>
-<span class="sd">    poisoning percentage. Labels can be flipped either randomly or targeted to change from a specific</span>
-<span class="sd">    label to another specified label.</span>
+<span class="sd">    Flips labels randomly to different classes.</span>
 
 <span class="sd">    Args:</span>
-<span class="sd">        dataset (Dataset): The dataset containing training data, expected to be a PyTorch dataset</span>
-<span class="sd">                           with a `.targets` attribute.</span>
-<span class="sd">        indices (list of int): The list of indices in the dataset to consider for label flipping.</span>
-<span class="sd">        poisoned_percent (float, optional): The ratio of labels to change, expressed as a fraction</span>
-<span class="sd">                                            (0 &lt;= poisoned_percent &lt;= 1). Default is 0.</span>
-<span class="sd">        targeted (bool, optional): If True, flips only labels matching `target_label` to `target_changed_label`.</span>
-<span class="sd">                                   Default is False.</span>
-<span class="sd">        target_label (int, optional): The label to change when `targeted` is True. Default is 4.</span>
-<span class="sd">        target_changed_label (int, optional): The label to which `target_label` will be changed. Default is 7.</span>
+<span class="sd">        dataset: The dataset to modify</span>
+<span class="sd">        indices: List of indices to consider for flipping</span>
+<span class="sd">        poisoned_percent: Percentage of labels to change (0-100)</span>
 
 <span class="sd">    Returns:</span>
-<span class="sd">        Dataset: A deep copy of the original dataset with modified labels in `.targets`.</span>
-
-<span class="sd">    Raises:</span>
-<span class="sd">        ValueError: If `poisoned_percent` is not between 0 and 1, or if `flipping_percent` is invalid.</span>
-
-<span class="sd">    Notes:</span>
-<span class="sd">        - When not in targeted mode, labels are flipped for a random selection of indices based on the specified</span>
-<span class="sd">          `poisoned_percent`. The new label is chosen randomly from the existing classes.</span>
-<span class="sd">        - In targeted mode, labels that match `target_label` are directly changed to `target_changed_label`.</span>
+<span class="sd">        Modified dataset with flipped labels</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">new_dataset</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">dataset</span><span class="p">)</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">new_dataset</span><span class="o">.</span><span class="n">targets</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">):</span>
@@ -6683,35 +7147,431 @@ label to another specified label.</p>
     <span class="k">else</span><span class="p">:</span>
         <span class="n">new_dataset</span><span class="o">.</span><span class="n">targets</span> <span class="o">=</span> <span class="n">new_dataset</span><span class="o">.</span><span class="n">targets</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
 
-    <span class="c1"># logging.info(f&quot;[{self.__class__.__name__}] First 20 labels before flipping: {new_dataset.targets[:20]}&quot;)</span>
-    <span class="c1"># logging.info(f&quot;[{self.__class__.__name__}] First 20 indices before flipping: {indices[:20]}&quot;)</span>
+    <span class="n">num_indices</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">indices</span><span class="p">)</span>
+    <span class="n">num_flipped</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">poisoned_percent</span> <span class="o">*</span> <span class="n">num_indices</span> <span class="o">/</span> <span class="mf">100.0</span><span class="p">)</span>
 
-    <span class="k">if</span> <span class="ow">not</span> <span class="n">targeted</span><span class="p">:</span>
-        <span class="n">num_indices</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">indices</span><span class="p">)</span>
-        <span class="n">num_flipped</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">poisoned_percent</span> <span class="o">*</span> <span class="n">num_indices</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">num_indices</span> <span class="o">==</span> <span class="mi">0</span> <span class="ow">or</span> <span class="n">num_flipped</span> <span class="o">&gt;</span> <span class="n">num_indices</span><span class="p">:</span>
-            <span class="k">return</span>
-        <span class="n">flipped_indices</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="n">indices</span><span class="p">,</span> <span class="n">num_flipped</span><span class="p">)</span>
-        <span class="n">class_list</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">new_dataset</span><span class="o">.</span><span class="n">targets</span><span class="o">.</span><span class="n">tolist</span><span class="p">()))</span>
-        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">flipped_indices</span><span class="p">:</span>
-            <span class="n">current_label</span> <span class="o">=</span> <span class="n">new_dataset</span><span class="o">.</span><span class="n">targets</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+    <span class="k">if</span> <span class="n">num_indices</span> <span class="o">==</span> <span class="mi">0</span> <span class="ow">or</span> <span class="n">num_flipped</span> <span class="o">&gt;</span> <span class="n">num_indices</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">new_dataset</span>
+
+    <span class="n">flipped_indices</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="n">indices</span><span class="p">,</span> <span class="n">num_flipped</span><span class="p">)</span>
+    <span class="n">class_list</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">new_dataset</span><span class="o">.</span><span class="n">targets</span><span class="o">.</span><span class="n">tolist</span><span class="p">()))</span>
+
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">flipped_indices</span><span class="p">:</span>
+        <span class="n">current_label</span> <span class="o">=</span> <span class="n">new_dataset</span><span class="o">.</span><span class="n">targets</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+        <span class="n">new_label</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="n">class_list</span><span class="p">)</span>
+        <span class="k">while</span> <span class="n">new_label</span> <span class="o">==</span> <span class="n">current_label</span><span class="p">:</span>
             <span class="n">new_label</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="n">class_list</span><span class="p">)</span>
-            <span class="k">while</span> <span class="n">new_label</span> <span class="o">==</span> <span class="n">current_label</span><span class="p">:</span>
-                <span class="n">new_label</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="n">class_list</span><span class="p">)</span>
-            <span class="n">new_dataset</span><span class="o">.</span><span class="n">targets</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">new_label</span>
-    <span class="k">else</span><span class="p">:</span>
-        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">indices</span><span class="p">:</span>
-            <span class="k">if</span> <span class="nb">int</span><span class="p">(</span><span class="n">new_dataset</span><span class="o">.</span><span class="n">targets</span><span class="p">[</span><span class="n">i</span><span class="p">])</span> <span class="o">==</span> <span class="n">target_label</span><span class="p">:</span>
-                <span class="n">new_dataset</span><span class="o">.</span><span class="n">targets</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">target_changed_label</span>
+        <span class="n">new_dataset</span><span class="o">.</span><span class="n">targets</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">new_label</span>
 
-        <span class="k">if</span> <span class="n">target_label</span> <span class="ow">in</span> <span class="n">new_dataset</span><span class="o">.</span><span class="n">targets</span><span class="p">:</span>
-            <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;[</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">] Target label </span><span class="si">{</span><span class="n">target_label</span><span class="si">}</span><span class="s2"> still present after flipping.&quot;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">new_dataset</span>
+</code></pre></div></td></tr></table></div>
+            </details>
+    </div>
+
+</div>
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-class">
+
+
+
+<h2 id="nebula.addons.attacks.dataset.labelflipping.TargetedLabelFlippingStrategy" class="doc doc-heading">
+            <code>TargetedLabelFlippingStrategy</code>
+
+
+<a href="#nebula.addons.attacks.dataset.labelflipping.TargetedLabelFlippingStrategy" class="headerlink" title="Permanent link">&para;</a></h2>
+
+
+    <div class="doc doc-contents ">
+            <p class="doc doc-class-bases">
+              Bases: <code><a class="autorefs autorefs-internal" title="LabelFlippingStrategy (nebula.addons.attacks.dataset.labelflipping.LabelFlippingStrategy)" href="#nebula.addons.attacks.dataset.labelflipping.LabelFlippingStrategy">LabelFlippingStrategy</a></code></p>
+
+
+        <p>Implementation of targeted label flipping strategy.</p>
+
+
+
+
+
+
+
+              <details class="quote">
+                <summary>Source code in <code>nebula/addons/attacks/dataset/labelflipping.py</code></summary>
+                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">50</span>
+<span class="normal">51</span>
+<span class="normal">52</span>
+<span class="normal">53</span>
+<span class="normal">54</span>
+<span class="normal">55</span>
+<span class="normal">56</span>
+<span class="normal">57</span>
+<span class="normal">58</span>
+<span class="normal">59</span>
+<span class="normal">60</span>
+<span class="normal">61</span>
+<span class="normal">62</span>
+<span class="normal">63</span>
+<span class="normal">64</span>
+<span class="normal">65</span>
+<span class="normal">66</span>
+<span class="normal">67</span>
+<span class="normal">68</span>
+<span class="normal">69</span>
+<span class="normal">70</span>
+<span class="normal">71</span>
+<span class="normal">72</span>
+<span class="normal">73</span>
+<span class="normal">74</span>
+<span class="normal">75</span>
+<span class="normal">76</span>
+<span class="normal">77</span>
+<span class="normal">78</span>
+<span class="normal">79</span>
+<span class="normal">80</span>
+<span class="normal">81</span>
+<span class="normal">82</span>
+<span class="normal">83</span>
+<span class="normal">84</span>
+<span class="normal">85</span>
+<span class="normal">86</span>
+<span class="normal">87</span>
+<span class="normal">88</span>
+<span class="normal">89</span>
+<span class="normal">90</span>
+<span class="normal">91</span>
+<span class="normal">92</span>
+<span class="normal">93</span>
+<span class="normal">94</span>
+<span class="normal">95</span>
+<span class="normal">96</span>
+<span class="normal">97</span>
+<span class="normal">98</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">TargetedLabelFlippingStrategy</span><span class="p">(</span><span class="n">LabelFlippingStrategy</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Implementation of targeted label flipping strategy.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">target_label</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">target_changed_label</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Initialize targeted label flipping strategy.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            target_label: The label to change</span>
+<span class="sd">            target_changed_label: The label to change to</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">target_label</span> <span class="o">=</span> <span class="n">target_label</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">target_changed_label</span> <span class="o">=</span> <span class="n">target_changed_label</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">flip_labels</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">dataset</span><span class="p">,</span>
+        <span class="n">indices</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span>
+        <span class="n">poisoned_percent</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;Dataset&quot;</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Flips labels from target_label to target_changed_label.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            dataset: The dataset to modify</span>
+<span class="sd">            indices: List of indices to consider for flipping</span>
+<span class="sd">            poisoned_percent: Percentage of labels to change (0-100)</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Modified dataset with flipped labels</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">new_dataset</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">dataset</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">new_dataset</span><span class="o">.</span><span class="n">targets</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">):</span>
+            <span class="n">new_dataset</span><span class="o">.</span><span class="n">targets</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">new_dataset</span><span class="o">.</span><span class="n">targets</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">new_dataset</span><span class="o">.</span><span class="n">targets</span> <span class="o">=</span> <span class="n">new_dataset</span><span class="o">.</span><span class="n">targets</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">indices</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">int</span><span class="p">(</span><span class="n">new_dataset</span><span class="o">.</span><span class="n">targets</span><span class="p">[</span><span class="n">i</span><span class="p">])</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">target_label</span><span class="p">:</span>
+                <span class="n">new_dataset</span><span class="o">.</span><span class="n">targets</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">target_changed_label</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">target_label</span> <span class="ow">in</span> <span class="n">new_dataset</span><span class="o">.</span><span class="n">targets</span><span class="p">:</span>
+            <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;[</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">] Target label </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">target_label</span><span class="si">}</span><span class="s2"> still present after flipping.&quot;</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">&quot;[</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">] Target label </span><span class="si">{</span><span class="n">target_label</span><span class="si">}</span><span class="s2"> successfully flipped to </span><span class="si">{</span><span class="n">target_changed_label</span><span class="si">}</span><span class="s2">.&quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;[</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">] Target label </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">target_label</span><span class="si">}</span><span class="s2"> successfully flipped to </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">target_changed_label</span><span class="si">}</span><span class="s2">.&quot;</span>
             <span class="p">)</span>
 
-    <span class="c1"># logging.info(f&quot;[{self.__class__.__name__}] First 20 labels after flipping: {new_dataset.targets[:20]}&quot;)</span>
+        <span class="k">return</span> <span class="n">new_dataset</span>
+</code></pre></div></td></tr></table></div>
+              </details>
+
+
+
+  <div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="nebula.addons.attacks.dataset.labelflipping.TargetedLabelFlippingStrategy.__init__" class="doc doc-heading">
+            <code class="highlight language-python"><span class="fm">__init__</span><span class="p">(</span><span class="n">target_label</span><span class="p">,</span> <span class="n">target_changed_label</span><span class="p">)</span></code>
+
+<a href="#nebula.addons.attacks.dataset.labelflipping.TargetedLabelFlippingStrategy.__init__" class="headerlink" title="Permanent link">&para;</a></h3>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Initialize targeted label flipping strategy.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>target_label</code>
+            </td>
+            <td>
+                  <code><span title="int">int</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The label to change</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>target_changed_label</code>
+            </td>
+            <td>
+                  <code><span title="int">int</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The label to change to</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+            <details class="quote">
+              <summary>Source code in <code>nebula/addons/attacks/dataset/labelflipping.py</code></summary>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">53</span>
+<span class="normal">54</span>
+<span class="normal">55</span>
+<span class="normal">56</span>
+<span class="normal">57</span>
+<span class="normal">58</span>
+<span class="normal">59</span>
+<span class="normal">60</span>
+<span class="normal">61</span>
+<span class="normal">62</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">target_label</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">target_changed_label</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Initialize targeted label flipping strategy.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        target_label: The label to change</span>
+<span class="sd">        target_changed_label: The label to change to</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">target_label</span> <span class="o">=</span> <span class="n">target_label</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">target_changed_label</span> <span class="o">=</span> <span class="n">target_changed_label</span>
+</code></pre></div></td></tr></table></div>
+            </details>
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="nebula.addons.attacks.dataset.labelflipping.TargetedLabelFlippingStrategy.flip_labels" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">flip_labels</span><span class="p">(</span><span class="n">dataset</span><span class="p">,</span> <span class="n">indices</span><span class="p">,</span> <span class="n">poisoned_percent</span><span class="p">)</span></code>
+
+<a href="#nebula.addons.attacks.dataset.labelflipping.TargetedLabelFlippingStrategy.flip_labels" class="headerlink" title="Permanent link">&para;</a></h3>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Flips labels from target_label to target_changed_label.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>dataset</code>
+            </td>
+            <td>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The dataset to modify</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>indices</code>
+            </td>
+            <td>
+                  <code><span title="list">list</span>[<span title="int">int</span>]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>List of indices to consider for flipping</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>poisoned_percent</code>
+            </td>
+            <td>
+                  <code><span title="float">float</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Percentage of labels to change (0-100)</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="torch.utils.data.Dataset">Dataset</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Modified dataset with flipped labels</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+            <details class="quote">
+              <summary>Source code in <code>nebula/addons/attacks/dataset/labelflipping.py</code></summary>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">64</span>
+<span class="normal">65</span>
+<span class="normal">66</span>
+<span class="normal">67</span>
+<span class="normal">68</span>
+<span class="normal">69</span>
+<span class="normal">70</span>
+<span class="normal">71</span>
+<span class="normal">72</span>
+<span class="normal">73</span>
+<span class="normal">74</span>
+<span class="normal">75</span>
+<span class="normal">76</span>
+<span class="normal">77</span>
+<span class="normal">78</span>
+<span class="normal">79</span>
+<span class="normal">80</span>
+<span class="normal">81</span>
+<span class="normal">82</span>
+<span class="normal">83</span>
+<span class="normal">84</span>
+<span class="normal">85</span>
+<span class="normal">86</span>
+<span class="normal">87</span>
+<span class="normal">88</span>
+<span class="normal">89</span>
+<span class="normal">90</span>
+<span class="normal">91</span>
+<span class="normal">92</span>
+<span class="normal">93</span>
+<span class="normal">94</span>
+<span class="normal">95</span>
+<span class="normal">96</span>
+<span class="normal">97</span>
+<span class="normal">98</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">flip_labels</span><span class="p">(</span>
+    <span class="bp">self</span><span class="p">,</span>
+    <span class="n">dataset</span><span class="p">,</span>
+    <span class="n">indices</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span>
+    <span class="n">poisoned_percent</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;Dataset&quot;</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Flips labels from target_label to target_changed_label.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        dataset: The dataset to modify</span>
+<span class="sd">        indices: List of indices to consider for flipping</span>
+<span class="sd">        poisoned_percent: Percentage of labels to change (0-100)</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        Modified dataset with flipped labels</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">new_dataset</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">dataset</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">new_dataset</span><span class="o">.</span><span class="n">targets</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">):</span>
+        <span class="n">new_dataset</span><span class="o">.</span><span class="n">targets</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">new_dataset</span><span class="o">.</span><span class="n">targets</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">new_dataset</span><span class="o">.</span><span class="n">targets</span> <span class="o">=</span> <span class="n">new_dataset</span><span class="o">.</span><span class="n">targets</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">indices</span><span class="p">:</span>
+        <span class="k">if</span> <span class="nb">int</span><span class="p">(</span><span class="n">new_dataset</span><span class="o">.</span><span class="n">targets</span><span class="p">[</span><span class="n">i</span><span class="p">])</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">target_label</span><span class="p">:</span>
+            <span class="n">new_dataset</span><span class="o">.</span><span class="n">targets</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">target_changed_label</span>
+
+    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">target_label</span> <span class="ow">in</span> <span class="n">new_dataset</span><span class="o">.</span><span class="n">targets</span><span class="p">:</span>
+        <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;[</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">] Target label </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">target_label</span><span class="si">}</span><span class="s2"> still present after flipping.&quot;</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;[</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">] Target label </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">target_label</span><span class="si">}</span><span class="s2"> successfully flipped to </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">target_changed_label</span><span class="si">}</span><span class="s2">.&quot;</span>
+        <span class="p">)</span>
 
     <span class="k">return</span> <span class="n">new_dataset</span>
 </code></pre></div></td></tr></table></div>
@@ -6756,7 +7616,7 @@ label to another specified label.</p>
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="May 25, 2025 16:56:20">May 25, 2025</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="June 11, 2025 16:51:43 UTC">June 11, 2025</span>
   </span>
 
     
@@ -6788,7 +7648,7 @@ label to another specified label.</p>
       <div class="md-copyright">
   
     <div class="md-copyright__highlight">
-      Created by <a href="https://enriquetomasmb.com">Enrique Tomás Martínez Beltrán</a>.
+      Created by <a href="https://enriquetomasmb.com">Enrique Tomás Martínez Beltrán</a>, Alberto Huertas Celdrán, Alejandro Avilés Serrano, and Fernando Torres Vega - Source code (AGPL-3.0)
     </div>
   
   
