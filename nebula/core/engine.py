@@ -369,6 +369,7 @@ class Engine:
 
     async def _aditional_node_start(self):
         logging.info(f"Aditional node | {self.addr} | going to stablish connection with federation")
+        self.set_initialization_status(True)
         await self.sa.start_late_connection_process()
         # continue ..
         logging.info("Creating trainer service to start the federation process..")
@@ -540,6 +541,9 @@ class Engine:
         )
 
     def learning_cycle_finished(self):
+        if not self.round or not self.total_rounds:
+            logging.info("[FER] not created")
+            return False
         return not (self.round < self.total_rounds)
 
     async def _learning_cycle(self):

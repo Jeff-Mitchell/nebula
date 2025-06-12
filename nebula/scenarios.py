@@ -578,7 +578,7 @@ class ScenarioManagement:
                 participant_config["situational_awareness"] = {
                     "strict_topology": self.scenario.strict_topology,
                     "sa_discovery": {
-                        "candidate_selector": self.scenario.sad_candidate_selector,
+                        "candidate_selector": "ring",
                         "model_handler": self.scenario.sad_model_handler,
                         "verbose": True
                     },
@@ -589,7 +589,7 @@ class ScenarioManagement:
                             "sa_network": True
                         },
                         "sa_network": {
-                            "neighbor_policy": self.scenario.sar_neighbor_policy,
+                            "neighbor_policy": "ring",
                             "verbose": True
                         }
                     }
@@ -779,7 +779,7 @@ class ScenarioManagement:
                     ).encode()
                 ).hexdigest()
                 participant_config["mobility_args"]["additional_node"]["status"] = True
-                participant_config["mobility_args"]["additional_node"]["time_start"] = additional_participant["time"]
+                participant_config["mobility_args"]["additional_node"]["time_start"] = additional_participant["time_start"]
 
                 # used for late creation nodes
                 participant_config["mobility_args"]["late_creation"] = True

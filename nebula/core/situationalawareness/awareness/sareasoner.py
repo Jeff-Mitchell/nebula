@@ -299,8 +299,8 @@ class SAReasoner(ISAReasoner):
         # SA Reasoner instance for all SA Reasoner Components
         sar_components: dict = self._config["situational_awareness"]["sa_reasoner"]["sar_components"]
         for sar_comp in sar_components.keys():
-            self._config["situational_awareness"]["sa_reasoner"]["sar_comp"]["sar"] = self
-            self._config["situational_awareness"]["sa_reasoner"]["sar_comp"]["addr"] = self._addr
+            self._config["situational_awareness"]["sa_reasoner"][sar_comp]["sar"] = self
+            self._config["situational_awareness"]["sa_reasoner"][sar_comp]["addr"] = self._addr
 
     async def _set_minimal_requirements(self):
         if self._sa_components:

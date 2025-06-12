@@ -294,9 +294,9 @@ class FederationConnector(ISADiscovery):
             if self._verbose: logging.info("❗️  No Candidates found...")
             self.accept_candidates_lock.release()
             self.late_connection_process_lock.release()
-            # if not connected:
-            #     if self._verbose: logging.info("❗️  repeating process...")
-            #     await self.start_late_connection_process(connected, msg_type, addrs_known)
+            if not connected:
+                if self._verbose: logging.info("❗️  repeating process...")
+                await self.start_late_connection_process(connected, msg_type, addrs_known)
 
 
     """                                                     ##############################
