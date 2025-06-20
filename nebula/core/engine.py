@@ -1,17 +1,29 @@
 import asyncio
 import logging
 import os
+import random
+import socket
 import time
+import docker
 
+from nebula.core.role import Role, factory_node_role
 from nebula.addons.attacks.attacks import create_attack
 from nebula.addons.functions import print_msg_box
 from nebula.addons.reporter import Reporter
 from nebula.addons.reputation.reputation import Reputation
-from nebula.core.addonmanager import AddonManager
+from nebula.core.addonmanager import AddondManager
 from nebula.core.aggregation.aggregator import create_aggregator
 from nebula.core.eventmanager import EventManager
-from nebula.core.nebulaevents import AggregationEvent, RoundStartEvent, UpdateNeighborEvent, UpdateReceivedEvent
+from nebula.core.nebulaevents import (
+    AggregationEvent,
+    RoundEndEvent,
+    RoundStartEvent,
+    UpdateNeighborEvent,
+    UpdateReceivedEvent,
+    ExperimentFinishEvent,
+)
 from nebula.core.network.communications import CommunicationsManager
+from nebula.core.situationalawareness.situationalawareness import SituationalAwareness
 from nebula.core.utils.locker import Locker
 
 logging.getLogger("requests").setLevel(logging.WARNING)
@@ -52,9 +64,15 @@ def print_banner():
                     ██║ ╚████║███████╗██████╔╝╚██████╔╝███████╗██║  ██║
                     ╚═╝  ╚═══╝╚══════╝╚═════╝  ╚═════╝ ╚══════╝╚═╝  ╚═╝
                       A Platform for Decentralized Federated Learning
-                        Created by Enrique Tomás Martínez Beltrán
-                          https://github.com/CyberDataLab/nebula
-                """
+
+                      Developed by:
+                       • Enrique Tomás Martínez Beltrán
+                       • Alberto Huertas Celdrán
+                       • Alejandro Avilés Serrano
+                       • Fernando Torres Vega
+
+                      https://nebula-dfl.com / https://nebula-dfl.eu
+            """
     logging.info(f"\n{banner}\n")
 
 
@@ -74,13 +92,14 @@ class Engine:
         self.port = config.participant["network_args"]["port"]
         self.addr = config.participant["network_args"]["addr"]
         self.role = config.participant["device_args"]["role"]
+        self.role: Role = factory_node_role(self.role)
         self.name = config.participant["device_args"]["name"]
-        # self.client = docker.from_env()
+        self.client = docker.from_env()
 
         print_banner()
 
         print_msg_box(
-            msg=f"Name {self.name}\nRole: {self.role}",
+            msg=f"Name {self.name}\nRole: {self.role.value}",
             indent=2,
             title="Node information",
         )
@@ -90,6 +109,7 @@ class Engine:
         self.round = None
         self.total_rounds = None
         self.federation_nodes = set()
+        self._federation_nodes_lock = Locker("federation_nodes_lock", async_lock=True)
         self.initialized = False
         self.log_dir = os.path.join(config.participant["tracking_args"]["log_dir"], self.experiment_name)
 
@@ -121,30 +141,51 @@ class Engine:
         self.config.reload_config_file()
 
         self._cm = CommunicationsManager(engine=self)
-        # Set the communication manager in the model (send messages from there)
-        self.trainer.model.set_communication_manager(self._cm)
-        self._reporter = Reporter(config=self.config, trainer=self.trainer, cm=self.cm)
-        self._addon_manager = AddonManager(self, self.config)
-        self._reputation = Reputation(self, self.config)
+
+        self._reporter = Reporter(config=self.config, trainer=self.trainer)
+
+        self._sinchronized_status = True
+        self.sinchronized_status_lock = Locker(name="sinchronized_status_lock")
+
+        self.trainning_in_progress_lock = Locker(name="trainning_in_progress_lock", async_lock=True)
+
+        event_manager = EventManager.get_instance(verbose=False)
+        self._addon_manager = AddondManager(self, self.config)
+
+        # Additional Components
+        if "situational_awareness" in self.config.participant:
+            self._situational_awareness = SituationalAwareness(self.config, self)
+
+        if self.config.participant["defense_args"]["reputation"]["enabled"]:
+            self._reputation = Reputation(engine=self, config=self.config)
 
     @property
     def cm(self):
+        """Communication Manager"""
         return self._cm
 
     @property
     def reporter(self):
+        """Reporter"""
         return self._reporter
 
     @property
     def aggregator(self):
+        """Aggregator"""
         return self._aggregator
-
-    def get_aggregator_type(self):
-        return type(self.aggregator)
 
     @property
     def trainer(self):
+        """Trainer"""
         return self._trainer
+
+    @property
+    def sa(self):
+        """Situational Awareness Module"""
+        return self._situational_awareness
+
+    def get_aggregator_type(self):
+        return type(self.aggregator)
 
     def get_addr(self):
         return self.addr
@@ -152,8 +193,13 @@ class Engine:
     def get_config(self):
         return self.config
 
-    def get_federation_nodes(self):
-        return self.federation_nodes
+    async def get_federation_nodes(self):
+        async with self._federation_nodes_lock:
+            return self.federation_nodes.copy()
+
+    async def update_federation_nodes(self, federation_nodes):
+        async with self._federation_nodes_lock:
+            self.federation_nodes = federation_nodes
 
     def get_initialization_status(self):
         return self.initialized
@@ -170,6 +216,9 @@ class Engine:
     def get_federation_setup_lock(self):
         return self.federation_setup_lock
 
+    def get_trainning_in_progress_lock(self):
+        return self.trainning_in_progress_lock
+
     def get_round_lock(self):
         return self.round_lock
 
@@ -178,10 +227,9 @@ class Engine:
         self.round = new_round
         self.trainer.set_current_round(new_round)
 
-    """
-    ##############################
-    #       MODEL CALLBACKS      #
-    ##############################
+    """                                                     ##############################
+                                                            #       MODEL CALLBACKS      #
+                                                            ##############################
     """
 
     async def model_initialization_callback(self, source, message):
@@ -205,17 +253,16 @@ class Engine:
 
     async def model_update_callback(self, source, message):
         logging.info(f"🤖  handle_model_message | Received model update from {source} with round {message.round}")
-        if not self.get_federation_ready_lock().locked() and len(self.get_federation_nodes()) == 0:
+        if not self.get_federation_ready_lock().locked() and len(await self.get_federation_nodes()) == 0:
             logging.info("🤖  handle_model_message | There are no defined federation nodes")
             return
         decoded_model = self.trainer.deserialize_model(message.parameters)
         updt_received_event = UpdateReceivedEvent(decoded_model, message.weight, source, message.round)
         await EventManager.get_instance().publish_node_event(updt_received_event)
 
-    """
-    ##############################
-    #      General callbacks     #
-    ##############################
+    """                                                     ##############################
+                                                            #      General callbacks     #
+                                                            ##############################
     """
 
     async def _discovery_discover_callback(self, source, message):
@@ -252,6 +299,32 @@ class Engine:
         else:
             logging.error(f"❗️  Connection {source} not found in connections...")
 
+    async def _control_leadership_transfer_callback(self, source, message):
+        logging.info(f"🔧  handle_control_message | Trigger | Received leadership transfer message from {source}")
+        if self.role == Role.AGGREGATOR:
+            neighbors = await self.cm.get_addrs_current_connections(myself=True)
+            if len(neighbors) > 1:
+                random_neighbor = random.choice(neighbors)
+                message = self.cm.create_message("control", "leadership_transfer")
+                await self.cm.send_message(random_neighbor, message)
+                logging.info(
+                    f"🔧  handle_control_message | Trigger | Leadership transfer message sent to {random_neighbor}"
+                )
+                message = self.cm.create_message("control", "leadership_transfer_ack")
+                await self.cm.send_message(source, message)
+                logging.info(f"🔧  handle_control_message | Trigger | Leadership transfer ack message sent to {source}")
+            else:
+                logging.info(f"🔧  handle_control_message | Trigger | Only one neighbor found, I am the leader")
+        else:
+            self.role = Role.AGGREGATOR
+            logging.info(f"🔧  handle_control_message | Trigger | I am now the leader")
+            message = self.cm.create_message("control", "leadership_transfer_ack")
+            await self.cm.send_message(source, message)
+            logging.info(f"🔧  handle_control_message | Trigger | Leadership transfer ack message sent to {source}")
+
+    async def _control_leadership_transfer_ack_callback(self, source, message):
+        logging.info(f"🔧  handle_control_message | Trigger | Received leadership transfer ack message from {source}")
+
     async def _connection_connect_callback(self, source, message):
         logging.info(f"🔗  handle_connection_message | Trigger | Received connection message from {source}")
         current_connections = await self.cm.get_addrs_current_connections(myself=True)
@@ -261,11 +334,6 @@ class Engine:
 
     async def _connection_disconnect_callback(self, source, message):
         logging.info(f"🔗  handle_connection_message | Trigger | Received disconnection message from {source}")
-        if self.mobility:
-            if await self.nm.waiting_confirmation_from(source):
-                await self.nm.confirmation_received(source, confirmation=False)
-            # if source in await self.cm.get_all_addrs_current_connections(only_direct=True):
-            await self.nm.update_neighbors(source, remove=True)
         await self.cm.disconnect(source, mutual_disconnection=False)
 
     async def _federation_federation_ready_callback(self, source, message):
@@ -277,28 +345,6 @@ class Engine:
     async def _federation_federation_start_callback(self, source, message):
         logging.info(f"📝  handle_federation_message | Trigger | Received start federation message from {source}")
         await self.create_trainer_module()
-
-    async def _reputation_share_callback(self, source, message):
-        try:
-            logging.info(
-                f"handle_reputation_message | Trigger | Received reputation message from {source} | Node: {message.node_id} | Score: {message.score} | Round: {message.round}"
-            )
-
-            current_node = self.addr
-            nei = message.node_id
-
-            # Manage reputation
-            if current_node != nei:
-                key = (current_node, nei, message.round)
-
-                if key not in self._reputation.reputation_with_all_feedback:
-                    self._reputation.reputation_with_all_feedback[key] = []
-
-                self._reputation.reputation_with_all_feedback[key].append(message.score)
-                # logging.info(f"Reputation with all feedback: {self.reputation_with_all_feedback}")
-
-        except Exception as e:
-            logging.exception(f"Error handling reputation message: {e}")
 
     async def _federation_federation_models_included_callback(self, source, message):
         logging.info(f"📝  handle_federation_message | Trigger | Received aggregation finished message from {source}")
@@ -320,10 +366,9 @@ class Engine:
         finally:
             await self.cm.get_connections_lock().release_async()
 
-    """
-    ##############################
-    #    REGISTERING CALLBACKS   #
-    ##############################
+    """                                                     ##############################
+                                                            #    REGISTERING CALLBACKS   #
+                                                            ##############################
     """
 
     async def register_events_callbacks(self):
@@ -344,10 +389,8 @@ class Engine:
             for (message_name, message_actions) in me_dict.items()
             for message_action in message_actions
         ]
-        # logging.info(f"{message_events}")
         for event_type, action in message_events:
             callback_name = f"_{event_type}_{action}_callback"
-            # logging.info(f"Searching callback named: {callback_name}")
             method = getattr(self, callback_name, None)
 
             if callable(method):
@@ -359,53 +402,198 @@ class Engine:
         if callable(method):
             await EventManager.get_instance().subscribe((event_type, action), method)
 
-    """
-    ##############################
-    #    ENGINE FUNCTIONALITY    #
-    ##############################
+    """                                                     ##############################
+                                                            #    ENGINE FUNCTIONALITY    #
+                                                            ##############################
     """
 
+    async def _aditional_node_start(self):
+        """
+        Starts the initialization process for an additional node joining the federation.
+
+        This method triggers the situational awareness module to initiate a late connection
+        process to discover and join the federation. Once connected, it starts the learning
+        process asynchronously.
+        """
+        logging.info(f"Aditional node | {self.addr} | going to stablish connection with federation")
+        await self.sa.start_late_connection_process()
+        # continue ..
+        logging.info("Creating trainer service to start the federation process..")
+        asyncio.create_task(self._start_learning_late())
+
     async def update_neighbors(self, removed_neighbor_addr, neighbors, remove=False):
-        self.federation_nodes = neighbors
+        """
+        Updates the internal list of federation neighbors and publishes a neighbor update event.
+
+        Args:
+            removed_neighbor_addr (str): Address of the neighbor that was removed (or affected).
+            neighbors (set): The updated set of current federation neighbors.
+            remove (bool): Flag indicating whether the specified neighbor was removed (True)
+                        or added (False).
+
+        Publishes:
+            UpdateNeighborEvent: An event describing the neighbor update, for use by listeners.
+        """
+        await self.update_federation_nodes(neighbors)
         updt_nei_event = UpdateNeighborEvent(removed_neighbor_addr, remove)
         asyncio.create_task(EventManager.get_instance().publish_node_event(updt_nei_event))
 
-    async def broadcast_models_include(self, aggregation_event: AggregationEvent):
+    async def broadcast_models_include(self, age: AggregationEvent):
+        """
+        Broadcasts a message to federation neighbors indicating that aggregation is ready.
+
+        Args:
+            age (AggregationEvent): The event containing information about the completed aggregation.
+
+        Sends:
+            federation_models_included: A message containing the round number of the aggregation.
+        """
         logging.info(f"🔄  Broadcasting MODELS_INCLUDED for round {self.get_round()}")
         message = self.cm.create_message(
             "federation", "federation_models_included", [str(arg) for arg in [self.get_round()]]
         )
         asyncio.create_task(self.cm.send_message_to_neighbors(message))
 
+    async def update_model_learning_rate(self, new_lr):
+        """
+        Updates the learning rate of the current training model.
+
+        Args:
+            new_lr (float): The new learning rate to apply to the trainer model.
+
+        This method ensures that the operation is protected by a lock to avoid
+        conflicts with ongoing training operations.
+        """
+        await self.trainning_in_progress_lock.acquire_async()
+        logging.info("Update | learning rate modified...")
+        self.trainer.update_model_learning_rate(new_lr)
+        await self.trainning_in_progress_lock.release_async()
+
+    async def _start_learning_late(self):
+        """
+        Initializes the training process for a node joining the federation after it has already started.
+
+        This method retrieves the training configuration from the situational awareness module,
+        including the model parameters, total number of training rounds, current round, and number
+        of epochs. It initializes the model and the trainer accordingly, and starts the learning cycle.
+
+        Locks:
+            - Acquires and releases `learning_cycle_lock` to ensure exclusive access during setup.
+            - Acquires and updates `round` via `round_lock`.
+            - Releases `federation_ready_lock` to indicate that the node is ready to begin learning.
+
+        Handles:
+            - Late start by setting model parameters and synchronization state.
+            - Runtime exceptions gracefully in case of double lock releases or other race conditions.
+
+        Logs important initialization information and direct connection state before training begins.
+        """
+        await self.learning_cycle_lock.acquire_async()
+        try:
+            model_serialized, rounds, round, _epochs = await self.sa.get_trainning_info()
+            self.total_rounds = rounds
+            epochs = _epochs
+            await self.get_round_lock().acquire_async()
+            self.round = round
+            await self.get_round_lock().release_async()
+            await self.learning_cycle_lock.release_async()
+            print_msg_box(
+                msg="Starting Federated Learning process...",
+                indent=2,
+                title="Start of the experiment late",
+            )
+            logging.info(f"Trainning setup | total rounds: {rounds} | current round: {round} | epochs: {epochs}")
+            direct_connections = await self.cm.get_addrs_current_connections(only_direct=True)
+            logging.info(f"Initial DIRECT connections: {direct_connections}")
+            await asyncio.sleep(1)
+            try:
+                logging.info("🤖  Initializing model...")
+                await asyncio.sleep(1)
+                model = self.trainer.deserialize_model(model_serialized)
+                self.trainer.set_model_parameters(model, initialize=True)
+                logging.info("Model Parameters Initialized")
+                self.set_initialization_status(True)
+                await (
+                    self.get_federation_ready_lock().release_async()
+                )  # Enable learning cycle once the initialization is done
+                try:
+                    await (
+                        self.get_federation_ready_lock().release_async()
+                    )  # Release the lock acquired at the beginning of the engine
+                except RuntimeError:
+                    pass
+            except RuntimeError:
+                pass
+
+            self.trainer.set_epochs(epochs)
+            self.trainer.set_current_round(round)
+            self.trainer.create_trainer()
+            await self._learning_cycle()
+
+        finally:
+            if await self.learning_cycle_lock.locked_async():
+                await self.learning_cycle_lock.release_async()
+
     async def create_trainer_module(self):
         asyncio.create_task(self._start_learning())
         logging.info("Started trainer module...")
 
     async def start_communications(self):
+        """
+        Initializes communication with neighboring nodes and registers internal event callbacks.
+
+        This method performs the following steps:
+        1. Registers all event callbacks used by the node.
+        2. Parses the list of initial neighbors from the configuration and initiates communications with them.
+        3. Waits for half of the configured grace time to allow initial network stabilization.
+
+        This grace period provides time for initial peer discovery and message exchange
+        before other services or training processes begin.
+        """
         await self.register_events_callbacks()
-        await self.aggregator.init()
-        logging.info(f"Neighbors: {self.config.participant['network_args']['neighbors']}")
-        logging.info(
-            f"💤  Cold start time: {self.config.participant['misc_args']['grace_time_connection']} seconds before connecting to the network"
-        )
-        await asyncio.sleep(self.config.participant["misc_args"]["grace_time_connection"])
-        await self.cm.start()
         initial_neighbors = self.config.participant["network_args"]["neighbors"].split()
-        for i in initial_neighbors:
-            addr = f"{i.split(':')[0]}:{i.split(':')[1]}"
-            await self.cm.connect(addr, direct=True)
-            await asyncio.sleep(1)
-        while not self.cm.verify_connections(initial_neighbors):
-            await asyncio.sleep(1)
-        current_connections = await self.cm.get_addrs_current_connections()
-        logging.info(f"Connections verified: {current_connections}")
-        await self._reporter.start()
-        await self.cm.deploy_additional_services()
-        await self._addon_manager.deploy_additional_services()
-        await self._reputation.setup()
+        await self.cm.start_communications(initial_neighbors)
         await asyncio.sleep(self.config.participant["misc_args"]["grace_time_connection"] // 2)
 
+    async def deploy_components(self):
+        """
+        Initializes and deploys the core components required for node operation in the federation.
+
+        This method performs the following actions:
+        1. Initializes the aggregator, which handles the model aggregation process.
+        2. Optionally initializes the situational awareness module if enabled in the configuration.
+        3. Sets up the reputation system if enabled.
+        4. Starts the reporting service for logging and monitoring purposes.
+        5. Deploys any additional add-ons registered via the addon manager.
+
+        This method ensures all critical and optional components are ready before
+        the federated learning process starts.
+        """
+        await self.aggregator.init()
+        if "situational_awareness" in self.config.participant:
+            await self.sa.init()
+        if self.config.participant["defense_args"]["reputation"]["enabled"]:
+            await self._reputation.setup()
+        await self._reporter.start()
+        await self._addon_manager.deploy_additional_services()
+
     async def deploy_federation(self):
+        """
+        Manages the startup logic for the federated learning process.
+
+        The behavior is determined by the configuration:
+        - If the device is responsible for starting the federation:
+        1. Waits for a configured grace period to allow peers to initialize.
+        2. Waits until the network is ready (all nodes are prepared).
+        3. Sends a 'FEDERATION_START' message to notify neighbors.
+        4. Initializes the trainer module and marks the node as ready.
+
+        - If the device is not the starter:
+        1. Sends a 'FEDERATION_READY' message to neighbors.
+        2. Waits passively for a start signal from the initiating node.
+
+        This function ensures proper synchronization and coordination before the federated rounds begin.
+        """
         await self.federation_ready_lock.acquire_async()
         if self.config.participant["device_args"]["start"]:
             logging.info(
@@ -431,6 +619,23 @@ class Engine:
             logging.info("💤  Waiting until receiving the start signal from the start node")
 
     async def _start_learning(self):
+        """
+        Starts the federated learning process from the beginning if no prior round exists.
+
+        This method performs the following sequence:
+        1. Acquires the learning cycle lock to ensure exclusive execution.
+        2. If no round has been initialized:
+        - Reads total rounds and epochs from the configuration.
+        - Sets the initial round to 0 and releases the round lock.
+        - Waits for the federation to be ready if the device is not the starter.
+        - If the device is the starter, it propagates the initial model to neighbors.
+        - Sets the number of epochs and creates the trainer instance.
+        - Initiates the federated learning cycle.
+        3. If a round already exists and the lock is still held, it is released to avoid deadlock.
+
+        This method ensures that the learning process is initialized safely and only once,
+        synchronizing startup across nodes and managing dependencies on federation readiness.
+        """
         await self.learning_cycle_lock.acquire_async()
         try:
             if self.round is None:
@@ -470,51 +675,20 @@ class Engine:
             if await self.learning_cycle_lock.locked_async():
                 await self.learning_cycle_lock.release_async()
 
-    async def _disrupt_connection_using_reputation(self, malicious_nodes):
-        malicious_nodes = list(set(malicious_nodes) & set(self.get_current_connections()))
-        logging.info(f"Disrupting connection with malicious nodes at round {self.round}")
-        logging.info(f"Removing {malicious_nodes} from {self.get_current_connections()}")
-        logging.info(f"Current connections before aggregation at round {self.round}: {self.get_current_connections()}")
-        for malicious_node in malicious_nodes:
-            if (self.get_name() != malicious_node) and (malicious_node not in self._secure_neighbors):
-                await self.cm.disconnect(malicious_node)
-        logging.info(f"Current connections after aggregation at round {self.round}: {self.get_current_connections()}")
-
-        await self._connect_with_benign(malicious_nodes)
-
-    async def _connect_with_benign(self, malicious_nodes):
-        lower_threshold = 1
-        higher_threshold = len(self.federation_nodes) - 1
-        if higher_threshold < lower_threshold:
-            higher_threshold = lower_threshold
-
-        benign_nodes = [i for i in self.federation_nodes if i not in malicious_nodes]
-        logging.info(f"_reputation_callback benign_nodes at round {self.round}: {benign_nodes}")
-        if len(self.get_current_connections()) <= lower_threshold:
-            for node in benign_nodes:
-                if len(self.get_current_connections()) <= higher_threshold and self.get_name() != node:
-                    connected = await self.cm.connect(node)
-                    if connected:
-                        logging.info(f"Connect new connection with at round {self.round}: {connected}")
-
-    async def _dynamic_aggregator(self, aggregated_models_weights, malicious_nodes):
-        logging.info(f"malicious detected at round {self.round}, change aggergation protocol!")
-        if self.aggregator != self.target_aggregation:
-            logging.info(f"Current aggregator is: {self.aggregator}")
-            self.aggregator = self.target_aggregation
-            await self.aggregator.update_federation_nodes(self.federation_nodes)
-
-            for subnodes in aggregated_models_weights:
-                sublist = subnodes.split()
-                (submodel, weights) = aggregated_models_weights[subnodes]
-                for node in sublist:
-                    if node not in malicious_nodes:
-                        await self.aggregator.include_model_in_buffer(
-                            submodel, weights, source=self.get_name(), round=self.round
-                        )
-            logging.info(f"Current aggregator is: {self.aggregator}")
-
     async def _waiting_model_updates(self):
+        """
+        Waits for the model aggregation results and updates the local model accordingly.
+
+        This method:
+        1. Awaits the result of the aggregation from the aggregator component.
+        2. If aggregation parameters are successfully received:
+        - Updates the local model with the aggregated parameters.
+        3. If no parameters are returned:
+        - Logs an error indicating aggregation failure.
+
+        This method is called after local training and before proceeding to the next round,
+        ensuring the model is synchronized with the federation’s latest aggregated state.
+        """
         logging.info(f"💤  Waiting convergence in round {self.round}.")
         params = await self.aggregator.get_aggregation()
         if params is not None:
@@ -525,10 +699,41 @@ class Engine:
         else:
             logging.error("Aggregation finished with no parameters")
 
+    def print_round_information(self):
+        print_msg_box(
+            msg=f"Round {self.round} of {self.total_rounds} started.",
+            indent=2,
+            title="Round information",
+        )
+
     def learning_cycle_finished(self):
-        return not (self.round < self.total_rounds)
+        if not self.round or not self.total_rounds:
+            return False
+        else:
+            return (self.round < self.total_rounds)
 
     async def _learning_cycle(self):
+        """
+        Main asynchronous loop for executing the Federated Learning process across multiple rounds.
+
+        This method orchestrates the entire lifecycle of each federated learning round, including:
+        1. Starting each round:
+        - Updating the list of federation nodes.
+        - Publishing a `RoundStartEvent` for local and global monitoring.
+        - Preparing the trainer and aggregator components.
+        2. Running the core learning logic via `_extended_learning_cycle`.
+        3. Ending each round:
+        - Publishing a `RoundEndEvent`.
+        - Releasing and updating the current round state in the configuration.
+        - Invoking callbacks for the trainer to handle end-of-round logic.
+
+        After completing all rounds:
+        - Finalizes the trainer by calling `on_learning_cycle_end()` and optionally performs testing.
+        - Reports the scenario status to the controller if required.
+        - Optionally stops the Docker container if deployed in a containerized environment.
+
+        This function blocks (awaits) until the full FL process concludes.
+        """
         while self.round is not None and self.round < self.total_rounds:
             current_time = time.time()
             print_msg_box(
@@ -537,8 +742,10 @@ class Engine:
                 title="Round information",
             )
             logging.info(f"Federation nodes: {self.federation_nodes}")
-            self.federation_nodes = await self.cm.get_addrs_current_connections(only_direct=True, myself=True)
-            expected_nodes = self.federation_nodes.copy()
+            await self.update_federation_nodes(
+                await self.cm.get_addrs_current_connections(only_direct=True, myself=True)
+            )
+            expected_nodes = await self.get_federation_nodes()
             rse = RoundStartEvent(self.round, current_time, expected_nodes)
             await EventManager.get_instance().publish_node_event(rse)
             self.trainer.on_round_start()
@@ -546,9 +753,14 @@ class Engine:
             direct_connections = await self.cm.get_addrs_current_connections(only_direct=True)
             undirected_connections = await self.cm.get_addrs_current_connections(only_undirected=True)
             logging.info(f"Direct connections: {direct_connections} | Undirected connections: {undirected_connections}")
-            logging.info(f"[Role {self.role}] Starting learning cycle...")
+            logging.info(f"[Role {self.role.value}] Starting learning cycle...")
             await self.aggregator.update_federation_nodes(expected_nodes)
             await self._extended_learning_cycle()
+
+            current_time = time.time()
+            ree = RoundEndEvent(self.round, current_time)
+            await EventManager.get_instance().publish_node_event(ree)
+
             await self.get_round_lock().acquire_async()
 
             print_msg_box(
@@ -566,7 +778,12 @@ class Engine:
 
         # End of the learning cycle
         self.trainer.on_learning_cycle_end()
+
         await self.trainer.test()
+
+        efe = ExperimentFinishEvent()
+        await EventManager.get_instance().publish_node_event(efe)
+
         print_msg_box(
             msg=f"FL process has been completed successfully (max. {self.total_rounds} rounds reached)",
             indent=2,
@@ -576,22 +793,20 @@ class Engine:
         if self.config.participant["scenario_args"]["controller"] != "nebula-test":
             result = await self.reporter.report_scenario_finished()
             if result:
-                pass
+                logging.info("📝  Scenario finished reported succesfully")
             else:
-                logging.error("Error reporting scenario finished")
-
-        logging.info("Checking if all my connections reached the total rounds...")
-        while not self.cm.check_finished_experiment():
-            await asyncio.sleep(1)
+                logging.error("📝  Error reporting scenario finished")
 
         await asyncio.sleep(5)
 
         # Kill itself
-        # if self.config.participant["scenario_args"]["deployment"] == "docker":
-        #     try:
-        #         self.client.containers.get(self.docker_id).stop()
-        #     except Exception as e:
-        #         print(f"Error stopping Docker container with ID {self.docker_id}: {e}")
+        if self.config.participant["scenario_args"]["deployment"] == "docker":
+            try:
+                docker_id = socket.gethostname()
+                logging.info(f"📦  Killing docker container with ID {docker_id}")
+                self.client.containers.get(docker_id).kill()
+            except Exception as e:
+                logging.exception(f"📦  Error stopping Docker container with ID {docker_id}: {e}")
 
     async def _extended_learning_cycle(self):
         """
@@ -599,154 +814,3 @@ class Engine:
         functionalities. The method is called in the _learning_cycle method.
         """
         pass
-
-
-class MaliciousNode(Engine):
-    def __init__(
-        self,
-        model,
-        datamodule,
-        config=Config,
-        trainer=Lightning,
-        security=False,
-    ):
-        super().__init__(
-            model,
-            datamodule,
-            config,
-            trainer,
-            security,
-        )
-        self.attack = create_attack(self)
-        self.aggregator_bening = self._aggregator
-
-    async def _extended_learning_cycle(self):
-        try:
-            await self.attack.attack()
-        except Exception:
-            attack_name = self.config.participant["adversarial_args"]["attack_params"]["attacks"]
-            logging.exception(f"Attack {attack_name} failed")
-
-        if self.role == "aggregator":
-            await AggregatorNode._extended_learning_cycle(self)
-        if self.role == "trainer":
-            await TrainerNode._extended_learning_cycle(self)
-        if self.role == "server":
-            await ServerNode._extended_learning_cycle(self)
-
-
-class AggregatorNode(Engine):
-    def __init__(
-        self,
-        model,
-        datamodule,
-        config=Config,
-        trainer=Lightning,
-        security=False,
-    ):
-        super().__init__(
-            model,
-            datamodule,
-            config,
-            trainer,
-            security,
-        )
-
-    async def _extended_learning_cycle(self):
-        # Define the functionality of the aggregator node
-        await self.trainer.test()
-        await self.trainer.train()
-
-        self_update_event = UpdateReceivedEvent(
-            self.trainer.get_model_parameters(), self.trainer.get_model_weight(), self.addr, self.round
-        )
-        await EventManager.get_instance().publish_node_event(self_update_event)
-
-        await self.cm.propagator.propagate("stable")
-        await self._waiting_model_updates()
-
-
-class ServerNode(Engine):
-    def __init__(
-        self,
-        model,
-        datamodule,
-        config=Config,
-        trainer=Lightning,
-        security=False,
-    ):
-        super().__init__(
-            model,
-            datamodule,
-            config,
-            trainer,
-            security,
-        )
-
-    async def _extended_learning_cycle(self):
-        # Define the functionality of the server node
-        await self.trainer.test()
-
-        self_update_event = UpdateReceivedEvent(
-            self.trainer.get_model_parameters(), self.trainer.BYPASS_MODEL_WEIGHT, self.addr, self.round
-        )
-        await EventManager.get_instance().publish_node_event(self_update_event)
-
-        await self._waiting_model_updates()
-        await self.cm.propagator.propagate("stable")
-
-
-class TrainerNode(Engine):
-    def __init__(
-        self,
-        model,
-        datamodule,
-        config=Config,
-        trainer=Lightning,
-        security=False,
-    ):
-        super().__init__(
-            model,
-            datamodule,
-            config,
-            trainer,
-            security,
-        )
-
-    async def _extended_learning_cycle(self):
-        # Define the functionality of the trainer node
-        logging.info("Waiting global update | Assign _waiting_global_update = True")
-
-        await self.trainer.test()
-        await self.trainer.train()
-
-        self_update_event = UpdateReceivedEvent(
-            self.trainer.get_model_parameters(), self.trainer.get_model_weight(), self.addr, self.round, local=True
-        )
-        await EventManager.get_instance().publish_node_event(self_update_event)
-
-        await self.cm.propagator.propagate("stable")
-        await self._waiting_model_updates()
-
-
-class IdleNode(Engine):
-    def __init__(
-        self,
-        model,
-        datamodule,
-        config=Config,
-        trainer=Lightning,
-        security=False,
-    ):
-        super().__init__(
-            model,
-            datamodule,
-            config,
-            trainer,
-            security,
-        )
-
-    async def _extended_learning_cycle(self):
-        # Define the functionality of the idle node
-        logging.info("Waiting global update | Assign _waiting_global_update = True")
-        await self._waiting_model_updates()

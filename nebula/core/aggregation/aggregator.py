@@ -15,27 +15,6 @@ if TYPE_CHECKING:
 class AggregatorException(Exception):
     pass
 
-
-def create_target_aggregator(config, engine):
-    from nebula.core.aggregation.fedavg import FedAvg
-    from nebula.core.aggregation.krum import Krum
-    from nebula.core.aggregation.median import Median
-    from nebula.core.aggregation.trimmedmean import TrimmedMean
-
-    ALGORITHM_MAP = {
-        "FedAvg": FedAvg,
-        "Krum": Krum,
-        "Median": Median,
-        "TrimmedMean": TrimmedMean,
-    }
-    algorithm = config.participant["defense_args"]["target_aggregation"]
-    aggregator = ALGORITHM_MAP.get(algorithm)
-    if aggregator:
-        return aggregator(config=config, engine=engine)
-    else:
-        raise AggregatorException(f"Aggregation algorithm {algorithm} not found.")
-
-
 class Aggregator(ABC):
     def __init__(self, config=None, engine=None):
         self.config = config
@@ -44,6 +23,7 @@ class Aggregator(ABC):
         logging.info(f"[{self.__class__.__name__}] Starting Aggregator")
         self._federation_nodes = set()
         self._pending_models_to_aggregate = {}
+        self._pending_models_to_aggregate_lock = Locker(name="pending_models_to_aggregate_lock", async_lock=True)
         self._aggregation_done_lock = Locker(name="aggregation_done_lock", async_lock=True)
         self._aggregation_waiting_skip = asyncio.Event()
 
@@ -58,6 +38,7 @@ class Aggregator(ABC):
 
     @property
     def us(self):
+        """Federation type UpdateHandler (e.g. DFL-UpdateHandler, CFL-UpdateHandler...)"""
         return self._update_storage
 
     @abstractmethod
@@ -70,6 +51,20 @@ class Aggregator(ABC):
         await self.us.init(self.config)
 
     async def update_federation_nodes(self, federation_nodes: set):
+        """
+        Updates the current set of nodes expected to participate in the upcoming aggregation round.
+
+        This method informs the update handler (`us`) about the new set of federation nodes, 
+        clears any pending models, and attempts to acquire the aggregation lock to prepare 
+        for model aggregation. If the aggregation process is already running, it raises an exception.
+
+        Args:
+            federation_nodes (set): A set of addresses representing the nodes expected to contribute 
+                                    updates for the next aggregation round.
+
+        Raises:
+            Exception: If the aggregation process is already running and the lock is currently held.
+        """
         await self.us.round_expected_updates(federation_nodes=federation_nodes)
 
         if not self._aggregation_done_lock.locked():
@@ -85,13 +80,30 @@ class Aggregator(ABC):
         return self._federation_nodes
 
     async def get_aggregation(self):
+        """
+        Handles the aggregation process for a training round.
+
+        This method waits for all expected model updates from federation nodes or until a timeout occurs.
+        It uses an asynchronous lock to coordinate access and includes an early exit mechanism if all
+        updates are received before the timeout. Once the condition is satisfied, it releases the lock,
+        collects the updates, identifies any missing nodes, and publishes an `AggregationEvent`.
+        Finally, it runs the aggregation algorithm and returns the result.
+
+        Returns:
+            Any: The result of the aggregation process, as returned by `run_aggregation`.
+
+        Raises:
+            TimeoutError: If the aggregation lock is not acquired within the defined timeout.
+            asyncio.CancelledError: If the aggregation lock acquisition is cancelled.
+            Exception: For any other unexpected errors during the aggregation process.
+        """
         try:
             timeout = self.config.participant["aggregator_args"]["aggregation_timeout"]
             logging.info(f"Aggregation timeout: {timeout} starts...")
             await self.us.notify_if_all_updates_received()
             lock_task = asyncio.create_task(self._aggregation_done_lock.acquire_async(timeout=timeout))
             skip_task = asyncio.create_task(self._aggregation_waiting_skip.wait())
-            done, _ = await asyncio.wait(
+            done, pending = await asyncio.wait(
                 [lock_task, skip_task],
                 return_when=asyncio.FIRST_COMPLETED,
             )
@@ -119,7 +131,6 @@ class Aggregator(ABC):
         await self.us.stop_notifying_updates()
         updates = await self.us.get_round_updates()
         missing_nodes = await self.us.get_round_missing_nodes()
-
         if missing_nodes:
             logging.info(f"🔄  get_aggregation | Aggregation incomplete, missing models from: {missing_nodes}")
         else:
@@ -146,7 +157,6 @@ class Aggregator(ABC):
 
 
 def create_aggregator(config, engine) -> Aggregator:
-    from nebula.core.aggregation.blockchainReputation import BlockchainReputation
     from nebula.core.aggregation.fedavg import FedAvg
     from nebula.core.aggregation.krum import Krum
     from nebula.core.aggregation.median import Median
@@ -157,7 +167,6 @@ def create_aggregator(config, engine) -> Aggregator:
         "Krum": Krum,
         "Median": Median,
         "TrimmedMean": TrimmedMean,
-        "BlockchainReputation": BlockchainReputation,
     }
     algorithm = config.participant["aggregator_args"]["algorithm"]
     aggregator = ALGORITHM_MAP.get(algorithm)

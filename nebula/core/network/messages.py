@@ -1,27 +1,64 @@
 import hashlib
 import logging
 import traceback
-from typing import TYPE_CHECKING
 
 from nebula.core.nebulaevents import MessageEvent
 from nebula.core.network.actions import factory_message_action, get_action_name_from_value, get_actions_names
 from nebula.core.pb import nebula_pb2
 
-if TYPE_CHECKING:
-    from nebula.core.network.communications import CommunicationsManager
-
 
 class MessagesManager:
-    def __init__(self, addr, config, cm: "CommunicationsManager"):
+    """
+    Manages creation, processing, and whenever is neccesary to do forwarding of Nebula protobuf messages.
+    Handles different message types defined in the protocol and coordinates with the CommunicationsManager.
+    """
+
+    def __init__(self, addr, config):
+        """
+        Initialize MessagesManager with the node address and configuration.
+
+        Args:
+            addr (str): The network address of the current node.
+            config (dict): Configuration dictionary for the node.
+        """
         self.addr = addr
         self.config = config
-        self.cm = cm
+        self._cm = None
         self._message_templates = {}
         self._define_message_templates()
 
+    @property
+    def cm(self):
+        """
+        Lazy-load and return the singleton instance of CommunicationsManager.
+
+        Returns:
+            CommunicationsManager: The communications manager instance.
+        """
+        if not self._cm:
+            from nebula.core.network.communications import CommunicationsManager
+
+            self._cm = CommunicationsManager.get_instance()
+            return self._cm
+        else:
+            return self._cm
+
     def _define_message_templates(self):
+        """
+        Define the message templates mapping message types to their parameters and default values.
+        This is used to dynamically create messages of different types.
+        """
         # Dictionary that maps message types to their required parameters and default values
         self._message_templates = {
+            "offer": {
+                "parameters": ["action", "n_neighbors", "loss", "parameters", "rounds", "round", "epochs"],
+                "defaults": {
+                    "parameters": None,
+                    "rounds": 1,
+                    "round": -1,
+                    "epochs": 1,
+                },
+            },
             "connection": {"parameters": ["action"], "defaults": {}},
             "discovery": {
                 "parameters": ["action", "latitude", "longitude"],
@@ -55,10 +92,18 @@ class MessagesManager:
                     "round": None,
                 },
             },
+            "discover": {"parameters": ["action"], "defaults": {}},
+            "link": {"parameters": ["action", "addrs"], "defaults": {}},
             # Add additional message types here
         }
 
-    def get_messages_events(self):
+    def get_messages_events(self) -> dict:
+        """
+        Retrieve the available message event names and their corresponding actions.
+
+        Returns:
+            dict: Mapping of message names (excluding 'model') to their available action names.
+        """
         message_events = {}
         for message_name in self._message_templates:
             if message_name != "model":
@@ -66,6 +111,16 @@ class MessagesManager:
         return message_events
 
     async def process_message(self, data, addr_from):
+        """
+        Asynchronously process an incoming serialized protobuf message.
+
+        Parses the message, verifies source, forwards or handles the message depending on its type,
+        and prevents duplicate processing using message hashes.
+
+        Args:
+            data (bytes): Serialized protobuf message bytes.
+            addr_from (str): Address from which the message was received.
+        """
         not_processing_messages = {"control_message", "connection_message"}
         special_processing_messages = {"discovery_message", "federation_message", "model_message"}
 
@@ -110,16 +165,29 @@ class MessagesManager:
                         await self.cm.handle_message(me)
             # Rest of messages
             else:
-                if await self.cm.include_received_message_hash(hashlib.md5(data).hexdigest()):
-                    me = MessageEvent(
-                        (msg_name, get_action_name_from_value(msg_name, message_data.action)), source, message_data
-                    )
-                    await self.cm.handle_message(me)
+                # if await self.cm.include_received_message_hash(hashlib.md5(data).hexdigest()):
+                me = MessageEvent(
+                    (msg_name, get_action_name_from_value(msg_name, message_data.action)), source, message_data
+                )
+                await self.cm.handle_message(me)
         except Exception as e:
             logging.exception(f"📥  handle_incoming_message | Error while processing: {e}")
             logging.exception(traceback.format_exc())
 
     def _should_forward_message(self, message_type, message_wrapper):
+        """
+        Determine if a received message should be forwarded to other nodes.
+
+        Forwarding is enabled for proxy devices or for specific message types
+        like initialization model messages or federation start actions.
+
+        Args:
+            message_type (str): Type of the message, e.g. 'model_message'.
+            message_wrapper (nebula_pb2.Wrapper): Parsed protobuf wrapper message.
+
+        Returns:
+            bool: True if the message should be forwarded, False otherwise.
+        """
         if self.cm.config.participant["device_args"]["proxy"]:
             return True
         # TODO: Improve the technique. Now only forward model messages if the node is a proxy
@@ -135,6 +203,25 @@ class MessagesManager:
             return True
 
     def create_message(self, message_type: str, action: str = "", *args, **kwargs):
+        """
+        Create and serialize a protobuf message of the given type and action.
+
+        Dynamically maps provided arguments to the protobuf message fields using predefined templates.
+        Wraps the message in a Nebula 'Wrapper' message with the node's address as source.
+
+        Args:
+            message_type (str): The type of message to create (e.g. 'offer', 'model', etc.).
+            action (str, optional): Action name for the message, converted to protobuf enum. Defaults to "".
+            *args: Positional arguments for message fields according to the template.
+            **kwargs: Keyword arguments for message fields.
+
+        Raises:
+            ValueError: If the message_type is invalid.
+            AttributeError: If the protobuf message class does not exist.
+
+        Returns:
+            bytes: Serialized protobuf 'Wrapper' message bytes ready for transmission.
+        """
         # logging.info(f"Creating message | type: {message_type}, action: {action}, positionals: {args}, explicits: {kwargs.keys()}")
         # If an action is provided, convert it to its corresponding enum value using the factory
         message_action = None
