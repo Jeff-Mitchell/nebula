@@ -10,11 +10,11 @@ import aiohttp
 import psutil
 
 if TYPE_CHECKING:
-    from nebula.core.network.communications import CommunicationsManager
+    pass
 
 
 class Reporter:
-    def __init__(self, config, trainer, cm: "CommunicationsManager"):
+    def __init__(self, config, trainer):
         """
         Initializes the reporter module for sending periodic updates to a dashboard controller.
 
@@ -48,13 +48,13 @@ class Reporter:
             - Initializes both current and accumulated metrics for traffic monitoring.
         """
         logging.info("Starting reporter module")
+        self._cm = None
         self.config = config
         self.trainer = trainer
-        self.cm = cm
         self.frequency = self.config.participant["reporter_args"]["report_frequency"]
         self.grace_time = self.config.participant["reporter_args"]["grace_time_reporter"]
         self.data_queue = asyncio.Queue()
-        self.url = f"http://{self.config.participant['scenario_args']['controller']}/platform/dashboard/{self.config.participant['scenario_args']['name']}/node/update"
+        self.url = f"http://{self.config.participant['scenario_args']['controller']}/nodes/{self.config.participant['scenario_args']['name']}/update"
         self.counter = 0
 
         self.first_net_metrics = True
@@ -67,6 +67,18 @@ class Reporter:
         self.acc_bytes_recv = 0
         self.acc_packets_sent = 0
         self.acc_packets_recv = 0
+        self._running = asyncio.Event()
+        self._reporter_task = None  # Track the background task
+
+    @property
+    def cm(self):
+        if not self._cm:
+            from nebula.core.network.communications import CommunicationsManager
+
+            self._cm = CommunicationsManager.get_instance()
+            return self._cm
+        else:
+            return self._cm
 
     async def enqueue_data(self, name, value):
         """
@@ -103,9 +115,10 @@ class Reporter:
             - The grace period allows for a delay before the first reporting cycle.
             - The reporter loop runs in the background, ensuring continuous data updates.
         """
+        self._running.set()
         await asyncio.sleep(self.grace_time)
-        task = asyncio.create_task(self.run_reporter())
-        return task
+        self._reporter_task = asyncio.create_task(self.run_reporter(), name="Reporter_run_reporter")
+        return self._reporter_task
 
     async def run_reporter(self):
         """
@@ -122,7 +135,7 @@ class Reporter:
         Notes:
             - The reporting frequency is determined by the 'report_frequency' setting in the config file.
         """
-        while True:
+        while self._running.is_set():
             if self.config.participant["reporter_args"]["report_status_data_queue"]:
                 if self.config.participant["scenario_args"]["controller"] != "nebula-test":
                     await self.__report_status_to_controller()
@@ -157,12 +170,16 @@ class Reporter:
               might be temporarily overloaded.
             - Logs exceptions if the connection attempt to the controller fails.
         """
-        url = f"http://{self.config.participant['scenario_args']['controller']}/platform/dashboard/{self.config.participant['scenario_args']['name']}/node/done"
+        url = f"http://{self.config.participant['scenario_args']['controller']}/nodes/{self.config.participant['scenario_args']['name']}/done"
         data = json.dumps({"idx": self.config.participant["device_args"]["idx"]})
         headers = {
             "Content-Type": "application/json",
             "User-Agent": f"NEBULA Participant {self.config.participant['device_args']['idx']}",
         }
+        try:
+            await self.__report_status_to_controller()
+        except Exception as e:
+            logging.exception(f"Error reporting status before scenario finished: {e}")
         try:
             async with aiohttp.ClientSession() as session, session.post(url, data=data, headers=headers) as response:
                 if response.status != 200:
@@ -179,6 +196,21 @@ class Reporter:
         except aiohttp.ClientError:
             logging.exception(f"Error connecting to the controller at {url}")
         return False
+
+    async def stop(self):
+        logging.info("🔍  Stopping reporter module...")
+        self._running.clear()
+
+        # Cancel the background task
+        if self._reporter_task and not self._reporter_task.done():
+            logging.info("🛑  Cancelling Reporter background task...")
+            self._reporter_task.cancel()
+            try:
+                await self._reporter_task
+            except asyncio.CancelledError:
+                pass
+            self._reporter_task = None
+            logging.info("🛑  Reporter background task cancelled")
 
     async def __report_data_queue(self):
         """
@@ -334,8 +366,8 @@ class Reporter:
             "Z-RAM/RAM process (%)": memory_percent_process,
             "Z-RAM/RAM process (MB)": memory_process,
             "Y-Disk/Disk (%)": disk_percent,
-            "X-Network/Network (bytes sent)": round(self.acc_bytes_sent / (1024**2), 3),
-            "X-Network/Network (bytes received)": round(self.acc_bytes_recv / (1024**2), 3),
+            "X-Network/Network (MB sent)": round(self.acc_bytes_sent / (1024**2), 3),
+            "X-Network/Network (MB received)": round(self.acc_bytes_recv / (1024**2), 3),
             "X-Network/Network (packets sent)": self.acc_packets_sent,
             "X-Network/Network (packets received)": self.acc_packets_recv,
             "X-Network/Connections": len(current_connections),
