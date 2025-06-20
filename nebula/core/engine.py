@@ -94,7 +94,8 @@ class Engine:
         self.role = config.participant["device_args"]["role"]
         self.role: Role = factory_node_role(self.role)
         self.name = config.participant["device_args"]["name"]
-        self.client = docker.from_env()
+        if config.participant["scenario_args"]["deployment"] == "docker":
+            self.client = docker.from_env()
 
         print_banner()
 
