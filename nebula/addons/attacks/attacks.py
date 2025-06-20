@@ -129,7 +129,7 @@ def create_attack(engine) -> Attack:
     }
 
     # Get attack name and parameters from the engine configuration
-    attack_name = engine.config.participant["adversarial_args"]["attacks"]
+    attack_name = engine.config.participant["adversarial_args"]["attack_params"]["attacks"]
     attack_params = engine.config.participant["adversarial_args"].get("attack_params", {}).items()
 
     # Look up the attack class based on the attack name

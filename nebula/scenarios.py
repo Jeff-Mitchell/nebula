@@ -392,7 +392,7 @@ class ScenarioManagement:
             participant_config["device_args"]["gpu_id"] = self.scenario.gpu_id
             participant_config["device_args"]["logging"] = self.scenario.logginglevel
             participant_config["aggregator_args"]["algorithm"] = self.scenario.agg_algorithm
-            participant_config["adversarial_args"]["attacks"] = node_config["attacks"]
+            participant_config["adversarial_args"]["attack_params"]["attacks"] = node_config["attacks"]
             participant_config["adversarial_args"]["attack_params"] = node_config["attack_params"]
             participant_config["defense_args"]["with_reputation"] = node_config["with_reputation"]
             # participant_config["defense_args"]["is_dynamic_topology"] = self.scenario.is_dynamic_topology
