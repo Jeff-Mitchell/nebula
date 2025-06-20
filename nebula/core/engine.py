@@ -75,7 +75,6 @@ class Engine:
         self.addr = config.participant["network_args"]["addr"]
         self.role = config.participant["device_args"]["role"]
         self.name = config.participant["device_args"]["name"]
-        self.docker_id = config.participant["device_args"]["docker_id"]
         # self.client = docker.from_env()
 
         print_banner()
