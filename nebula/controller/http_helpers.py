@@ -6,7 +6,7 @@ from typing import Optional, Union
 import aiohttp
 from aiohttp import FormData
  
-_TIMEOUT = aiohttp.ClientTimeout(total=15)
+_TIMEOUT = aiohttp.ClientTimeout(total=300, sock_connect=30, sock_read=None)
  
 async def _request_json(
     method: str,

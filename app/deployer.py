@@ -788,6 +788,8 @@ class Deployer:
                 "/var/run/docker.sock:/var/run/docker.sock",
                 f"{self.databases_dir}:/nebula/app/databases"
             ],
+            cap_add=["NET_ADMIN", "NET_RAW"],
+            devices=["/dev/net/tun:/dev/net/tun"],
             extra_hosts={"host.docker.internal": "host-gateway"},
             port_bindings={self.controller_port: self.controller_port},
         )

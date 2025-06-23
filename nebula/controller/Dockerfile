@@ -16,6 +16,12 @@ RUN apt-get update && apt-get install -y python3.11 python3.11-dev python3.11-di
 # Install curl and network tools
 RUN apt-get install -y curl net-tools iproute2 iputils-ping
 
+# Install Tailscale CLI + daemon
+RUN curl -fsSL https://tailscale.com/install.sh | sh
+
+# Auth-key for tailscale
+ENV TS_AUTHKEY=tskey-auth-kiJDaxLFTe11CNTRL-XFmHtSkaddTSTBDFJK86dTbVHARTnjLL
+
 # Update alternatives to make Python 3.11 the default
 RUN update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.11 2
 RUN update-alternatives --install /usr/bin/python python /usr/bin/python3 1

@@ -583,6 +583,10 @@ class ScenarioManagement:
         self.advanced_analytics = os.environ.get("NEBULA_ADVANCED_ANALYTICS", "False") == "True"
         self.config = Config(entity="scenarioManagement")
 
+        logging.debug("[PHYSICAL] physical_ips recibidas: %s", self.scenario.physical_ips)
+        logging.debug("[PHYSICAL] nodos originales: %s",
+              {k: v["ip"] for k, v in self.scenario.nodes.items()})
+
         # If physical set the neighbours correctly
         if self.scenario.deployment == "physical" and self.scenario.physical_ips:
             for idx, ip in enumerate(self.scenario.physical_ips):
@@ -594,7 +598,10 @@ class ScenarioManagement:
         if self.scenario.deployment == "docker":
             self.controller = f"{os.environ.get('NEBULA_CONTROLLER_HOST')}:{os.environ.get('NEBULA_CONTROLLER_PORT')}"
         elif self.scenario.deployment == "physical":
-            self.controller = "100.120.46.10:49152"
+                host = self.get_own_tailscale_ip()
+                port = os.getenv("NEBULA_CONTROLLER_PORT", "5050")
+                self.controller = f"{host}:{port}"
+                logging.info(f"[ANAS] Este es el host y puerto del controller: {self.controller}")
         else:
             self.controller = f"127.0.0.1:{os.environ.get('NEBULA_CONTROLLER_PORT')}"
 
@@ -672,7 +679,7 @@ class ScenarioManagement:
 
             participant_config["network_args"]["ip"] = node_config["ip"]
             if self.scenario.deployment == "physical":
-                participant_config["network_args"]["port"] = 8000
+                participant_config["network_args"]["port"] = 7000
             else:
                 participant_config["network_args"]["port"] = int(node_config["port"])
             participant_config["network_args"]["simulation"] = self.scenario.network_simulation
@@ -682,6 +689,8 @@ class ScenarioManagement:
             participant_config["device_args"]["proxy"] = node_config["proxy"]
             participant_config["device_args"]["malicious"] = node_config["malicious"]
             participant_config["scenario_args"]["rounds"] = int(self.scenario.rounds)
+            participant_config["scenario_args"]["deployment"] = self.scenario.deployment
+            participant_config["scenario_args"]["controller"]  = self.controller
             participant_config["data_args"]["dataset"] = self.scenario.dataset
             participant_config["data_args"]["iid"] = self.scenario.iid
             participant_config["data_args"]["partition_selection"] = self.scenario.partition_selection
@@ -1049,7 +1058,7 @@ class ScenarioManagement:
             if self.scenario.deployment == "docker":
                 self.start_nodes_docker()
             elif self.scenario.deployment == "physical":
-                self.start_nodes_physical()
+                await self.start_nodes_physical()
             elif self.scenario.deployment == "process":
                 self.start_nodes_process()
             else:
@@ -1366,7 +1375,7 @@ class ScenarioManagement:
 
     async def _upload_and_start(self, node_cfg: dict) -> None:
         ip = node_cfg["network_args"]["ip"]
-        port = node_cfg["network_args"]["port"]
+        port = 8000
         host = f"{ip}:{port}"
         idx = node_cfg["device_args"]["idx"]
 
@@ -1407,6 +1416,33 @@ class ScenarioManagement:
 
         logging.info("Node %s running: %s", host, data)
 
+    def get_own_tailscale_ip(self):
+        """
+        Returns the Tailscale IP address assigned to this machine.
+        Prefers returning an IPv4 address (e.g., 100.x.x.x) if available.
+        """
+        try:
+            result = subprocess.run(
+                ["tailscale", "status", "--json"],
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                check=True
+            )
+            data = json.loads(result.stdout)
+            self_info = data.get("Self", {})
+            ips = self_info.get("TailscaleIPs", [])
+
+            # Prefer IPv4 addresses (those without ":")
+            for ip in ips:
+                if ":" not in ip:  # IPv4
+                    return ip
+
+            # If no IPv4 is found, return the first available IP (likely IPv6)
+            return ips[0] if ips else None
+
+        except Exception as e:
+            raise RuntimeError(f"Failed to obtain Tailscale IP: {e}")
+
     async def start_nodes_physical(self):
         """
         Placeholder method for starting nodes on physical devices.
@@ -1420,14 +1456,13 @@ class ScenarioManagement:
         logging.info("Starting nodes as physical devices...")
         logging.info(f"env path: {self.env_path}")
 
-        for idx, node in enumerate(self.config.participants):
-            pass
+        tasks = [
+            asyncio.create_task(self._upload_and_start(node))
+            for node in self.config.participants
+        ]
+        await asyncio.gather(*tasks)
 
-        asyncio.create_task(self._upload_and_start(node))
-
-        logging.info(
-            "Physical devices deployment is not implemented publicly. Please use docker or process deployment."
-        )
+        logging.info("All physical nodes launched")
 
     @classmethod
     def remove_files_by_scenario(cls, scenario_name):

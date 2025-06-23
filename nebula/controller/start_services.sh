@@ -6,6 +6,22 @@ set -x
 # Print in console debug messages
 echo "Starting services..."
 
+# Launch tailscaled
+tailscaled --state=/var/lib/tailscale/tailscaled.state &
+for i in {1..15}; do
+    if tailscale status > /dev/null 2>&1; then
+        break
+    fi
+    sleep 1
+done
+
+# Join the tailnet
+tailscale up \
+  --authkey="${TS_AUTHKEY}" \
+  --hostname="controller" \
+  --accept-routes \
+  --accept-dns=false || true
+
 cd nebula
 echo "path $(pwd)"
 # Start Gunicorn
