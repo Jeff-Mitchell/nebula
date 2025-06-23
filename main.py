@@ -7,6 +7,7 @@ import re
 import signal
 import subprocess
 import zipfile
+import socket
 from typing import Dict, List, Optional, Set
 
 from flask import (
@@ -483,6 +484,31 @@ def setup_new_run():
         _json_abort(400, "Could not delete old log files.")
 
     return jsonify(saved), 201
+
+
+@app.route("/free_port/", methods=["GET"])
+def free_port():
+    """
+    Return a TCP port number that the operating system currently considers free.
+
+    Example response
+    ----------------
+    {
+        "port": 39245
+    }
+    """
+    try:
+        # Ask the OS for a free port
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+            s.bind(("", 0))
+            port = s.getsockname()[1]
+
+        # Everything went fine – return the port as JSON
+        return jsonify(port=port)
+    except OSError as exc:
+        # Something went wrong
+        _json_abort(500, f"Unable to obtain free port: {exc}")
+
 
 # ─────────────────────────────────────────────────────────────────────────────
 #  ENTRY-POINT
