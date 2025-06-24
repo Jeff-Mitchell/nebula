@@ -16,11 +16,11 @@ for i in {1..15}; do
 done
 
 # Join the tailnet
-tailscale up \
+tailscale up --reset \
   --authkey="${TS_AUTHKEY}" \
   --hostname="controller" \
   --accept-routes \
-  --accept-dns=false || true
+  --accept-dns=false
 
 cd nebula
 echo "path $(pwd)"

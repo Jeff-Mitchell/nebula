@@ -601,7 +601,6 @@ class ScenarioManagement:
                 host = self.get_own_tailscale_ip()
                 port = os.getenv("NEBULA_CONTROLLER_PORT", "5050")
                 self.controller = f"{host}:{port}"
-                logging.info(f"[ANAS] Este es el host y puerto del controller: {self.controller}")
         else:
             self.controller = f"127.0.0.1:{os.environ.get('NEBULA_CONTROLLER_PORT')}"
 
@@ -679,7 +678,8 @@ class ScenarioManagement:
 
             participant_config["network_args"]["ip"] = node_config["ip"]
             if self.scenario.deployment == "physical":
-                participant_config["network_args"]["port"] = 7000
+                # Placeholder
+                participant_config["network_args"]["port"] = 0
             else:
                 participant_config["network_args"]["port"] = int(node_config["port"])
             participant_config["network_args"]["simulation"] = self.scenario.network_simulation
@@ -820,16 +820,16 @@ class ScenarioManagement:
         except Exception as e:
             logging.exception(f"Error while removing current_scenario_commands.sh file: {e}")
 
-    @staticmethod
-    def stop_nodes():
+    def stop_nodes(self):
         """
-        Stop all running NEBULA nodes.
-
-        This method logs the shutdown action and calls the stop_participants
-        method to remove all scenario command files, which signals nodes to stop.
+        Stops all nodes in the current scenario
+        (regardless of the deployment mode).
         """
-        logging.info("Closing NEBULA nodes... Please wait")
-        ScenarioManagement.stop_participants()
+        if self.scenario.deployment == "physical":
+            asyncio.run(self.stop_nodes_physical())
+        else:
+            logging.info("Closing NEBULA nodes... Please wait")
+            self.stop_participants(self.scenario_name)
 
     async def load_configurations_and_start_nodes(
         self, additional_participants=None, schema_additional_participants=None
@@ -864,6 +864,9 @@ class ScenarioManagement:
         participant_files.sort()
         if len(participant_files) == 0:
             raise ValueError("No participant files found in config folder")
+
+        if self.scenario.deployment == "physical":
+            await self._assign_free_ports_physical(participant_files)
 
         self.config.set_participants_config(participant_files)
         self.n_nodes = len(participant_files)
@@ -1372,49 +1375,61 @@ class ScenarioManagement:
 
         except Exception as e:
             raise Exception(f"Error starting nodes as processes: {e}")
+        
+    
+    async def _assign_free_ports_physical(self, participant_files):
+        async def _patch(file_path):
+            with open(file_path) as f:
+                cfg = json.load(f)
 
-    async def _upload_and_start(self, node_cfg: dict) -> None:
-        ip = node_cfg["network_args"]["ip"]
-        port = 8000
-        host = f"{ip}:{port}"
-        idx = node_cfg["device_args"]["idx"]
+            ip_addr = cfg["network_args"]["ip"]
+            host    = f"{ip_addr}:8000"
+            idx     = str(cfg["device_args"]["idx"])
 
-        cfg_dir = self.config_dir
-        config_path = f"{cfg_dir}/participant_{idx}.json"
-        global_test_path = f"{cfg_dir}/global_test.h5"
-        train_set_path = f"{cfg_dir}/participant_{idx}_train.h5"
+            status, data = await remote_get(host, "/free_port/")
+            if status == 200 and isinstance(data, dict) and "port" in data:
+                port = int(data["port"])
+            else:
+                logging.warning("Using fallback port 7000 for %s (status %s, data=%s)",
+                                host, status, data)
+                port = 7000
 
-        # ---------- multipart/form-data ------------------------
-        form = FormData()
-        form.add_field(
-            "config", open(config_path, "rb"), filename=os.path.basename(config_path), content_type="application/json"
-        )
-        form.add_field(
-            "global_test",
-            open(global_test_path, "rb"),
-            filename=os.path.basename(global_test_path),
-            content_type="application/octet-stream",
-        )
-        form.add_field(
-            "train_set",
-            open(train_set_path, "rb"),
-            filename=os.path.basename(train_set_path),
-            content_type="application/octet-stream",
-        )
+            cfg["network_args"]["port"]      = port
+            self.scenario.nodes[idx]["port"] = port
 
-        # ---------- /physical/setup/ (PUT) ---------------------
-        setup_ep = f"/physical/setup/{quote(host, safe='')}"
-        st, data = await remote_post_form(self.controller, setup_ep, form, method="PUT")
-        if st != 201:
-            raise RuntimeError(f"[{host}] setup failed {st}: {data}")
+            with open(file_path, "w") as f:
+                json.dump(cfg, f, indent=2)
 
-        # ---------- /physical/run/ (GET) ------------------------
-        run_ep = f"/physical/run/{quote(host, safe='')}"
-        st, data = await remote_get(self.controller, run_ep)
-        if st != 200:
-            raise RuntimeError(f"[{host}] run failed {st}: {data}")
+        await asyncio.gather(*(_patch(pf) for pf in participant_files))
 
-        logging.info("Node %s running: %s", host, data)
+    async def _stop_node(self, node_cfg: dict) -> dict:
+        """Send /physical/stop/ through the controller to a single Raspberry."""
+        ip   = node_cfg["network_args"]["ip"]
+        host = f"{ip}:8000"
+        stop_ep = f"/physical/stop/{quote(host, safe='')}"
+
+        logging.info(f"🛑 Sending stop command to Raspberry at {host}")
+        st, data = await remote_get(self.controller, stop_ep)
+        
+        result = {
+            "ip": ip,
+            "host": host,
+            "status_code": st,
+            "response": data
+        }
+        
+        if st == 200:
+            logging.info(f"✅ Raspberry {host} stopped successfully: {data}")
+            if isinstance(data, dict) and "pid" in data and "state" in data:
+                logging.info(f"   📊 Process PID: {data['pid']}, State: {data['state']}")
+            else:
+                logging.warning(f"   ⚠️  Unexpected response format from {host}: {data}")
+        elif st is None:
+            logging.warning(f"❌ Raspberry {host} unreachable while stopping: {data}")
+        else:
+            logging.error(f"💥 Raspberry {host} stop failed with status {st}: {data}")
+        
+        return result
 
     def get_own_tailscale_ip(self):
         """
@@ -1561,3 +1576,89 @@ class ScenarioManagement:
                 return False
 
             time.sleep(5)
+
+    def reload_participants_from_config(self):
+        """
+        Recarga los participantes desde los archivos participant_*.json del config_dir.
+        """
+        import glob
+        import json
+        import os
+        participant_files = glob.glob(os.path.join(self.config_dir, "participant_*.json"))
+        participants = []
+        for pf in participant_files:
+            with open(pf, "r") as f:
+                participants.append(json.load(f))
+        self.config.participants = participants
+
+    async def stop_nodes_physical(self):
+        """Stop every physical participant via the controller."""
+        logging.info("🛑 Stopping physical nodes...")
+        self.reload_participants_from_config()
+        logging.info(f"[DEBUG] Participants to stop: {self.config.participants}")
+        tasks = [
+            asyncio.create_task(self._stop_node(cfg))
+            for cfg in self.config.participants
+        ]
+        results = await asyncio.gather(*tasks)
+        
+        # Analizar resultados
+        successful_stops = []
+        failed_stops = []
+        
+        for result in results:
+            if result["status_code"] == 200:
+                successful_stops.append(result)
+            else:
+                failed_stops.append(result)
+        
+        logging.info(f"✅ Physical nodes stop completed: {len(successful_stops)} successful, {len(failed_stops)} failed")
+        
+        return {
+            "successful": successful_stops,
+            "failed": failed_stops,
+            "total_nodes": len(results)
+        }
+
+    async def _upload_and_start(self, node_cfg: dict) -> None:
+        ip = node_cfg["network_args"]["ip"]
+        port = 8000
+        host = f"{ip}:{port}"
+        idx = node_cfg["device_args"]["idx"]
+
+        cfg_dir = self.config_dir
+        config_path = f"{cfg_dir}/participant_{idx}.json"
+        global_test_path = f"{cfg_dir}/global_test.h5"
+        train_set_path = f"{cfg_dir}/participant_{idx}_train.h5"
+
+        # ---------- multipart/form-data ------------------------
+        form = FormData()
+        form.add_field(
+            "config", open(config_path, "rb"), filename=os.path.basename(config_path), content_type="application/json"
+        )
+        form.add_field(
+            "global_test",
+            open(global_test_path, "rb"),
+            filename=os.path.basename(global_test_path),
+            content_type="application/octet-stream",
+        )
+        form.add_field(
+            "train_set",
+            open(train_set_path, "rb"),
+            filename=os.path.basename(train_set_path),
+            content_type="application/octet-stream",
+        )
+
+        # ---------- /physical/setup/ (PUT) ---------------------
+        setup_ep = f"/physical/setup/{quote(host, safe='')}"
+        st, data = await remote_post_form(self.controller, setup_ep, form, method="PUT")
+        if st != 201:
+            raise RuntimeError(f"[{host}] setup failed {st}: {data}")
+
+        # ---------- /physical/run/ (GET) ------------------------
+        run_ep = f"/physical/run/{quote(host, safe='')}"
+        st, data = await remote_get(self.controller, run_ep)
+        if st != 200:
+            raise RuntimeError(f"[{host}] run failed {st}: {data}")
+
+        logging.info("Node %s running: %s", host, data)

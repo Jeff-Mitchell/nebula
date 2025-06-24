@@ -12,12 +12,14 @@ from typing import Annotated
 import aiohttp
 import psutil
 import uvicorn
+import inspect
 from fastapi import Body, FastAPI, Request, status, HTTPException, Path, File, UploadFile
 from fastapi.concurrency import asynccontextmanager
 
 from nebula.controller.database import scenario_set_all_status_to_finished, scenario_set_status_to_finished
 from nebula.controller.http_helpers import remote_get, remote_post_form
 from nebula.utils import DockerUtils
+from nebula.controller.scenarios import Scenario
 
 
 # Setup controller logger
@@ -347,39 +349,85 @@ async def stop_scenario(
 ):
     """
     Stops the execution of a federated learning scenario and performs cleanup operations.
-    
-    This endpoint:
-        - Stops all participant containers associated with the specified scenario.
-        - Removes Docker containers and network resources tied to the scenario and user.
-        - Sets the scenario's status to "finished" in the database.
-        - Optionally finalizes all active scenarios if the 'all' flag is set.
-    
-    Args:
-        scenario_name (str): Name of the scenario to stop.
-        username (str): User who initiated the stop operation.
-        all (bool): Whether to stop all running scenarios instead of just one (default: False).
-    
-    Raises:
-        HTTPException: Returns a 500 status code if any step fails.
-    
-    Note:
-        This function does not currently trigger statistics generation.
+    Now also stops physical nodes if the scenario is of type 'physical'.
     """
     from nebula.controller.scenarios import ScenarioManagement
+    from nebula.controller.database import get_scenario_by_name
 
-    ScenarioManagement.stop_participants(scenario_name)
-    DockerUtils.remove_containers_by_prefix(f"{os.environ.get('NEBULA_CONTROLLER_NAME')}_{username}-participant")
-    DockerUtils.remove_docker_network(
-        f"{(os.environ.get('NEBULA_CONTROLLER_NAME'))}_{str(username).lower()}-nebula-net-scenario"
-    )
-    try:
-        if all:
-            scenario_set_all_status_to_finished()
+    # Get scenario fron data base
+    scenario_row = get_scenario_by_name(scenario_name)
+    if scenario_row is None:
+        raise HTTPException(status_code=404, detail=f"Scenario '{scenario_name}' not found")
+    scenario_dict = dict(scenario_row)
+    
+    json_fields = ['nodes', 'nodes_graph', 'attack_params', 'reputation', 'matrix', 'additional_participants']
+    
+    for field in json_fields:
+        if field in scenario_dict and scenario_dict[field]:
+            try:
+                if isinstance(scenario_dict[field], str):
+                    scenario_dict[field] = json.loads(scenario_dict[field])
+            except (json.JSONDecodeError, TypeError):
+                scenario_dict[field] = None
+    
+    sig = inspect.signature(Scenario.__init__)
+    scenario_filtered = {}
+    
+    for param_name, param in sig.parameters.items():
+        if param_name == 'self':
+            continue
+        if param_name in scenario_dict:
+            scenario_filtered[param_name] = scenario_dict[param_name]
+        elif param.default is not inspect.Parameter.empty:
+            scenario_filtered[param_name] = param.default
         else:
-            scenario_set_status_to_finished(scenario_name)
-    except Exception as e:
-        logging.exception(f"Error setting scenario {scenario_name} to finished: {e}")
-        raise HTTPException(status_code=500, detail="Internal server error")
+            scenario_filtered[param_name] = None
+
+    # Detect deployment type
+    deployment_type = scenario_dict.get("deployment", "")
+    result = {"stopped": [], "errors": []}
+
+    if deployment_type == "physical":
+        # Instanciates ScenarioManagement and obtains physical nodes
+        scenario_manager = ScenarioManagement(scenario_filtered, user=username)
+        try:
+            stop_results = await scenario_manager.stop_nodes_physical()
+            result["stopped"] = [r["ip"] for r in stop_results["successful"]]
+            result["failed"] = [r["ip"] for r in stop_results["failed"]]
+            result["details"] = {
+                "successful": stop_results["successful"],
+                "failed": stop_results["failed"],
+                "total_nodes": stop_results["total_nodes"]
+            }
+            logging.info(f"📊 Physical scenario stop summary: {len(stop_results['successful'])}/{stop_results['total_nodes']} nodes stopped successfully")
+        except Exception as e:
+            result["errors"].append(str(e))
+            logging.exception(f"💥 Error during physical scenario stop: {e}")
+        # Mark scenario as finished
+        try:
+            if all:
+                scenario_set_all_status_to_finished()
+            else:
+                scenario_set_status_to_finished(scenario_name)
+        except Exception as e:
+            logging.exception(f"Error setting scenario {scenario_name} to finished: {e}")
+            raise HTTPException(status_code=500, detail="Internal server error")
+        return {"message": "Physical scenario stop requested", **result}
+    else:
+        # Original logic for processes and docker
+        ScenarioManagement.stop_participants(scenario_name)
+        DockerUtils.remove_containers_by_prefix(f"{os.environ.get('NEBULA_CONTROLLER_NAME')}_{username}-participant")
+        DockerUtils.remove_docker_network(
+            f"{(os.environ.get('NEBULA_CONTROLLER_NAME'))}_{str(username).lower()}-nebula-net-scenario"
+        )
+        try:
+            if all:
+                scenario_set_all_status_to_finished()
+            else:
+                scenario_set_status_to_finished(scenario_name)
+        except Exception as e:
+            logging.exception(f"Error setting scenario {scenario_name} to finished: {e}")
+            raise HTTPException(status_code=500, detail="Internal server error")
 
 
 @app.post("/scenarios/remove")
@@ -837,7 +885,7 @@ async def get_user_by_scenario_name(
 async def discover_vpn():
     """
     Calls the Tailscale CLI to fetch the current status in JSON format,
-    extracts all IPv4 addresses (by filtering out any address containing “:”),
+    extracts all IPv4 addresses (by filtering out any address containing "::"),
     and returns them as a JSON object {"ips": [...]}.
     """
     try:
@@ -887,11 +935,20 @@ async def physical_run(ip: str):
  
 @app.get("/physical/stop/{ip}", tags=["physical"])
 async def physical_stop(ip: str):
-    status, data = await remote_get(ip, "/stop/")
+    """
+    Forward /stop/ to a physical node.
+
+    Example call that reaches the Raspberry:
+    └─ GET http://<ip>:8000/stop/
+    """
+    host = ip if ":" in ip else f"{ip}:8000"
+    status, data = await remote_get(host, "/stop/")
+
     if status == 200:
-        return data
+        return data                                   # → {"pid":1234,"state":"stopped"}
     if status is None:
-        raise HTTPException(status_code=502, detail=f"Node unreachable: {data}")
+        raise HTTPException(status_code=502,
+                            detail=f"Node unreachable: {data}")
     raise HTTPException(status_code=status, detail=data)
  
  
@@ -925,6 +982,20 @@ async def physical_setup(
         raise HTTPException(status_code=502, detail=f"Node unreachable: {data}")
     raise HTTPException(status_code=status_code, detail=data)
  
+@app.get("/physical/free_port/{ip}", tags=["physical"])
+async def physical_free_port(ip: str):
+    """
+    Forward /free_port/ to the physical node.
+    """
+    host = ip if ":" in ip else f"{ip}:8000"
+    status_code, data = await remote_get(host, "/free_port/")
+
+    if status_code == 200:
+        return data
+    if status_code is None:
+        raise HTTPException(status_code=502, detail=f"Node unreachable: {data}")
+    raise HTTPException(status_code=status_code, detail=data)
+
 # ──────────────────────────────────────────────────────────────
 # Physical · single-node state
 # ──────────────────────────────────────────────────────────────
