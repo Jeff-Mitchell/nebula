@@ -6,6 +6,7 @@ import os
 import sys
 from typing import TYPE_CHECKING
 from pathlib import Path
+import base64, tarfile, io
 
 
 import aiohttp
@@ -237,39 +238,35 @@ class Reporter:
             logging.warning("No metrics directory found in %s", self._LOGS_DIR)
             return False
 
-        metrics = await asyncio.to_thread(self.__collect_metrics_from_dir, latest_dir)
-
-        body = json.dumps(metrics, ensure_ascii=False)
-        compressed = False
-        if len(body.encode()) > self._MAX_JSON_SIZE_BYTES:
-            body = await asyncio.to_thread(self.__gzip_b64, body.encode())
-            compressed = True
+        tar_bytes = await asyncio.to_thread(self.__make_tar_gz, latest_dir)
+        b64_data  = base64.b64encode(tar_bytes).decode()
 
         payload = {
-            "idx": self.config.participant["device_args"]["idx"],
-            "ip":  self.config.participant["network_args"]["ip"],
-            "compressed": compressed,
-            "metrics": body,
+            "idx"  : self.config.participant["device_args"]["idx"],
+            "ip"   : self.config.participant["network_args"]["ip"],
+            "archive": True,
+            "data" : b64_data,
         }
 
-        url = f"http://{self.config.participant['scenario_args']['controller']}/nodes/{self.config.participant['scenario_args']['name']}/metrics"
+        url = (f"http://{self.config.participant['scenario_args']['controller']}"
+               f"/nodes/{self.config.participant['scenario_args']['name']}/metrics")
         headers = {
             "Content-Type": "application/json",
-            "User-Agent": f"NEBULA Participant {self.config.participant['device_args']['idx']}",
+            "User-Agent"  : f"NEBULA Participant {self.config.participant['device_args']['idx']}",
         }
 
-        logging.info("Sending final metrics (compressed=%s)…", compressed)
+        logging.info("Sending final metrics as tar.gz (%s KiB)…", len(tar_bytes)//1024)
         try:
             async with aiohttp.ClientSession() as session:
                 async with session.post(url, data=json.dumps(payload), headers=headers) as resp:
                     if resp.status != 200:
-                        logging.error("Controller did not respond %s; metrics discarded", resp.status)
+                        logging.error("Controller responded %s – metrics discarded", resp.status)
                         logging.debug(await resp.text())
                         return False
-                    logging.info("Final metrics have been sended correctly")
+                    logging.info("Final metrics sent OK")
                     return True
         except aiohttp.ClientError:
-            logging.exception("Could not contact with the controller for final metrics sending")
+            logging.exception("Could not contact controller for final metrics")
             return False
 
     # Directory utilities 
@@ -337,6 +334,16 @@ class Reporter:
                 logging.warning("Could not read %s — %s", file, exc)
 
         return metrics
+
+    @staticmethod
+    def __make_tar_gz(dir_path: Path) -> bytes:
+        """
+        Devuelve un tar.gz (en bytes) con el contenido completo de dir_path.
+        """
+        with io.BytesIO() as mem:
+            with tarfile.open(fileobj=mem, mode="w:gz") as tar:
+                tar.add(dir_path, arcname=".")
+            return mem.getvalue()
 
     @staticmethod
     def __gzip_b64(data: bytes) -> str:
