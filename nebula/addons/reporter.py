@@ -56,10 +56,10 @@ class Reporter:
             - Initializes both current and accumulated metrics for traffic monitoring.
         """
         logging.info("Starting reporter module")
-        cfg_logs_dir = Path(self.config.participant["tracking_args"]["log_dir"]).expanduser().resolve()
-        self.__class__._LOGS_DIR = cfg_logs_dir
         self._cm = None
         self.config = config
+        cfg_logs_dir = Path(self.config.participant["tracking_args"]["log_dir"]).expanduser().resolve()
+        self.__class__._LOGS_DIR = cfg_logs_dir
         self.trainer = trainer
         self.frequency = self.config.participant["reporter_args"]["report_frequency"]
         self.grace_time = self.config.participant["reporter_args"]["grace_time_reporter"]
