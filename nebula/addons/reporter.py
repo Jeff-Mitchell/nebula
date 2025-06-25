@@ -5,15 +5,23 @@ import logging
 import os
 import sys
 from typing import TYPE_CHECKING
+from pathlib import Path
+
 
 import aiohttp
 import psutil
+
+_TEXT_EXTS = {".txt", ".log", ".json", ".csv", ".yaml", ".yml"}
 
 if TYPE_CHECKING:
     pass
 
 
 class Reporter:
+
+    _LOGS_DIR = (Path(__file__).resolve().parent / ".." / "app" / "logs").resolve()
+    _MAX_JSON_SIZE_BYTES = 10 * 1024 * 1024  # 10 MiB
+
     def __init__(self, config, trainer):
         """
         Initializes the reporter module for sending periodic updates to a dashboard controller.
@@ -68,6 +76,7 @@ class Reporter:
         self.acc_packets_sent = 0
         self.acc_packets_recv = 0
         self._running = asyncio.Event()
+        self._final_metrics_sent = False
         self._reporter_task = None  # Track the background task
 
     @property
@@ -170,6 +179,12 @@ class Reporter:
               might be temporarily overloaded.
             - Logs exceptions if the connection attempt to the controller fails.
         """
+
+        # ───── Send final metrics once ─────
+        if not self._final_metrics_sent:
+            await self.__send_final_metrics()
+            self._final_metrics_sent = True
+
         url = f"http://{self.config.participant['scenario_args']['controller']}/nodes/{self.config.participant['scenario_args']['name']}/done"
         data = json.dumps({"idx": self.config.participant["device_args"]["idx"]})
         headers = {
@@ -211,6 +226,108 @@ class Reporter:
                 pass
             self._reporter_task = None
             logging.info("🛑  Reporter background task cancelled")
+
+    # Final metrics
+    async def __send_final_metrics(self) -> bool:
+        latest_dir = await asyncio.to_thread(self.__get_latest_metrics_dir)
+        if latest_dir is None:
+            logging.warning("No metrics directory found in %s", self._LOGS_DIR)
+            return False
+
+        metrics = await asyncio.to_thread(self.__collect_metrics_from_dir, latest_dir)
+
+        body = json.dumps(metrics, ensure_ascii=False)
+        compressed = False
+        if len(body.encode()) > self._MAX_JSON_SIZE_BYTES:
+            body = await asyncio.to_thread(self.__gzip_b64, body.encode())
+            compressed = True
+
+        payload = {
+            "idx": self.config.participant["device_args"]["idx"],
+            "ip":  self.config.participant["network_args"]["ip"],
+            "compressed": compressed,
+            "metrics": body,
+        }
+
+        url = f"http://{self.config.participant['scenario_args']['controller']}/nodes/{self.config.participant['scenario_args']['name']}/metrics"
+        headers = {
+            "Content-Type": "application/json",
+            "User-Agent": f"NEBULA Participant {self.config.participant['device_args']['idx']}",
+        }
+
+        logging.info("Sending final metrics (compressed=%s)…", compressed)
+        try:
+            async with aiohttp.ClientSession() as session:
+                async with session.post(url, data=json.dumps(payload), headers=headers) as resp:
+                    if resp.status != 200:
+                        logging.error("Controller did not respond %s; metrics discarded", resp.status)
+                        logging.debug(await resp.text())
+                        return False
+                    logging.info("Final metrics have been sended correctly")
+                    return True
+        except aiohttp.ClientError:
+            logging.exception("Could not contact with the controller for final metrics sending")
+            return False
+
+    # Directory utilities 
+    @classmethod
+    def __get_latest_metrics_dir(cls):
+        """Returns the Path of the most recent subdirectory in ../app/logs or None."""
+        try:
+            logs_root = cls._LOGS_DIR.expanduser().resolve()
+            if not logs_root.is_dir():
+                return None
+            subdirs = [d for d in logs_root.iterdir() if d.is_dir()]
+            return max(subdirs, key=lambda p: p.stat().st_mtime) if subdirs else None
+        except Exception as exc:
+            logging.exception("Error finding metrics directory: %s", exc)
+            return None
+
+    @staticmethod
+    def __collect_metrics_from_dir(base_dir: Path) -> dict:
+        """
+        relative_path -> {
+            "binary": bool,
+            "data": str,          # UTF-8 text or base64 if binary
+            "mime": str | None    # optional hint for binaries
+        }
+        """
+        import base64, mimetypes
+
+        metrics: dict[str, dict] = {}
+
+        for file in base_dir.rglob("*"):
+            if not file.is_file():
+                continue
+
+            rel_path = str(file.relative_to(base_dir))
+            ext = file.suffix.lower()
+
+            try:
+                if ext in _TEXT_EXTS:
+                    metrics[rel_path] = {
+                        "binary": False,
+                        "data": file.read_text(errors="replace"),
+                        "mime": "text/plain",
+                    }
+                else:
+                    metrics[rel_path] = {
+                        "binary": True,
+                        "data": base64.b64encode(file.read_bytes()).decode(),
+                        "mime": mimetypes.guess_type(file.name)[0] or "application/octet-stream",
+                    }
+            except Exception as exc:           # noqa: BLE001
+                logging.warning("Could not read %s — %s", file, exc)
+
+        return metrics
+
+    @staticmethod
+    def __gzip_b64(data: bytes) -> str:
+        import base64, gzip, io
+        with io.BytesIO() as bio:
+            with gzip.GzipFile(fileobj=bio, mode="wb") as gz:
+                gz.write(data)
+            return base64.b64encode(bio.getvalue()).decode()
 
     async def __report_data_queue(self):
         """
