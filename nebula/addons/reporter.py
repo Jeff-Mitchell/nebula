@@ -56,6 +56,8 @@ class Reporter:
             - Initializes both current and accumulated metrics for traffic monitoring.
         """
         logging.info("Starting reporter module")
+        cfg_logs_dir = Path(self.config.participant["tracking_args"]["log_dir"]).expanduser().resolve()
+        self.__class__._LOGS_DIR = cfg_logs_dir
         self._cm = None
         self.config = config
         self.trainer = trainer
@@ -273,15 +275,29 @@ class Reporter:
     # Directory utilities 
     @classmethod
     def __get_latest_metrics_dir(cls):
-        """Returns the Path of the most recent subdirectory in ../app/logs or None."""
+        """
+        Returns the folder containing the metrics from the most recent run.
+
+        Expected structure:
+            <log_dir>/
+                nebula_DFL_YYYY_mm_dd_hh_mm_ss/       <- most recent run
+                    metrics/                          <- metrics are stored here
+                        participant_<n>/...
+        """
         try:
-            logs_root = cls._LOGS_DIR.expanduser().resolve()
-            if not logs_root.is_dir():
+            runs = [d for d in cls._LOGS_DIR.iterdir() if d.is_dir()]
+            if not runs:
                 return None
-            subdirs = [d for d in logs_root.iterdir() if d.is_dir()]
-            return max(subdirs, key=lambda p: p.stat().st_mtime) if subdirs else None
+
+            latest_run   = max(runs, key=lambda p: p.stat().st_mtime)
+            metrics_root = latest_run / "metrics"
+
+            # if for any reason the "metrics" subdirectory does not exist,
+            # return the full run directory to avoid breaking the logic.
+            return metrics_root if metrics_root.is_dir() else latest_run
+
         except Exception as exc:
-            logging.exception("Error finding metrics directory: %s", exc)
+            logging.exception("Error while searching for metrics directory: %s", exc)
             return None
 
     @staticmethod
