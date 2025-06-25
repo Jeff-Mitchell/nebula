@@ -226,6 +226,7 @@ class Reporter:
                 pass
             self._reporter_task = None
             logging.info("🛑  Reporter background task cancelled")
+        await self.report_scenario_finished()
 
     # Final metrics
     async def __send_final_metrics(self) -> bool:
@@ -433,7 +434,7 @@ class Reporter:
             pass
 
         pid = os.getpid()
-        cpu_percent_process = await asyncio.to_thread(psutil.Process(pid).cpu_percent, interval=1)
+        cpu_percent_process = await asyncio.to_thread(psutil.Process(pid).cpu_percent, interval=None)
 
         process = psutil.Process(pid)
         memory_process = await asyncio.to_thread(lambda: process.memory_info().rss / (1024**2))
