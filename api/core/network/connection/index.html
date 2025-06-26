@@ -6267,7 +6267,7 @@
 
 
         <p>Manages TCP communication channels using asyncio for asynchronous networking.</p>
-<p>This class encapsulates the logic for establishing, maintaining, 
+<p>This class encapsulates the logic for establishing, maintaining,
 and handling TCP connections between nodes in the distributed system.</p>
 
 
@@ -6977,11 +6977,27 @@ and efficient networking in distributed federated learning scenarios.</p>
 <span class="normal">710</span>
 <span class="normal">711</span>
 <span class="normal">712</span>
-<span class="normal">713</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">Connection</span><span class="p">:</span>
+<span class="normal">713</span>
+<span class="normal">714</span>
+<span class="normal">715</span>
+<span class="normal">716</span>
+<span class="normal">717</span>
+<span class="normal">718</span>
+<span class="normal">719</span>
+<span class="normal">720</span>
+<span class="normal">721</span>
+<span class="normal">722</span>
+<span class="normal">723</span>
+<span class="normal">724</span>
+<span class="normal">725</span>
+<span class="normal">726</span>
+<span class="normal">727</span>
+<span class="normal">728</span>
+<span class="normal">729</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">Connection</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Manages TCP communication channels using asyncio for asynchronous networking.</span>
 
-<span class="sd">    This class encapsulates the logic for establishing, maintaining, </span>
+<span class="sd">    This class encapsulates the logic for establishing, maintaining,</span>
 <span class="sd">    and handling TCP connections between nodes in the distributed system.</span>
 
 <span class="sd">    Responsibilities:</span>
@@ -7033,12 +7049,14 @@ and efficient networking in distributed federated learning scenarios.</p>
         <span class="bp">self</span><span class="o">.</span><span class="n">loop</span> <span class="o">=</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">get_event_loop</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">read_task</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">process_task</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">inactivity_task</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">pending_messages_queue</span> <span class="o">=</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">Queue</span><span class="p">(</span><span class="n">maxsize</span><span class="o">=</span><span class="mi">100</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">message_buffers</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">bytes</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">MessageChunk</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_prio</span><span class="p">:</span> <span class="n">ConnectionPriority</span> <span class="o">=</span> <span class="n">ConnectionPriority</span><span class="p">(</span><span class="n">prio</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_inactivity</span> <span class="o">=</span> <span class="kc">False</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_last_activity</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_activity_lock</span> <span class="o">=</span> <span class="n">Locker</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;activity_lock&quot;</span><span class="p">,</span> <span class="n">async_lock</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_activity_task</span> <span class="o">=</span> <span class="kc">None</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">EOT_CHAR</span> <span class="o">=</span> <span class="sa">b</span><span class="s2">&quot;</span><span class="se">\x00\x00\x00\x04</span><span class="s2">&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">COMPRESSION_CHAR</span> <span class="o">=</span> <span class="sa">b</span><span class="s2">&quot;</span><span class="se">\x00\x00\x00\x01</span><span class="s2">&quot;</span>
@@ -7054,6 +7072,7 @@ and efficient networking in distributed federated learning scenarios.</p>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">incompleted_reconnections</span> <span class="o">=</span> <span class="mi">0</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">forced_disconnection</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_running</span> <span class="o">=</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">Event</span><span class="p">()</span>
 
         <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
             <span class="sa">f</span><span class="s2">&quot;Connection [established]: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">addr</span><span class="si">}</span><span class="s2"> (id: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">id</span><span class="si">}</span><span class="s2">) (active: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">active</span><span class="si">}</span><span class="s2">) (direct: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">direct</span><span class="si">}</span><span class="s2">)&quot;</span>
@@ -7064,9 +7083,6 @@ and efficient networking in distributed federated learning scenarios.</p>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="fm">__str__</span><span class="p">()</span>
-
-    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="fm">__del__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">stop</span><span class="p">()</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">cm</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
@@ -7112,19 +7128,23 @@ and efficient networking in distributed federated learning scenarios.</p>
 <span class="sd">        periodically checking if the last activity exceeds the inactivity threshold.</span>
 <span class="sd">        If inactive, marks the connection as inactive and logs a warning.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
-            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">direct</span><span class="p">:</span>
-                <span class="k">break</span>
-            <span class="k">await</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">INACTIVITY_DAEMON_SLEEP_TIME</span><span class="p">)</span>
-            <span class="k">async</span> <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_activity_lock</span><span class="p">:</span>
-                <span class="n">time_since_last</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">_last_activity</span>
-                <span class="k">if</span> <span class="n">time_since_last</span> <span class="o">&gt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">INACTIVITY_TIMER</span><span class="p">:</span>
-                    <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_inactivity</span><span class="p">:</span>
-                        <span class="bp">self</span><span class="o">.</span><span class="n">_inactivity</span> <span class="o">=</span> <span class="kc">True</span>
-                        <span class="n">logging</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;[</span><span class="si">{</span><span class="bp">self</span><span class="si">}</span><span class="s2">] Connection marked as inactive.&quot;</span><span class="p">)</span>
-                <span class="k">else</span><span class="p">:</span>
-                    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_inactivity</span><span class="p">:</span>
-                        <span class="bp">self</span><span class="o">.</span><span class="n">_inactivity</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">while</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_running</span><span class="p">():</span>
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">direct</span><span class="p">:</span>
+                    <span class="k">break</span>
+                <span class="k">await</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">INACTIVITY_DAEMON_SLEEP_TIME</span><span class="p">)</span>
+                <span class="k">async</span> <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_activity_lock</span><span class="p">:</span>
+                    <span class="n">time_since_last</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">_last_activity</span>
+                    <span class="k">if</span> <span class="n">time_since_last</span> <span class="o">&gt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">INACTIVITY_TIMER</span><span class="p">:</span>
+                        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_inactivity</span><span class="p">:</span>
+                            <span class="bp">self</span><span class="o">.</span><span class="n">_inactivity</span> <span class="o">=</span> <span class="kc">True</span>
+                            <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;[</span><span class="si">{</span><span class="bp">self</span><span class="si">}</span><span class="s2">] Connection marked as inactive.&quot;</span><span class="p">)</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_inactivity</span><span class="p">:</span>
+                            <span class="bp">self</span><span class="o">.</span><span class="n">_inactivity</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="k">except</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">CancelledError</span><span class="p">:</span>
+            <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;_monitor_inactivity cancelled during shutdown.&quot;</span><span class="p">)</span>
+            <span class="k">return</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">get_federated_round</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">federated_round</span>
@@ -7166,6 +7186,9 @@ and efficient networking in distributed federated learning scenarios.</p>
     <span class="k">def</span><span class="w"> </span><span class="nf">get_last_active</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">last_active</span>
 
+    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">is_running</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_running</span><span class="o">.</span><span class="n">is_set</span><span class="p">()</span>
+
     <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">start</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Start the connection by launching asynchronous tasks for handling incoming messages,</span>
@@ -7176,9 +7199,10 @@ and efficient networking in distributed federated learning scenarios.</p>
 <span class="sd">        2. `process_message_queue` - processes messages queued for sending or further handling.</span>
 <span class="sd">        3. `_monitor_inactivity` - periodically checks if the connection has been inactive and updates its state accordingly.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_running</span><span class="o">.</span><span class="n">set</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">read_task</span> <span class="o">=</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">create_task</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">handle_incoming_message</span><span class="p">(),</span> <span class="n">name</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;Connection </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">addr</span><span class="si">}</span><span class="s2"> reader&quot;</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">process_task</span> <span class="o">=</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">create_task</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">process_message_queue</span><span class="p">(),</span> <span class="n">name</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;Connection </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">addr</span><span class="si">}</span><span class="s2"> processor&quot;</span><span class="p">)</span>
-        <span class="n">asyncio</span><span class="o">.</span><span class="n">create_task</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_monitor_inactivity</span><span class="p">())</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">inactivity_task</span> <span class="o">=</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">create_task</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_monitor_inactivity</span><span class="p">())</span>
 
     <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">stop</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
@@ -7190,9 +7214,10 @@ and efficient networking in distributed federated learning scenarios.</p>
 <span class="sd">        - Cancels the read and process tasks if they exist, awaiting their cancellation and logging any cancellation exceptions.</span>
 <span class="sd">        - Closes the writer stream safely, awaiting its closure and logging any errors that occur during the closing process.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_running</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
         <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;❗️  Connection [stopped]: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">addr</span><span class="si">}</span><span class="s2"> (id: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">id</span><span class="si">}</span><span class="s2">)&quot;</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">forced_disconnection</span> <span class="o">=</span> <span class="kc">True</span>
-        <span class="n">tasks</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">read_task</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">process_task</span><span class="p">]</span>
+        <span class="n">tasks</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">read_task</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">process_task</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">inactivity_task</span><span class="p">]</span>
         <span class="k">for</span> <span class="n">task</span> <span class="ow">in</span> <span class="n">tasks</span><span class="p">:</span>
             <span class="k">if</span> <span class="n">task</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
                 <span class="n">task</span><span class="o">.</span><span class="n">cancel</span><span class="p">()</span>
@@ -7227,6 +7252,12 @@ and efficient networking in distributed federated learning scenarios.</p>
 <span class="sd">            delay (int): Delay in seconds between reconnection attempts. Defaults to 5.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">forced_disconnection</span> <span class="ow">or</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">direct</span><span class="p">:</span>
+            <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Not going to reconnect because: (forced: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">forced_disconnection</span><span class="si">}</span><span class="s2">, direct: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">direct</span><span class="si">}</span><span class="s2">)&quot;</span><span class="p">)</span>
+            <span class="k">return</span>
+
+        <span class="c1"># Check if learning cycle has finished - don&#39;t reconnect</span>
+        <span class="k">if</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">cm</span><span class="o">.</span><span class="n">learning_finished</span><span class="p">():</span>
+            <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Not attempting reconnection to </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">addr</span><span class="si">}</span><span class="s2"> because learning cycle has finished&quot;</span><span class="p">)</span>
             <span class="k">return</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">incompleted_reconnections</span> <span class="o">+=</span> <span class="mi">1</span>
@@ -7257,7 +7288,6 @@ and efficient networking in distributed federated learning scenarios.</p>
                 <span class="n">logging</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Reconnection attempt </span><span class="si">{</span><span class="n">attempt</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">1</span><span class="si">}</span><span class="s2"> failed: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
                 <span class="k">await</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="n">delay</span><span class="p">)</span>
         <span class="n">logging</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Failed to reconnect to </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">addr</span><span class="si">}</span><span class="s2"> after </span><span class="si">{</span><span class="n">max_retries</span><span class="si">}</span><span class="s2"> attempts. Stopping connection...&quot;</span><span class="p">)</span>
-        <span class="c1"># await self.stop()</span>
         <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">cm</span><span class="o">.</span><span class="n">terminate_failed_reconnection</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
 
     <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">send</span><span class="p">(</span>
@@ -7286,6 +7316,11 @@ and efficient networking in distributed federated learning scenarios.</p>
             <span class="n">logging</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s2">&quot;Cannot send data, writer is None&quot;</span><span class="p">)</span>
             <span class="k">return</span>
 
+        <span class="c1"># Check if learning cycle has finished - don&#39;t send messages</span>
+        <span class="k">if</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">cm</span><span class="o">.</span><span class="n">learning_finished</span><span class="p">():</span>
+            <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Not sending message to </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">addr</span><span class="si">}</span><span class="s2"> because learning cycle has finished&quot;</span><span class="p">)</span>
+            <span class="k">return</span>
+
         <span class="k">try</span><span class="p">:</span>
             <span class="n">message_id</span> <span class="o">=</span> <span class="n">uuid</span><span class="o">.</span><span class="n">uuid4</span><span class="p">()</span><span class="o">.</span><span class="n">bytes</span>
             <span class="n">data_prefix</span><span class="p">,</span> <span class="n">encoded_data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_prepare_data</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">pb</span><span class="p">,</span> <span class="n">encoding_type</span><span class="p">)</span>
@@ -7302,8 +7337,10 @@ and efficient networking in distributed federated learning scenarios.</p>
             <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">_send_chunks</span><span class="p">(</span><span class="n">message_id</span><span class="p">,</span> <span class="n">data_to_send</span><span class="p">)</span>
         <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
             <span class="n">logging</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Error sending data: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">direct</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">direct</span> <span class="ow">and</span> <span class="ow">not</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">cm</span><span class="o">.</span><span class="n">learning_finished</span><span class="p">():</span>
                 <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">reconnect</span><span class="p">()</span>
+            <span class="k">elif</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">cm</span><span class="o">.</span><span class="n">learning_finished</span><span class="p">():</span>
+                <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Not attempting reconnection to </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">addr</span><span class="si">}</span><span class="s2"> because learning cycle has finished&quot;</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_prepare_data</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">pb</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span> <span class="n">encoding_type</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">bytes</span><span class="p">,</span> <span class="nb">bytes</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
@@ -7358,8 +7395,8 @@ and efficient networking in distributed federated learning scenarios.</p>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Sends the encoded data over the connection in fixed-size chunks.</span>
 
-<span class="sd">        Each chunk is prefixed with a header containing the message ID, chunk index, </span>
-<span class="sd">        a flag indicating if it&#39;s the last chunk, and the size of the chunk. </span>
+<span class="sd">        Each chunk is prefixed with a header containing the message ID, chunk index,</span>
+<span class="sd">        a flag indicating if it&#39;s the last chunk, and the size of the chunk.</span>
 <span class="sd">        An end-of-transmission (EOT) character is appended to each chunk.</span>
 
 <span class="sd">        Args:</span>
@@ -7406,32 +7443,31 @@ and efficient networking in distributed federated learning scenarios.</p>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">reusable_buffer</span> <span class="o">=</span> <span class="nb">bytearray</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">MAX_CHUNK_SIZE</span><span class="p">)</span>
         <span class="k">try</span><span class="p">:</span>
-            <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
+            <span class="k">while</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_running</span><span class="p">():</span>
                 <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">pending_messages_queue</span><span class="o">.</span><span class="n">full</span><span class="p">():</span>
-                    <span class="k">await</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mf">0.1</span><span class="p">)</span>  <span class="c1"># Wait a bit if the queue is full to create backpressure</span>
+                    <span class="k">await</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mf">0.1</span><span class="p">)</span>
                     <span class="k">continue</span>
                 <span class="n">header</span> <span class="o">=</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">_read_exactly</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">HEADER_SIZE</span><span class="p">)</span>
                 <span class="n">message_id</span><span class="p">,</span> <span class="n">chunk_index</span><span class="p">,</span> <span class="n">is_last_chunk</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parse_header</span><span class="p">(</span><span class="n">header</span><span class="p">)</span>
-
                 <span class="n">chunk_data</span> <span class="o">=</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">_read_chunk</span><span class="p">(</span><span class="n">reusable_buffer</span><span class="p">)</span>
                 <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">_update_activity</span><span class="p">()</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">_store_chunk</span><span class="p">(</span><span class="n">message_id</span><span class="p">,</span> <span class="n">chunk_index</span><span class="p">,</span> <span class="n">chunk_data</span><span class="p">,</span> <span class="n">is_last_chunk</span><span class="p">)</span>
-                <span class="c1"># logging.debug(f&quot;Received chunk {chunk_index} of message {message_id.hex()} | size: {len(chunk_data)} bytes&quot;)</span>
-                <span class="c1"># Active connection without fails</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">incompleted_reconnections</span> <span class="o">=</span> <span class="mi">0</span>
                 <span class="k">if</span> <span class="n">is_last_chunk</span><span class="p">:</span>
                     <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">_process_complete_message</span><span class="p">(</span><span class="n">message_id</span><span class="p">)</span>
-        <span class="k">except</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">CancelledError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-            <span class="n">logging</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Message handling cancelled: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">except</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">CancelledError</span><span class="p">:</span>
+            <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;handle_incoming_message cancelled during shutdown.&quot;</span><span class="p">)</span>
+            <span class="k">return</span>
         <span class="k">except</span> <span class="ne">ConnectionError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
             <span class="n">logging</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Connection closed while reading: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
         <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
             <span class="n">logging</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Error handling incoming message: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-        <span class="k">except</span> <span class="ne">BrokenPipeError</span><span class="p">:</span>
-            <span class="n">logging</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Error handling incoming message: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
         <span class="k">finally</span><span class="p">:</span>
-            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">direct</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">_prio</span> <span class="o">==</span> <span class="n">ConnectionPriority</span><span class="o">.</span><span class="n">HIGH</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">direct</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">_prio</span> <span class="o">==</span> <span class="n">ConnectionPriority</span><span class="o">.</span><span class="n">HIGH</span><span class="p">:</span> <span class="c1">#and not await self.cm.learning_finished():</span>
+                <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;ERROR: handling incoming message. Trying to reconnect..&quot;</span><span class="p">)</span>
                 <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">reconnect</span><span class="p">()</span>
+            <span class="k">elif</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">cm</span><span class="o">.</span><span class="n">learning_finished</span><span class="p">():</span>
+                <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Not attempting reconnection to </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">addr</span><span class="si">}</span><span class="s2"> because learning cycle has finished&quot;</span><span class="p">)</span>
 
     <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">_read_exactly</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">num_bytes</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">max_retries</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">3</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bytes</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
@@ -7458,7 +7494,7 @@ and efficient networking in distributed federated learning scenarios.</p>
             <span class="k">try</span><span class="p">:</span>
                 <span class="k">while</span> <span class="n">remaining</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
                     <span class="n">chunk</span> <span class="o">=</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">reader</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="nb">min</span><span class="p">(</span><span class="n">remaining</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">BUFFER_SIZE</span><span class="p">))</span>
-                    <span class="k">if</span> <span class="ow">not</span> <span class="n">chunk</span> <span class="ow">and</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">cm</span><span class="o">.</span><span class="n">learning_finished</span><span class="p">():</span>
+                    <span class="k">if</span> <span class="ow">not</span> <span class="n">chunk</span><span class="p">:</span>
                         <span class="k">raise</span> <span class="ne">ConnectionError</span><span class="p">(</span><span class="s2">&quot;Connection closed while reading&quot;</span><span class="p">)</span>
                     <span class="n">data</span> <span class="o">+=</span> <span class="n">chunk</span>
                     <span class="n">remaining</span> <span class="o">-=</span> <span class="nb">len</span><span class="p">(</span><span class="n">chunk</span><span class="p">)</span>
@@ -7495,7 +7531,7 @@ and efficient networking in distributed federated learning scenarios.</p>
 <span class="sd">        Reads a data chunk from the stream, validating its size and EOT marker.</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            buffer (bytearray, optional): A reusable buffer to store the chunk. </span>
+<span class="sd">            buffer (bytearray, optional): A reusable buffer to store the chunk.</span>
 <span class="sd">                If not provided, a new buffer of MAX_CHUNK_SIZE will be created.</span>
 
 <span class="sd">        Returns:</span>
@@ -7604,27 +7640,23 @@ and efficient networking in distributed federated learning scenarios.</p>
     <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">process_message_queue</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Continuously processes messages from the pending queue.</span>
-
-<span class="sd">        Behavior:</span>
-<span class="sd">            - Retrieves messages from the queue one by one.</span>
-<span class="sd">            - Delegates the message to the appropriate handler based on its type.</span>
-<span class="sd">            - Ensures the queue is marked as processed.</span>
-
-<span class="sd">        Notes:</span>
-<span class="sd">            Runs indefinitely unless externally cancelled or stopped.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
-            <span class="k">try</span><span class="p">:</span>
-                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">pending_messages_queue</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-                    <span class="n">logging</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s2">&quot;Pending messages queue is not initialized&quot;</span><span class="p">)</span>
-                    <span class="k">return</span>
-                <span class="n">data_type_prefix</span><span class="p">,</span> <span class="n">message</span> <span class="o">=</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">pending_messages_queue</span><span class="o">.</span><span class="n">get</span><span class="p">()</span>
-                <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">_handle_message</span><span class="p">(</span><span class="n">data_type_prefix</span><span class="p">,</span> <span class="n">message</span><span class="p">)</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">pending_messages_queue</span><span class="o">.</span><span class="n">task_done</span><span class="p">()</span>
-            <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-                <span class="n">logging</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Error processing message queue: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-            <span class="k">finally</span><span class="p">:</span>
-                <span class="k">await</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">while</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_running</span><span class="p">():</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">pending_messages_queue</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                        <span class="n">logging</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s2">&quot;Pending messages queue is not initialized&quot;</span><span class="p">)</span>
+                        <span class="k">return</span>
+                    <span class="n">data_type_prefix</span><span class="p">,</span> <span class="n">message</span> <span class="o">=</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">pending_messages_queue</span><span class="o">.</span><span class="n">get</span><span class="p">()</span>
+                    <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">_handle_message</span><span class="p">(</span><span class="n">data_type_prefix</span><span class="p">,</span> <span class="n">message</span><span class="p">)</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">pending_messages_queue</span><span class="o">.</span><span class="n">task_done</span><span class="p">()</span>
+                <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                    <span class="n">logging</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Error processing message queue: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+                <span class="k">finally</span><span class="p">:</span>
+                    <span class="k">await</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+        <span class="k">except</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">CancelledError</span><span class="p">:</span>
+            <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;process_message_queue cancelled during shutdown.&quot;</span><span class="p">)</span>
+            <span class="k">return</span>
 
     <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">_handle_message</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data_type_prefix</span><span class="p">:</span> <span class="nb">bytes</span><span class="p">,</span> <span class="n">message</span><span class="p">:</span> <span class="nb">bytes</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
@@ -7728,14 +7760,14 @@ and efficient networking in distributed federated learning scenarios.</p>
 
             <details class="quote">
               <summary>Source code in <code>nebula/core/network/connection.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">199</span>
-<span class="normal">200</span>
-<span class="normal">201</span>
-<span class="normal">202</span>
-<span class="normal">203</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">203</span>
 <span class="normal">204</span>
 <span class="normal">205</span>
-<span class="normal">206</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">get_direct</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="normal">206</span>
+<span class="normal">207</span>
+<span class="normal">208</span>
+<span class="normal">209</span>
+<span class="normal">210</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">get_direct</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Check if the connection is marked as direct ( a.k.a neighbor ).</span>
 
@@ -7845,28 +7877,7 @@ is processed. On errors, reconnection is attempted if appropriate.</p>
 
             <details class="quote">
               <summary>Source code in <code>nebula/core/network/connection.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">448</span>
-<span class="normal">449</span>
-<span class="normal">450</span>
-<span class="normal">451</span>
-<span class="normal">452</span>
-<span class="normal">453</span>
-<span class="normal">454</span>
-<span class="normal">455</span>
-<span class="normal">456</span>
-<span class="normal">457</span>
-<span class="normal">458</span>
-<span class="normal">459</span>
-<span class="normal">460</span>
-<span class="normal">461</span>
-<span class="normal">462</span>
-<span class="normal">463</span>
-<span class="normal">464</span>
-<span class="normal">465</span>
-<span class="normal">466</span>
-<span class="normal">467</span>
-<span class="normal">468</span>
-<span class="normal">469</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">469</span>
 <span class="normal">470</span>
 <span class="normal">471</span>
 <span class="normal">472</span>
@@ -7889,7 +7900,27 @@ is processed. On errors, reconnection is attempted if appropriate.</p>
 <span class="normal">489</span>
 <span class="normal">490</span>
 <span class="normal">491</span>
-<span class="normal">492</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">handle_incoming_message</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="normal">492</span>
+<span class="normal">493</span>
+<span class="normal">494</span>
+<span class="normal">495</span>
+<span class="normal">496</span>
+<span class="normal">497</span>
+<span class="normal">498</span>
+<span class="normal">499</span>
+<span class="normal">500</span>
+<span class="normal">501</span>
+<span class="normal">502</span>
+<span class="normal">503</span>
+<span class="normal">504</span>
+<span class="normal">505</span>
+<span class="normal">506</span>
+<span class="normal">507</span>
+<span class="normal">508</span>
+<span class="normal">509</span>
+<span class="normal">510</span>
+<span class="normal">511</span>
+<span class="normal">512</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">handle_incoming_message</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Asynchronously handles incoming data chunks from the connection.</span>
 
@@ -7908,32 +7939,31 @@ is processed. On errors, reconnection is attempted if appropriate.</p>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">reusable_buffer</span> <span class="o">=</span> <span class="nb">bytearray</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">MAX_CHUNK_SIZE</span><span class="p">)</span>
     <span class="k">try</span><span class="p">:</span>
-        <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
+        <span class="k">while</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_running</span><span class="p">():</span>
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">pending_messages_queue</span><span class="o">.</span><span class="n">full</span><span class="p">():</span>
-                <span class="k">await</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mf">0.1</span><span class="p">)</span>  <span class="c1"># Wait a bit if the queue is full to create backpressure</span>
+                <span class="k">await</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mf">0.1</span><span class="p">)</span>
                 <span class="k">continue</span>
             <span class="n">header</span> <span class="o">=</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">_read_exactly</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">HEADER_SIZE</span><span class="p">)</span>
             <span class="n">message_id</span><span class="p">,</span> <span class="n">chunk_index</span><span class="p">,</span> <span class="n">is_last_chunk</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parse_header</span><span class="p">(</span><span class="n">header</span><span class="p">)</span>
-
             <span class="n">chunk_data</span> <span class="o">=</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">_read_chunk</span><span class="p">(</span><span class="n">reusable_buffer</span><span class="p">)</span>
             <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">_update_activity</span><span class="p">()</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_store_chunk</span><span class="p">(</span><span class="n">message_id</span><span class="p">,</span> <span class="n">chunk_index</span><span class="p">,</span> <span class="n">chunk_data</span><span class="p">,</span> <span class="n">is_last_chunk</span><span class="p">)</span>
-            <span class="c1"># logging.debug(f&quot;Received chunk {chunk_index} of message {message_id.hex()} | size: {len(chunk_data)} bytes&quot;)</span>
-            <span class="c1"># Active connection without fails</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">incompleted_reconnections</span> <span class="o">=</span> <span class="mi">0</span>
             <span class="k">if</span> <span class="n">is_last_chunk</span><span class="p">:</span>
                 <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">_process_complete_message</span><span class="p">(</span><span class="n">message_id</span><span class="p">)</span>
-    <span class="k">except</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">CancelledError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-        <span class="n">logging</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Message handling cancelled: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="k">except</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">CancelledError</span><span class="p">:</span>
+        <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;handle_incoming_message cancelled during shutdown.&quot;</span><span class="p">)</span>
+        <span class="k">return</span>
     <span class="k">except</span> <span class="ne">ConnectionError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
         <span class="n">logging</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Connection closed while reading: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
     <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
         <span class="n">logging</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Error handling incoming message: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-    <span class="k">except</span> <span class="ne">BrokenPipeError</span><span class="p">:</span>
-        <span class="n">logging</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Error handling incoming message: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
     <span class="k">finally</span><span class="p">:</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">direct</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">_prio</span> <span class="o">==</span> <span class="n">ConnectionPriority</span><span class="o">.</span><span class="n">HIGH</span><span class="p">:</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">direct</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">_prio</span> <span class="o">==</span> <span class="n">ConnectionPriority</span><span class="o">.</span><span class="n">HIGH</span><span class="p">:</span> <span class="c1">#and not await self.cm.learning_finished():</span>
+            <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;ERROR: handling incoming message. Trying to reconnect..&quot;</span><span class="p">)</span>
             <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">reconnect</span><span class="p">()</span>
+        <span class="k">elif</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">cm</span><span class="o">.</span><span class="n">learning_finished</span><span class="p">():</span>
+            <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Not attempting reconnection to </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">addr</span><span class="si">}</span><span class="s2"> because learning cycle has finished&quot;</span><span class="p">)</span>
 </code></pre></div></td></tr></table></div>
             </details>
     </div>
@@ -8023,69 +8053,47 @@ is processed. On errors, reconnection is attempted if appropriate.</p>
         <p>Continuously processes messages from the pending queue.</p>
 
 
-<details class="behavior" open>
-  <summary>Behavior</summary>
-  <ul>
-<li>Retrieves messages from the queue one by one.</li>
-<li>Delegates the message to the appropriate handler based on its type.</li>
-<li>Ensures the queue is marked as processed.</li>
-</ul>
-</details>
-
-<details class="notes" open>
-  <summary>Notes</summary>
-  <p>Runs indefinitely unless externally cancelled or stopped.</p>
-</details>
-
             <details class="quote">
               <summary>Source code in <code>nebula/core/network/connection.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">662</span>
-<span class="normal">663</span>
-<span class="normal">664</span>
-<span class="normal">665</span>
-<span class="normal">666</span>
-<span class="normal">667</span>
-<span class="normal">668</span>
-<span class="normal">669</span>
-<span class="normal">670</span>
-<span class="normal">671</span>
-<span class="normal">672</span>
-<span class="normal">673</span>
-<span class="normal">674</span>
-<span class="normal">675</span>
-<span class="normal">676</span>
-<span class="normal">677</span>
-<span class="normal">678</span>
-<span class="normal">679</span>
-<span class="normal">680</span>
-<span class="normal">681</span>
-<span class="normal">682</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">682</span>
 <span class="normal">683</span>
 <span class="normal">684</span>
-<span class="normal">685</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">process_message_queue</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="normal">685</span>
+<span class="normal">686</span>
+<span class="normal">687</span>
+<span class="normal">688</span>
+<span class="normal">689</span>
+<span class="normal">690</span>
+<span class="normal">691</span>
+<span class="normal">692</span>
+<span class="normal">693</span>
+<span class="normal">694</span>
+<span class="normal">695</span>
+<span class="normal">696</span>
+<span class="normal">697</span>
+<span class="normal">698</span>
+<span class="normal">699</span>
+<span class="normal">700</span>
+<span class="normal">701</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">process_message_queue</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Continuously processes messages from the pending queue.</span>
-
-<span class="sd">    Behavior:</span>
-<span class="sd">        - Retrieves messages from the queue one by one.</span>
-<span class="sd">        - Delegates the message to the appropriate handler based on its type.</span>
-<span class="sd">        - Ensures the queue is marked as processed.</span>
-
-<span class="sd">    Notes:</span>
-<span class="sd">        Runs indefinitely unless externally cancelled or stopped.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
-        <span class="k">try</span><span class="p">:</span>
-            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">pending_messages_queue</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-                <span class="n">logging</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s2">&quot;Pending messages queue is not initialized&quot;</span><span class="p">)</span>
-                <span class="k">return</span>
-            <span class="n">data_type_prefix</span><span class="p">,</span> <span class="n">message</span> <span class="o">=</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">pending_messages_queue</span><span class="o">.</span><span class="n">get</span><span class="p">()</span>
-            <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">_handle_message</span><span class="p">(</span><span class="n">data_type_prefix</span><span class="p">,</span> <span class="n">message</span><span class="p">)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">pending_messages_queue</span><span class="o">.</span><span class="n">task_done</span><span class="p">()</span>
-        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-            <span class="n">logging</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Error processing message queue: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-        <span class="k">finally</span><span class="p">:</span>
-            <span class="k">await</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="k">while</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_running</span><span class="p">():</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">pending_messages_queue</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="n">logging</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s2">&quot;Pending messages queue is not initialized&quot;</span><span class="p">)</span>
+                    <span class="k">return</span>
+                <span class="n">data_type_prefix</span><span class="p">,</span> <span class="n">message</span> <span class="o">=</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">pending_messages_queue</span><span class="o">.</span><span class="n">get</span><span class="p">()</span>
+                <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">_handle_message</span><span class="p">(</span><span class="n">data_type_prefix</span><span class="p">,</span> <span class="n">message</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">pending_messages_queue</span><span class="o">.</span><span class="n">task_done</span><span class="p">()</span>
+            <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                <span class="n">logging</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Error processing message queue: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="k">finally</span><span class="p">:</span>
+                <span class="k">await</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+    <span class="k">except</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">CancelledError</span><span class="p">:</span>
+        <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;process_message_queue cancelled during shutdown.&quot;</span><span class="p">)</span>
+        <span class="k">return</span>
 </code></pre></div></td></tr></table></div>
             </details>
     </div>
@@ -8168,16 +8176,7 @@ marks the disconnection as forced, and terminates the failed reconnection via th
 
             <details class="quote">
               <summary>Source code in <code>nebula/core/network/connection.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">269</span>
-<span class="normal">270</span>
-<span class="normal">271</span>
-<span class="normal">272</span>
-<span class="normal">273</span>
-<span class="normal">274</span>
-<span class="normal">275</span>
-<span class="normal">276</span>
-<span class="normal">277</span>
-<span class="normal">278</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">278</span>
 <span class="normal">279</span>
 <span class="normal">280</span>
 <span class="normal">281</span>
@@ -8218,7 +8217,21 @@ marks the disconnection as forced, and terminates the failed reconnection via th
 <span class="normal">316</span>
 <span class="normal">317</span>
 <span class="normal">318</span>
-<span class="normal">319</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">reconnect</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">max_retries</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">5</span><span class="p">,</span> <span class="n">delay</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">5</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="normal">319</span>
+<span class="normal">320</span>
+<span class="normal">321</span>
+<span class="normal">322</span>
+<span class="normal">323</span>
+<span class="normal">324</span>
+<span class="normal">325</span>
+<span class="normal">326</span>
+<span class="normal">327</span>
+<span class="normal">328</span>
+<span class="normal">329</span>
+<span class="normal">330</span>
+<span class="normal">331</span>
+<span class="normal">332</span>
+<span class="normal">333</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">reconnect</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">max_retries</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">5</span><span class="p">,</span> <span class="n">delay</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">5</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Attempt to reconnect to the remote address with a maximum number of retries and delay between attempts.</span>
 
@@ -8237,6 +8250,12 @@ marks the disconnection as forced, and terminates the failed reconnection via th
 <span class="sd">        delay (int): Delay in seconds between reconnection attempts. Defaults to 5.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">forced_disconnection</span> <span class="ow">or</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">direct</span><span class="p">:</span>
+        <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Not going to reconnect because: (forced: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">forced_disconnection</span><span class="si">}</span><span class="s2">, direct: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">direct</span><span class="si">}</span><span class="s2">)&quot;</span><span class="p">)</span>
+        <span class="k">return</span>
+
+    <span class="c1"># Check if learning cycle has finished - don&#39;t reconnect</span>
+    <span class="k">if</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">cm</span><span class="o">.</span><span class="n">learning_finished</span><span class="p">():</span>
+        <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Not attempting reconnection to </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">addr</span><span class="si">}</span><span class="s2"> because learning cycle has finished&quot;</span><span class="p">)</span>
         <span class="k">return</span>
 
     <span class="bp">self</span><span class="o">.</span><span class="n">incompleted_reconnections</span> <span class="o">+=</span> <span class="mi">1</span>
@@ -8267,7 +8286,6 @@ marks the disconnection as forced, and terminates the failed reconnection via th
             <span class="n">logging</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Reconnection attempt </span><span class="si">{</span><span class="n">attempt</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">1</span><span class="si">}</span><span class="s2"> failed: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
             <span class="k">await</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="n">delay</span><span class="p">)</span>
     <span class="n">logging</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Failed to reconnect to </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">addr</span><span class="si">}</span><span class="s2"> after </span><span class="si">{</span><span class="n">max_retries</span><span class="si">}</span><span class="s2"> attempts. Stopping connection...&quot;</span><span class="p">)</span>
-    <span class="c1"># await self.stop()</span>
     <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">cm</span><span class="o">.</span><span class="n">terminate_failed_reconnection</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
 </code></pre></div></td></tr></table></div>
             </details>
@@ -8379,21 +8397,7 @@ marks the disconnection as forced, and terminates the failed reconnection via th
 
             <details class="quote">
               <summary>Source code in <code>nebula/core/network/connection.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">321</span>
-<span class="normal">322</span>
-<span class="normal">323</span>
-<span class="normal">324</span>
-<span class="normal">325</span>
-<span class="normal">326</span>
-<span class="normal">327</span>
-<span class="normal">328</span>
-<span class="normal">329</span>
-<span class="normal">330</span>
-<span class="normal">331</span>
-<span class="normal">332</span>
-<span class="normal">333</span>
-<span class="normal">334</span>
-<span class="normal">335</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">335</span>
 <span class="normal">336</span>
 <span class="normal">337</span>
 <span class="normal">338</span>
@@ -8422,7 +8426,28 @@ marks the disconnection as forced, and terminates the failed reconnection via th
 <span class="normal">361</span>
 <span class="normal">362</span>
 <span class="normal">363</span>
-<span class="normal">364</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">send</span><span class="p">(</span>
+<span class="normal">364</span>
+<span class="normal">365</span>
+<span class="normal">366</span>
+<span class="normal">367</span>
+<span class="normal">368</span>
+<span class="normal">369</span>
+<span class="normal">370</span>
+<span class="normal">371</span>
+<span class="normal">372</span>
+<span class="normal">373</span>
+<span class="normal">374</span>
+<span class="normal">375</span>
+<span class="normal">376</span>
+<span class="normal">377</span>
+<span class="normal">378</span>
+<span class="normal">379</span>
+<span class="normal">380</span>
+<span class="normal">381</span>
+<span class="normal">382</span>
+<span class="normal">383</span>
+<span class="normal">384</span>
+<span class="normal">385</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">send</span><span class="p">(</span>
     <span class="bp">self</span><span class="p">,</span>
     <span class="n">data</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
     <span class="n">pb</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
@@ -8448,6 +8473,11 @@ marks the disconnection as forced, and terminates the failed reconnection via th
         <span class="n">logging</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s2">&quot;Cannot send data, writer is None&quot;</span><span class="p">)</span>
         <span class="k">return</span>
 
+    <span class="c1"># Check if learning cycle has finished - don&#39;t send messages</span>
+    <span class="k">if</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">cm</span><span class="o">.</span><span class="n">learning_finished</span><span class="p">():</span>
+        <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Not sending message to </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">addr</span><span class="si">}</span><span class="s2"> because learning cycle has finished&quot;</span><span class="p">)</span>
+        <span class="k">return</span>
+
     <span class="k">try</span><span class="p">:</span>
         <span class="n">message_id</span> <span class="o">=</span> <span class="n">uuid</span><span class="o">.</span><span class="n">uuid4</span><span class="p">()</span><span class="o">.</span><span class="n">bytes</span>
         <span class="n">data_prefix</span><span class="p">,</span> <span class="n">encoded_data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_prepare_data</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">pb</span><span class="p">,</span> <span class="n">encoding_type</span><span class="p">)</span>
@@ -8464,8 +8494,10 @@ marks the disconnection as forced, and terminates the failed reconnection via th
         <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">_send_chunks</span><span class="p">(</span><span class="n">message_id</span><span class="p">,</span> <span class="n">data_to_send</span><span class="p">)</span>
     <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
         <span class="n">logging</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Error sending data: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">direct</span><span class="p">:</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">direct</span> <span class="ow">and</span> <span class="ow">not</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">cm</span><span class="o">.</span><span class="n">learning_finished</span><span class="p">():</span>
             <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">reconnect</span><span class="p">()</span>
+        <span class="k">elif</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">cm</span><span class="o">.</span><span class="n">learning_finished</span><span class="p">():</span>
+            <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Not attempting reconnection to </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">addr</span><span class="si">}</span><span class="s2"> because learning cycle has finished&quot;</span><span class="p">)</span>
 </code></pre></div></td></tr></table></div>
             </details>
     </div>
@@ -8497,19 +8529,20 @@ processing the message queue, and monitoring connection inactivity.</p>
 
             <details class="quote">
               <summary>Source code in <code>nebula/core/network/connection.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">227</span>
-<span class="normal">228</span>
-<span class="normal">229</span>
-<span class="normal">230</span>
-<span class="normal">231</span>
-<span class="normal">232</span>
-<span class="normal">233</span>
-<span class="normal">234</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">234</span>
 <span class="normal">235</span>
 <span class="normal">236</span>
 <span class="normal">237</span>
 <span class="normal">238</span>
-<span class="normal">239</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">start</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="normal">239</span>
+<span class="normal">240</span>
+<span class="normal">241</span>
+<span class="normal">242</span>
+<span class="normal">243</span>
+<span class="normal">244</span>
+<span class="normal">245</span>
+<span class="normal">246</span>
+<span class="normal">247</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">start</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Start the connection by launching asynchronous tasks for handling incoming messages,</span>
 <span class="sd">    processing the message queue, and monitoring connection inactivity.</span>
@@ -8519,9 +8552,10 @@ processing the message queue, and monitoring connection inactivity.</p>
 <span class="sd">    2. `process_message_queue` - processes messages queued for sending or further handling.</span>
 <span class="sd">    3. `_monitor_inactivity` - periodically checks if the connection has been inactive and updates its state accordingly.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">_running</span><span class="o">.</span><span class="n">set</span><span class="p">()</span>
     <span class="bp">self</span><span class="o">.</span><span class="n">read_task</span> <span class="o">=</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">create_task</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">handle_incoming_message</span><span class="p">(),</span> <span class="n">name</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;Connection </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">addr</span><span class="si">}</span><span class="s2"> reader&quot;</span><span class="p">)</span>
     <span class="bp">self</span><span class="o">.</span><span class="n">process_task</span> <span class="o">=</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">create_task</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">process_message_queue</span><span class="p">(),</span> <span class="n">name</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;Connection </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">addr</span><span class="si">}</span><span class="s2"> processor&quot;</span><span class="p">)</span>
-    <span class="n">asyncio</span><span class="o">.</span><span class="n">create_task</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_monitor_inactivity</span><span class="p">())</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">inactivity_task</span> <span class="o">=</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">create_task</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_monitor_inactivity</span><span class="p">())</span>
 </code></pre></div></td></tr></table></div>
             </details>
     </div>
@@ -8553,15 +8587,7 @@ and closing the underlying writer stream.</p>
 
             <details class="quote">
               <summary>Source code in <code>nebula/core/network/connection.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">241</span>
-<span class="normal">242</span>
-<span class="normal">243</span>
-<span class="normal">244</span>
-<span class="normal">245</span>
-<span class="normal">246</span>
-<span class="normal">247</span>
-<span class="normal">248</span>
-<span class="normal">249</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">249</span>
 <span class="normal">250</span>
 <span class="normal">251</span>
 <span class="normal">252</span>
@@ -8579,7 +8605,16 @@ and closing the underlying writer stream.</p>
 <span class="normal">264</span>
 <span class="normal">265</span>
 <span class="normal">266</span>
-<span class="normal">267</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">stop</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="normal">267</span>
+<span class="normal">268</span>
+<span class="normal">269</span>
+<span class="normal">270</span>
+<span class="normal">271</span>
+<span class="normal">272</span>
+<span class="normal">273</span>
+<span class="normal">274</span>
+<span class="normal">275</span>
+<span class="normal">276</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">stop</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Stop the connection by cancelling all active asyncio tasks related to this connection</span>
 <span class="sd">    and closing the underlying writer stream.</span>
@@ -8589,9 +8624,10 @@ and closing the underlying writer stream.</p>
 <span class="sd">    - Cancels the read and process tasks if they exist, awaiting their cancellation and logging any cancellation exceptions.</span>
 <span class="sd">    - Closes the writer stream safely, awaiting its closure and logging any errors that occur during the closing process.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">_running</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
     <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;❗️  Connection [stopped]: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">addr</span><span class="si">}</span><span class="s2"> (id: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">id</span><span class="si">}</span><span class="s2">)&quot;</span><span class="p">)</span>
     <span class="bp">self</span><span class="o">.</span><span class="n">forced_disconnection</span> <span class="o">=</span> <span class="kc">True</span>
-    <span class="n">tasks</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">read_task</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">process_task</span><span class="p">]</span>
+    <span class="n">tasks</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">read_task</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">process_task</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">inactivity_task</span><span class="p">]</span>
     <span class="k">for</span> <span class="n">task</span> <span class="ow">in</span> <span class="n">tasks</span><span class="p">:</span>
         <span class="k">if</span> <span class="n">task</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">task</span><span class="o">.</span><span class="n">cancel</span><span class="p">()</span>
@@ -8648,7 +8684,7 @@ and closing the underlying writer stream.</p>
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="June 11, 2025 16:51:46 UTC">June 11, 2025</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="June 26, 2025 13:41:04 UTC">June 26, 2025</span>
   </span>
 
     

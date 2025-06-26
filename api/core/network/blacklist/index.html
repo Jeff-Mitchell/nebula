@@ -3816,6 +3816,15 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
+  <a href="#nebula.core.network.blacklist.BlackList.__init__" class="md-nav__link">
+    <span class="md-ellipsis">
+      __init__
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#nebula.core.network.blacklist.BlackList.add_recently_disconnected" class="md-nav__link">
     <span class="md-ellipsis">
       add_recently_disconnected
@@ -3891,6 +3900,15 @@
   <a href="#nebula.core.network.blacklist.BlackList.node_in_blacklist" class="md-nav__link">
     <span class="md-ellipsis">
       node_in_blacklist
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#nebula.core.network.blacklist.BlackList.stop" class="md-nav__link">
+    <span class="md-ellipsis">
+      stop
     </span>
   </a>
   
@@ -6119,6 +6137,15 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
+  <a href="#nebula.core.network.blacklist.BlackList.__init__" class="md-nav__link">
+    <span class="md-ellipsis">
+      __init__
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#nebula.core.network.blacklist.BlackList.add_recently_disconnected" class="md-nav__link">
     <span class="md-ellipsis">
       add_recently_disconnected
@@ -6194,6 +6221,15 @@
   <a href="#nebula.core.network.blacklist.BlackList.node_in_blacklist" class="md-nav__link">
     <span class="md-ellipsis">
       node_in_blacklist
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#nebula.core.network.blacklist.BlackList.stop" class="md-nav__link">
+    <span class="md-ellipsis">
+      stop
     </span>
   </a>
   
@@ -6544,7 +6580,54 @@ or disconnection events. Nodes remain blacklisted for a fixed period defined by 
 <span class="normal">253</span>
 <span class="normal">254</span>
 <span class="normal">255</span>
-<span class="normal">256</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">BlackList</span><span class="p">:</span>
+<span class="normal">256</span>
+<span class="normal">257</span>
+<span class="normal">258</span>
+<span class="normal">259</span>
+<span class="normal">260</span>
+<span class="normal">261</span>
+<span class="normal">262</span>
+<span class="normal">263</span>
+<span class="normal">264</span>
+<span class="normal">265</span>
+<span class="normal">266</span>
+<span class="normal">267</span>
+<span class="normal">268</span>
+<span class="normal">269</span>
+<span class="normal">270</span>
+<span class="normal">271</span>
+<span class="normal">272</span>
+<span class="normal">273</span>
+<span class="normal">274</span>
+<span class="normal">275</span>
+<span class="normal">276</span>
+<span class="normal">277</span>
+<span class="normal">278</span>
+<span class="normal">279</span>
+<span class="normal">280</span>
+<span class="normal">281</span>
+<span class="normal">282</span>
+<span class="normal">283</span>
+<span class="normal">284</span>
+<span class="normal">285</span>
+<span class="normal">286</span>
+<span class="normal">287</span>
+<span class="normal">288</span>
+<span class="normal">289</span>
+<span class="normal">290</span>
+<span class="normal">291</span>
+<span class="normal">292</span>
+<span class="normal">293</span>
+<span class="normal">294</span>
+<span class="normal">295</span>
+<span class="normal">296</span>
+<span class="normal">297</span>
+<span class="normal">298</span>
+<span class="normal">299</span>
+<span class="normal">300</span>
+<span class="normal">301</span>
+<span class="normal">302</span>
+<span class="normal">303</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">BlackList</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Manages a dynamic blacklist and a list of recently disconnected nodes in a distributed system.</span>
 
@@ -6560,14 +6643,19 @@ or disconnection events. Nodes remain blacklisted for a fixed period defined by 
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">max_time_listed</span><span class="o">=</span><span class="n">BLACKLIST_EXPIRATION_TIME</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Initialize the BlackList with the specified expiration time.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            max_time_listed (int): Maximum time in seconds for nodes to remain blacklisted.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_max_time_listed</span> <span class="o">=</span> <span class="n">max_time_listed</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_blacklisted_nodes</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">=</span> <span class="p">{}</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_recently_disconnected</span><span class="p">:</span> <span class="nb">set</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_recently_disconnected_lock</span> <span class="o">=</span> <span class="n">Locker</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;recently_disconnected_lock&quot;</span><span class="p">,</span> <span class="n">async_lock</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_blacklisted_nodes_lock</span> <span class="o">=</span> <span class="n">Locker</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;blacklisted_nodes_lock&quot;</span><span class="p">,</span> <span class="n">async_lock</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_bl_cleaner_running</span> <span class="o">=</span> <span class="kc">False</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_blacklist_cleaner_wake_up</span> <span class="o">=</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">Event</span><span class="p">()</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_running</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_blacklisted_nodes</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_recently_disconnected</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_blacklisted_nodes_lock</span> <span class="o">=</span> <span class="n">Locker</span><span class="p">(</span><span class="s2">&quot;blacklisted_nodes_lock&quot;</span><span class="p">,</span> <span class="n">async_lock</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_recently_disconnected_lock</span> <span class="o">=</span> <span class="n">Locker</span><span class="p">(</span><span class="s2">&quot;recently_disconnected_lock&quot;</span><span class="p">,</span> <span class="n">async_lock</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_running</span> <span class="o">=</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">Event</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_background_tasks</span> <span class="o">=</span> <span class="p">[]</span>  <span class="c1"># Track background tasks</span>
 
     <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">apply_restrictions</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">nodes</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">set</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
@@ -6609,12 +6697,14 @@ or disconnection events. Nodes remain blacklisted for a fixed period defined by 
         <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">_blacklisted_nodes_lock</span><span class="o">.</span><span class="n">acquire_async</span><span class="p">()</span>
         <span class="n">expiration_time</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_blacklisted_nodes</span><span class="p">[</span><span class="n">addr</span><span class="p">]</span> <span class="o">=</span> <span class="n">expiration_time</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_running</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_running</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_running</span><span class="o">.</span><span class="n">is_set</span><span class="p">():</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_running</span><span class="o">.</span><span class="n">set</span><span class="p">()</span>
             <span class="n">asyncio</span><span class="o">.</span><span class="n">create_task</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_start_blacklist_cleaner</span><span class="p">())</span>
         <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">_blacklisted_nodes_lock</span><span class="o">.</span><span class="n">release_async</span><span class="p">()</span>
         <span class="n">nbe</span> <span class="o">=</span> <span class="n">NodeBlacklistedEvent</span><span class="p">(</span><span class="n">addr</span><span class="p">,</span> <span class="n">blacklisted</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-        <span class="n">asyncio</span><span class="o">.</span><span class="n">create_task</span><span class="p">(</span><span class="n">EventManager</span><span class="o">.</span><span class="n">get_instance</span><span class="p">()</span><span class="o">.</span><span class="n">publish_node_event</span><span class="p">(</span><span class="n">nbe</span><span class="p">))</span>
+        <span class="n">event_manager</span> <span class="o">=</span> <span class="n">EventManager</span><span class="o">.</span><span class="n">get_instance</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">event_manager</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">asyncio</span><span class="o">.</span><span class="n">create_task</span><span class="p">(</span><span class="n">event_manager</span><span class="o">.</span><span class="n">publish_node_event</span><span class="p">(</span><span class="n">nbe</span><span class="p">))</span>
 
     <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">get_blacklist</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">set</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
@@ -6628,7 +6718,7 @@ or disconnection events. Nodes remain blacklisted for a fixed period defined by 
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_blacklisted_nodes</span><span class="p">:</span>
             <span class="n">bl</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_blacklisted_nodes</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
         <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">_blacklisted_nodes_lock</span><span class="o">.</span><span class="n">release_async</span><span class="p">()</span>
-        <span class="k">return</span> <span class="n">bl</span>
+        <span class="k">return</span> <span class="n">bl</span> <span class="ow">or</span> <span class="nb">set</span><span class="p">()</span>
 
     <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">clear_blacklist</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
@@ -6643,7 +6733,7 @@ or disconnection events. Nodes remain blacklisted for a fixed period defined by 
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Background task that periodically removes expired entries from the blacklist.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">while</span> <span class="bp">self</span><span class="o">.</span><span class="n">_running</span><span class="p">:</span>
+        <span class="k">while</span> <span class="bp">self</span><span class="o">.</span><span class="n">_running</span><span class="o">.</span><span class="n">is_set</span><span class="p">():</span>
             <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">_blacklist_clean</span><span class="p">()</span>
             <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">_blacklist_cleaner_wait</span><span class="p">()</span>
 
@@ -6664,7 +6754,7 @@ or disconnection events. Nodes remain blacklisted for a fixed period defined by 
 
         <span class="bp">self</span><span class="o">.</span><span class="n">_blacklisted_nodes</span> <span class="o">=</span> <span class="n">new_bl</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">new_bl</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_running</span> <span class="o">=</span> <span class="kc">False</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_running</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
         <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">_blacklisted_nodes_lock</span><span class="o">.</span><span class="n">release_async</span><span class="p">()</span>
 
     <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">_blacklist_cleaner_wait</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
@@ -6726,21 +6816,24 @@ or disconnection events. Nodes remain blacklisted for a fixed period defined by 
 <span class="sd">            addr (str): Address of the disconnected node.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Recently disconnected from: </span><span class="si">{</span><span class="n">addr</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_recently_disconnected_lock</span><span class="o">.</span><span class="n">acquire_async</span><span class="p">()</span>
+        <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">_recently_disconnected_lock</span><span class="o">.</span><span class="n">acquire_async</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_recently_disconnected</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">addr</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_recently_disconnected_lock</span><span class="o">.</span><span class="n">release_async</span><span class="p">()</span>
-        <span class="n">asyncio</span><span class="o">.</span><span class="n">create_task</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_remove_recently_disc</span><span class="p">(</span><span class="n">addr</span><span class="p">))</span>
+        <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">_recently_disconnected_lock</span><span class="o">.</span><span class="n">release_async</span><span class="p">()</span>
+        <span class="n">task</span> <span class="o">=</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">create_task</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_remove_recently_disc</span><span class="p">(</span><span class="n">addr</span><span class="p">),</span> <span class="n">name</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;BlackList_remove_recently_</span><span class="si">{</span><span class="n">addr</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_background_tasks</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">task</span><span class="p">)</span>
         <span class="n">nbe</span> <span class="o">=</span> <span class="n">NodeBlacklistedEvent</span><span class="p">(</span><span class="n">addr</span><span class="p">)</span>
-        <span class="n">asyncio</span><span class="o">.</span><span class="n">create_task</span><span class="p">(</span><span class="n">EventManager</span><span class="o">.</span><span class="n">get_instance</span><span class="p">()</span><span class="o">.</span><span class="n">publish_node_event</span><span class="p">(</span><span class="n">nbe</span><span class="p">))</span>
+        <span class="n">event_manager</span> <span class="o">=</span> <span class="n">EventManager</span><span class="o">.</span><span class="n">get_instance</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">event_manager</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">asyncio</span><span class="o">.</span><span class="n">create_task</span><span class="p">(</span><span class="n">event_manager</span><span class="o">.</span><span class="n">publish_node_event</span><span class="p">(</span><span class="n">nbe</span><span class="p">))</span>
 
     <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">clear_recently_disconected</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Clears the list of recently disconnected nodes.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_recently_disconnected_lock</span><span class="o">.</span><span class="n">acquire_async</span><span class="p">()</span>
+        <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">_recently_disconnected_lock</span><span class="o">.</span><span class="n">acquire_async</span><span class="p">()</span>
         <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;🧹 Removing nodes from Recently Disconencted list&quot;</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_recently_disconnected</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_recently_disconnected_lock</span><span class="o">.</span><span class="n">release_async</span><span class="p">()</span>
+        <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">_recently_disconnected_lock</span><span class="o">.</span><span class="n">release_async</span><span class="p">()</span>
 
     <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">get_recently_disconnected</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
@@ -6750,9 +6843,9 @@ or disconnection events. Nodes remain blacklisted for a fixed period defined by 
 <span class="sd">            set: Addresses of recently disconnected nodes.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">rd</span> <span class="o">=</span> <span class="kc">None</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_recently_disconnected_lock</span><span class="o">.</span><span class="n">acquire_async</span><span class="p">()</span>
+        <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">_recently_disconnected_lock</span><span class="o">.</span><span class="n">acquire_async</span><span class="p">()</span>
         <span class="n">rd</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_recently_disconnected</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_recently_disconnected_lock</span><span class="o">.</span><span class="n">release_async</span><span class="p">()</span>
+        <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">_recently_disconnected_lock</span><span class="o">.</span><span class="n">release_async</span><span class="p">()</span>
         <span class="k">return</span> <span class="n">rd</span>
 
     <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">_remove_recently_disc</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">addr</span><span class="p">):</span>
@@ -6763,10 +6856,10 @@ or disconnection events. Nodes remain blacklisted for a fixed period defined by 
 <span class="sd">            addr (str): Address to remove after expiration.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">await</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="n">RECENTLY_DISCONNECTED_EXPIRE_TIME</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_recently_disconnected_lock</span><span class="o">.</span><span class="n">acquire_async</span><span class="p">()</span>
+        <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">_recently_disconnected_lock</span><span class="o">.</span><span class="n">acquire_async</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_recently_disconnected</span><span class="o">.</span><span class="n">discard</span><span class="p">(</span><span class="n">addr</span><span class="p">)</span>
         <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Recently disconnection timeout expired for souce: </span><span class="si">{</span><span class="n">addr</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_recently_disconnected_lock</span><span class="o">.</span><span class="n">release_async</span><span class="p">()</span>
+        <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">_recently_disconnected_lock</span><span class="o">.</span><span class="n">release_async</span><span class="p">()</span>
 
     <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">verify_not_recently_disc</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">nodes</span><span class="p">:</span> <span class="nb">set</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">set</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
@@ -6781,13 +6874,50 @@ or disconnection events. Nodes remain blacklisted for a fixed period defined by 
         <span class="k">if</span> <span class="ow">not</span> <span class="n">nodes</span><span class="p">:</span>
             <span class="k">return</span> <span class="kc">None</span>
         <span class="n">nodes_not_listed</span> <span class="o">=</span> <span class="n">nodes</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_recently_disconnected_lock</span><span class="o">.</span><span class="n">acquire_async</span><span class="p">()</span>
+        <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">_recently_disconnected_lock</span><span class="o">.</span><span class="n">acquire_async</span><span class="p">()</span>
         <span class="n">rec_disc</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_recently_disconnected</span>
         <span class="c1"># logging.info(f&quot;recently disconencted nodes: {rec_disc}&quot;)</span>
         <span class="k">if</span> <span class="n">rec_disc</span><span class="p">:</span>
             <span class="n">nodes_not_listed</span> <span class="o">=</span> <span class="n">nodes</span><span class="o">.</span><span class="n">difference</span><span class="p">(</span><span class="n">rec_disc</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_recently_disconnected_lock</span><span class="o">.</span><span class="n">release_async</span><span class="p">()</span>
+        <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">_recently_disconnected_lock</span><span class="o">.</span><span class="n">release_async</span><span class="p">()</span>
         <span class="k">return</span> <span class="n">nodes_not_listed</span>
+
+    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">stop</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Stop the BlackList by clearing all data and stopping background tasks.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;🛑  Stopping BlackList...&quot;</span><span class="p">)</span>
+
+        <span class="c1"># Stop the background cleaner</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_running</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
+
+        <span class="c1"># Cancel all background tasks</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_background_tasks</span><span class="p">:</span>
+            <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;🛑  Cancelling </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_background_tasks</span><span class="p">)</span><span class="si">}</span><span class="s2"> background tasks...&quot;</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">task</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_background_tasks</span><span class="p">:</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">task</span><span class="o">.</span><span class="n">done</span><span class="p">():</span>
+                    <span class="n">task</span><span class="o">.</span><span class="n">cancel</span><span class="p">()</span>
+                    <span class="k">try</span><span class="p">:</span>
+                        <span class="k">await</span> <span class="n">task</span>
+                    <span class="k">except</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">CancelledError</span><span class="p">:</span>
+                        <span class="k">pass</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_background_tasks</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
+            <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;🛑  All background tasks cancelled&quot;</span><span class="p">)</span>
+
+        <span class="c1"># Clear all data</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">async</span> <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_blacklisted_nodes_lock</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_blacklisted_nodes</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="n">logging</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Error clearing blacklist: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">async</span> <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_recently_disconnected_lock</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_recently_disconnected</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="n">logging</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Error clearing recently disconnected: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+        <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;✅  BlackList stopped successfully&quot;</span><span class="p">)</span>
 </code></pre></div></td></tr></table></div>
               </details>
 
@@ -6802,6 +6932,86 @@ or disconnection events. Nodes remain blacklisted for a fixed period defined by 
 
 
 
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="nebula.core.network.blacklist.BlackList.__init__" class="doc doc-heading">
+            <code class="highlight language-python"><span class="fm">__init__</span><span class="p">(</span><span class="n">max_time_listed</span><span class="o">=</span><span class="n">BLACKLIST_EXPIRATION_TIME</span><span class="p">)</span></code>
+
+<a href="#nebula.core.network.blacklist.BlackList.__init__" class="headerlink" title="Permanent link">&para;</a></h3>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Initialize the BlackList with the specified expiration time.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>max_time_listed</code>
+            </td>
+            <td>
+                  <code><span title="int">int</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Maximum time in seconds for nodes to remain blacklisted.</p>
+              </div>
+            </td>
+            <td>
+                  <code><span title="nebula.core.network.blacklist.BLACKLIST_EXPIRATION_TIME">BLACKLIST_EXPIRATION_TIME</span></code>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+            <details class="quote">
+              <summary>Source code in <code>nebula/core/network/blacklist.py</code></summary>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">28</span>
+<span class="normal">29</span>
+<span class="normal">30</span>
+<span class="normal">31</span>
+<span class="normal">32</span>
+<span class="normal">33</span>
+<span class="normal">34</span>
+<span class="normal">35</span>
+<span class="normal">36</span>
+<span class="normal">37</span>
+<span class="normal">38</span>
+<span class="normal">39</span>
+<span class="normal">40</span>
+<span class="normal">41</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">max_time_listed</span><span class="o">=</span><span class="n">BLACKLIST_EXPIRATION_TIME</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Initialize the BlackList with the specified expiration time.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        max_time_listed (int): Maximum time in seconds for nodes to remain blacklisted.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">_max_time_listed</span> <span class="o">=</span> <span class="n">max_time_listed</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">_blacklisted_nodes</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">_recently_disconnected</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">_blacklisted_nodes_lock</span> <span class="o">=</span> <span class="n">Locker</span><span class="p">(</span><span class="s2">&quot;blacklisted_nodes_lock&quot;</span><span class="p">,</span> <span class="n">async_lock</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">_recently_disconnected_lock</span> <span class="o">=</span> <span class="n">Locker</span><span class="p">(</span><span class="s2">&quot;recently_disconnected_lock&quot;</span><span class="p">,</span> <span class="n">async_lock</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">_running</span> <span class="o">=</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">Event</span><span class="p">()</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">_background_tasks</span> <span class="o">=</span> <span class="p">[]</span>  <span class="c1"># Track background tasks</span>
+</code></pre></div></td></tr></table></div>
+            </details>
+    </div>
+
+</div>
 
 <div class="doc doc-object doc-function">
 
@@ -6854,20 +7064,23 @@ or disconnection events. Nodes remain blacklisted for a fixed period defined by 
 
             <details class="quote">
               <summary>Source code in <code>nebula/core/network/blacklist.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">187</span>
-<span class="normal">188</span>
-<span class="normal">189</span>
-<span class="normal">190</span>
-<span class="normal">191</span>
-<span class="normal">192</span>
-<span class="normal">193</span>
-<span class="normal">194</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">194</span>
 <span class="normal">195</span>
 <span class="normal">196</span>
 <span class="normal">197</span>
 <span class="normal">198</span>
 <span class="normal">199</span>
-<span class="normal">200</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">add_recently_disconnected</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">addr</span><span class="p">):</span>
+<span class="normal">200</span>
+<span class="normal">201</span>
+<span class="normal">202</span>
+<span class="normal">203</span>
+<span class="normal">204</span>
+<span class="normal">205</span>
+<span class="normal">206</span>
+<span class="normal">207</span>
+<span class="normal">208</span>
+<span class="normal">209</span>
+<span class="normal">210</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">add_recently_disconnected</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">addr</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Marks a node as recently disconnected and schedules its expiration.</span>
 
@@ -6875,12 +7088,15 @@ or disconnection events. Nodes remain blacklisted for a fixed period defined by 
 <span class="sd">        addr (str): Address of the disconnected node.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Recently disconnected from: </span><span class="si">{</span><span class="n">addr</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-    <span class="bp">self</span><span class="o">.</span><span class="n">_recently_disconnected_lock</span><span class="o">.</span><span class="n">acquire_async</span><span class="p">()</span>
+    <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">_recently_disconnected_lock</span><span class="o">.</span><span class="n">acquire_async</span><span class="p">()</span>
     <span class="bp">self</span><span class="o">.</span><span class="n">_recently_disconnected</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">addr</span><span class="p">)</span>
-    <span class="bp">self</span><span class="o">.</span><span class="n">_recently_disconnected_lock</span><span class="o">.</span><span class="n">release_async</span><span class="p">()</span>
-    <span class="n">asyncio</span><span class="o">.</span><span class="n">create_task</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_remove_recently_disc</span><span class="p">(</span><span class="n">addr</span><span class="p">))</span>
+    <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">_recently_disconnected_lock</span><span class="o">.</span><span class="n">release_async</span><span class="p">()</span>
+    <span class="n">task</span> <span class="o">=</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">create_task</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_remove_recently_disc</span><span class="p">(</span><span class="n">addr</span><span class="p">),</span> <span class="n">name</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;BlackList_remove_recently_</span><span class="si">{</span><span class="n">addr</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">_background_tasks</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">task</span><span class="p">)</span>
     <span class="n">nbe</span> <span class="o">=</span> <span class="n">NodeBlacklistedEvent</span><span class="p">(</span><span class="n">addr</span><span class="p">)</span>
-    <span class="n">asyncio</span><span class="o">.</span><span class="n">create_task</span><span class="p">(</span><span class="n">EventManager</span><span class="o">.</span><span class="n">get_instance</span><span class="p">()</span><span class="o">.</span><span class="n">publish_node_event</span><span class="p">(</span><span class="n">nbe</span><span class="p">))</span>
+    <span class="n">event_manager</span> <span class="o">=</span> <span class="n">EventManager</span><span class="o">.</span><span class="n">get_instance</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">event_manager</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">asyncio</span><span class="o">.</span><span class="n">create_task</span><span class="p">(</span><span class="n">event_manager</span><span class="o">.</span><span class="n">publish_node_event</span><span class="p">(</span><span class="n">nbe</span><span class="p">))</span>
 </code></pre></div></td></tr></table></div>
             </details>
     </div>
@@ -6938,12 +7154,7 @@ or disconnection events. Nodes remain blacklisted for a fixed period defined by 
 
             <details class="quote">
               <summary>Source code in <code>nebula/core/network/blacklist.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">67</span>
-<span class="normal">68</span>
-<span class="normal">69</span>
-<span class="normal">70</span>
-<span class="normal">71</span>
-<span class="normal">72</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">72</span>
 <span class="normal">73</span>
 <span class="normal">74</span>
 <span class="normal">75</span>
@@ -6954,7 +7165,14 @@ or disconnection events. Nodes remain blacklisted for a fixed period defined by 
 <span class="normal">80</span>
 <span class="normal">81</span>
 <span class="normal">82</span>
-<span class="normal">83</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">add_to_blacklist</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">addr</span><span class="p">):</span>
+<span class="normal">83</span>
+<span class="normal">84</span>
+<span class="normal">85</span>
+<span class="normal">86</span>
+<span class="normal">87</span>
+<span class="normal">88</span>
+<span class="normal">89</span>
+<span class="normal">90</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">add_to_blacklist</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">addr</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Adds a node to the blacklist and starts the cleaner task if not already running.</span>
 
@@ -6965,12 +7183,14 @@ or disconnection events. Nodes remain blacklisted for a fixed period defined by 
     <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">_blacklisted_nodes_lock</span><span class="o">.</span><span class="n">acquire_async</span><span class="p">()</span>
     <span class="n">expiration_time</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
     <span class="bp">self</span><span class="o">.</span><span class="n">_blacklisted_nodes</span><span class="p">[</span><span class="n">addr</span><span class="p">]</span> <span class="o">=</span> <span class="n">expiration_time</span>
-    <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_running</span><span class="p">:</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_running</span> <span class="o">=</span> <span class="kc">True</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_running</span><span class="o">.</span><span class="n">is_set</span><span class="p">():</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_running</span><span class="o">.</span><span class="n">set</span><span class="p">()</span>
         <span class="n">asyncio</span><span class="o">.</span><span class="n">create_task</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_start_blacklist_cleaner</span><span class="p">())</span>
     <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">_blacklisted_nodes_lock</span><span class="o">.</span><span class="n">release_async</span><span class="p">()</span>
     <span class="n">nbe</span> <span class="o">=</span> <span class="n">NodeBlacklistedEvent</span><span class="p">(</span><span class="n">addr</span><span class="p">,</span> <span class="n">blacklisted</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-    <span class="n">asyncio</span><span class="o">.</span><span class="n">create_task</span><span class="p">(</span><span class="n">EventManager</span><span class="o">.</span><span class="n">get_instance</span><span class="p">()</span><span class="o">.</span><span class="n">publish_node_event</span><span class="p">(</span><span class="n">nbe</span><span class="p">))</span>
+    <span class="n">event_manager</span> <span class="o">=</span> <span class="n">EventManager</span><span class="o">.</span><span class="n">get_instance</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">event_manager</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">asyncio</span><span class="o">.</span><span class="n">create_task</span><span class="p">(</span><span class="n">event_manager</span><span class="o">.</span><span class="n">publish_node_event</span><span class="p">(</span><span class="n">nbe</span><span class="p">))</span>
 </code></pre></div></td></tr></table></div>
             </details>
     </div>
@@ -7051,12 +7271,7 @@ or disconnection events. Nodes remain blacklisted for a fixed period defined by 
 
             <details class="quote">
               <summary>Source code in <code>nebula/core/network/blacklist.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">38</span>
-<span class="normal">39</span>
-<span class="normal">40</span>
-<span class="normal">41</span>
-<span class="normal">42</span>
-<span class="normal">43</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">43</span>
 <span class="normal">44</span>
 <span class="normal">45</span>
 <span class="normal">46</span>
@@ -7066,7 +7281,12 @@ or disconnection events. Nodes remain blacklisted for a fixed period defined by 
 <span class="normal">50</span>
 <span class="normal">51</span>
 <span class="normal">52</span>
-<span class="normal">53</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">apply_restrictions</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">nodes</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">set</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="normal">53</span>
+<span class="normal">54</span>
+<span class="normal">55</span>
+<span class="normal">56</span>
+<span class="normal">57</span>
+<span class="normal">58</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">apply_restrictions</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">nodes</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">set</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Applies both blacklist and recently disconnected restrictions to a given set of nodes.</span>
 
@@ -7108,14 +7328,14 @@ or disconnection events. Nodes remain blacklisted for a fixed period defined by 
 
             <details class="quote">
               <summary>Source code in <code>nebula/core/network/blacklist.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 99</span>
-<span class="normal">100</span>
-<span class="normal">101</span>
-<span class="normal">102</span>
-<span class="normal">103</span>
-<span class="normal">104</span>
-<span class="normal">105</span>
-<span class="normal">106</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">clear_blacklist</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">106</span>
+<span class="normal">107</span>
+<span class="normal">108</span>
+<span class="normal">109</span>
+<span class="normal">110</span>
+<span class="normal">111</span>
+<span class="normal">112</span>
+<span class="normal">113</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">clear_blacklist</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Clears the blacklist entirely.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
@@ -7149,21 +7369,21 @@ or disconnection events. Nodes remain blacklisted for a fixed period defined by 
 
             <details class="quote">
               <summary>Source code in <code>nebula/core/network/blacklist.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">202</span>
-<span class="normal">203</span>
-<span class="normal">204</span>
-<span class="normal">205</span>
-<span class="normal">206</span>
-<span class="normal">207</span>
-<span class="normal">208</span>
-<span class="normal">209</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">clear_recently_disconected</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">212</span>
+<span class="normal">213</span>
+<span class="normal">214</span>
+<span class="normal">215</span>
+<span class="normal">216</span>
+<span class="normal">217</span>
+<span class="normal">218</span>
+<span class="normal">219</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">clear_recently_disconected</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Clears the list of recently disconnected nodes.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="bp">self</span><span class="o">.</span><span class="n">_recently_disconnected_lock</span><span class="o">.</span><span class="n">acquire_async</span><span class="p">()</span>
+    <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">_recently_disconnected_lock</span><span class="o">.</span><span class="n">acquire_async</span><span class="p">()</span>
     <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;🧹 Removing nodes from Recently Disconencted list&quot;</span><span class="p">)</span>
     <span class="bp">self</span><span class="o">.</span><span class="n">_recently_disconnected</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
-    <span class="bp">self</span><span class="o">.</span><span class="n">_recently_disconnected_lock</span><span class="o">.</span><span class="n">release_async</span><span class="p">()</span>
+    <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">_recently_disconnected_lock</span><span class="o">.</span><span class="n">release_async</span><span class="p">()</span>
 </code></pre></div></td></tr></table></div>
             </details>
     </div>
@@ -7190,12 +7410,12 @@ or disconnection events. Nodes remain blacklisted for a fixed period defined by 
 
             <details class="quote">
               <summary>Source code in <code>nebula/core/network/blacklist.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">55</span>
-<span class="normal">56</span>
-<span class="normal">57</span>
-<span class="normal">58</span>
-<span class="normal">59</span>
-<span class="normal">60</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">clear_restrictions</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">60</span>
+<span class="normal">61</span>
+<span class="normal">62</span>
+<span class="normal">63</span>
+<span class="normal">64</span>
+<span class="normal">65</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">clear_restrictions</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Clears both the blacklist and the recently disconnected list.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
@@ -7258,19 +7478,19 @@ or disconnection events. Nodes remain blacklisted for a fixed period defined by 
 
             <details class="quote">
               <summary>Source code in <code>nebula/core/network/blacklist.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">85</span>
-<span class="normal">86</span>
-<span class="normal">87</span>
-<span class="normal">88</span>
-<span class="normal">89</span>
-<span class="normal">90</span>
-<span class="normal">91</span>
-<span class="normal">92</span>
-<span class="normal">93</span>
-<span class="normal">94</span>
-<span class="normal">95</span>
-<span class="normal">96</span>
-<span class="normal">97</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">get_blacklist</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">set</span><span class="p">:</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 92</span>
+<span class="normal"> 93</span>
+<span class="normal"> 94</span>
+<span class="normal"> 95</span>
+<span class="normal"> 96</span>
+<span class="normal"> 97</span>
+<span class="normal"> 98</span>
+<span class="normal"> 99</span>
+<span class="normal">100</span>
+<span class="normal">101</span>
+<span class="normal">102</span>
+<span class="normal">103</span>
+<span class="normal">104</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">get_blacklist</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">set</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Adds a node to the blacklist and starts the cleaner task if not already running.</span>
 
@@ -7282,7 +7502,7 @@ or disconnection events. Nodes remain blacklisted for a fixed period defined by 
     <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_blacklisted_nodes</span><span class="p">:</span>
         <span class="n">bl</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_blacklisted_nodes</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
     <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">_blacklisted_nodes_lock</span><span class="o">.</span><span class="n">release_async</span><span class="p">()</span>
-    <span class="k">return</span> <span class="n">bl</span>
+    <span class="k">return</span> <span class="n">bl</span> <span class="ow">or</span> <span class="nb">set</span><span class="p">()</span>
 </code></pre></div></td></tr></table></div>
             </details>
     </div>
@@ -7331,18 +7551,18 @@ or disconnection events. Nodes remain blacklisted for a fixed period defined by 
 
             <details class="quote">
               <summary>Source code in <code>nebula/core/network/blacklist.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">211</span>
-<span class="normal">212</span>
-<span class="normal">213</span>
-<span class="normal">214</span>
-<span class="normal">215</span>
-<span class="normal">216</span>
-<span class="normal">217</span>
-<span class="normal">218</span>
-<span class="normal">219</span>
-<span class="normal">220</span>
-<span class="normal">221</span>
-<span class="normal">222</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">get_recently_disconnected</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">221</span>
+<span class="normal">222</span>
+<span class="normal">223</span>
+<span class="normal">224</span>
+<span class="normal">225</span>
+<span class="normal">226</span>
+<span class="normal">227</span>
+<span class="normal">228</span>
+<span class="normal">229</span>
+<span class="normal">230</span>
+<span class="normal">231</span>
+<span class="normal">232</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">get_recently_disconnected</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Retrieves a copy of the recently disconnected nodes.</span>
 
@@ -7350,9 +7570,9 @@ or disconnection events. Nodes remain blacklisted for a fixed period defined by 
 <span class="sd">        set: Addresses of recently disconnected nodes.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">rd</span> <span class="o">=</span> <span class="kc">None</span>
-    <span class="bp">self</span><span class="o">.</span><span class="n">_recently_disconnected_lock</span><span class="o">.</span><span class="n">acquire_async</span><span class="p">()</span>
+    <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">_recently_disconnected_lock</span><span class="o">.</span><span class="n">acquire_async</span><span class="p">()</span>
     <span class="n">rd</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_recently_disconnected</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
-    <span class="bp">self</span><span class="o">.</span><span class="n">_recently_disconnected_lock</span><span class="o">.</span><span class="n">release_async</span><span class="p">()</span>
+    <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">_recently_disconnected_lock</span><span class="o">.</span><span class="n">release_async</span><span class="p">()</span>
     <span class="k">return</span> <span class="n">rd</span>
 </code></pre></div></td></tr></table></div>
             </details>
@@ -7433,14 +7653,7 @@ or disconnection events. Nodes remain blacklisted for a fixed period defined by 
 
             <details class="quote">
               <summary>Source code in <code>nebula/core/network/blacklist.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">145</span>
-<span class="normal">146</span>
-<span class="normal">147</span>
-<span class="normal">148</span>
-<span class="normal">149</span>
-<span class="normal">150</span>
-<span class="normal">151</span>
-<span class="normal">152</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">152</span>
 <span class="normal">153</span>
 <span class="normal">154</span>
 <span class="normal">155</span>
@@ -7448,7 +7661,14 @@ or disconnection events. Nodes remain blacklisted for a fixed period defined by 
 <span class="normal">157</span>
 <span class="normal">158</span>
 <span class="normal">159</span>
-<span class="normal">160</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">node_in_blacklist</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">addr</span><span class="p">):</span>
+<span class="normal">160</span>
+<span class="normal">161</span>
+<span class="normal">162</span>
+<span class="normal">163</span>
+<span class="normal">164</span>
+<span class="normal">165</span>
+<span class="normal">166</span>
+<span class="normal">167</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">node_in_blacklist</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">addr</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Checks whether a given address is currently blacklisted.</span>
 
@@ -7464,6 +7684,103 @@ or disconnection events. Nodes remain blacklisted for a fixed period defined by 
         <span class="n">blacklisted</span> <span class="o">=</span> <span class="n">addr</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_blacklisted_nodes</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span>
     <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">_blacklisted_nodes_lock</span><span class="o">.</span><span class="n">release_async</span><span class="p">()</span>
     <span class="k">return</span> <span class="n">blacklisted</span>
+</code></pre></div></td></tr></table></div>
+            </details>
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="nebula.core.network.blacklist.BlackList.stop" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">stop</span><span class="p">()</span></code>
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-async"><code>async</code></small>
+  </span>
+
+<a href="#nebula.core.network.blacklist.BlackList.stop" class="headerlink" title="Permanent link">&para;</a></h3>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Stop the BlackList by clearing all data and stopping background tasks.</p>
+
+
+            <details class="quote">
+              <summary>Source code in <code>nebula/core/network/blacklist.py</code></summary>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">268</span>
+<span class="normal">269</span>
+<span class="normal">270</span>
+<span class="normal">271</span>
+<span class="normal">272</span>
+<span class="normal">273</span>
+<span class="normal">274</span>
+<span class="normal">275</span>
+<span class="normal">276</span>
+<span class="normal">277</span>
+<span class="normal">278</span>
+<span class="normal">279</span>
+<span class="normal">280</span>
+<span class="normal">281</span>
+<span class="normal">282</span>
+<span class="normal">283</span>
+<span class="normal">284</span>
+<span class="normal">285</span>
+<span class="normal">286</span>
+<span class="normal">287</span>
+<span class="normal">288</span>
+<span class="normal">289</span>
+<span class="normal">290</span>
+<span class="normal">291</span>
+<span class="normal">292</span>
+<span class="normal">293</span>
+<span class="normal">294</span>
+<span class="normal">295</span>
+<span class="normal">296</span>
+<span class="normal">297</span>
+<span class="normal">298</span>
+<span class="normal">299</span>
+<span class="normal">300</span>
+<span class="normal">301</span>
+<span class="normal">302</span>
+<span class="normal">303</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">stop</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Stop the BlackList by clearing all data and stopping background tasks.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;🛑  Stopping BlackList...&quot;</span><span class="p">)</span>
+
+    <span class="c1"># Stop the background cleaner</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">_running</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
+
+    <span class="c1"># Cancel all background tasks</span>
+    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_background_tasks</span><span class="p">:</span>
+        <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;🛑  Cancelling </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_background_tasks</span><span class="p">)</span><span class="si">}</span><span class="s2"> background tasks...&quot;</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">task</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_background_tasks</span><span class="p">:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">task</span><span class="o">.</span><span class="n">done</span><span class="p">():</span>
+                <span class="n">task</span><span class="o">.</span><span class="n">cancel</span><span class="p">()</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="k">await</span> <span class="n">task</span>
+                <span class="k">except</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">CancelledError</span><span class="p">:</span>
+                    <span class="k">pass</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_background_tasks</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
+        <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;🛑  All background tasks cancelled&quot;</span><span class="p">)</span>
+
+    <span class="c1"># Clear all data</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="k">async</span> <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_blacklisted_nodes_lock</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_blacklisted_nodes</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
+    <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+        <span class="n">logging</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Error clearing blacklist: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+    <span class="k">try</span><span class="p">:</span>
+        <span class="k">async</span> <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_recently_disconnected_lock</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_recently_disconnected</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
+    <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+        <span class="n">logging</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Error clearing recently disconnected: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+    <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;✅  BlackList stopped successfully&quot;</span><span class="p">)</span>
 </code></pre></div></td></tr></table></div>
             </details>
     </div>
@@ -7544,14 +7861,7 @@ or disconnection events. Nodes remain blacklisted for a fixed period defined by 
 
             <details class="quote">
               <summary>Source code in <code>nebula/core/network/blacklist.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">162</span>
-<span class="normal">163</span>
-<span class="normal">164</span>
-<span class="normal">165</span>
-<span class="normal">166</span>
-<span class="normal">167</span>
-<span class="normal">168</span>
-<span class="normal">169</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">169</span>
 <span class="normal">170</span>
 <span class="normal">171</span>
 <span class="normal">172</span>
@@ -7562,7 +7872,14 @@ or disconnection events. Nodes remain blacklisted for a fixed period defined by 
 <span class="normal">177</span>
 <span class="normal">178</span>
 <span class="normal">179</span>
-<span class="normal">180</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">verify_allowed_nodes</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">nodes</span><span class="p">:</span> <span class="nb">set</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">set</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="normal">180</span>
+<span class="normal">181</span>
+<span class="normal">182</span>
+<span class="normal">183</span>
+<span class="normal">184</span>
+<span class="normal">185</span>
+<span class="normal">186</span>
+<span class="normal">187</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">verify_allowed_nodes</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">nodes</span><span class="p">:</span> <span class="nb">set</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">set</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Filters out blacklisted nodes from the given set.</span>
 
@@ -7661,17 +7978,7 @@ or disconnection events. Nodes remain blacklisted for a fixed period defined by 
 
             <details class="quote">
               <summary>Source code in <code>nebula/core/network/blacklist.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">237</span>
-<span class="normal">238</span>
-<span class="normal">239</span>
-<span class="normal">240</span>
-<span class="normal">241</span>
-<span class="normal">242</span>
-<span class="normal">243</span>
-<span class="normal">244</span>
-<span class="normal">245</span>
-<span class="normal">246</span>
-<span class="normal">247</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">247</span>
 <span class="normal">248</span>
 <span class="normal">249</span>
 <span class="normal">250</span>
@@ -7680,7 +7987,17 @@ or disconnection events. Nodes remain blacklisted for a fixed period defined by 
 <span class="normal">253</span>
 <span class="normal">254</span>
 <span class="normal">255</span>
-<span class="normal">256</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">verify_not_recently_disc</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">nodes</span><span class="p">:</span> <span class="nb">set</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">set</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="normal">256</span>
+<span class="normal">257</span>
+<span class="normal">258</span>
+<span class="normal">259</span>
+<span class="normal">260</span>
+<span class="normal">261</span>
+<span class="normal">262</span>
+<span class="normal">263</span>
+<span class="normal">264</span>
+<span class="normal">265</span>
+<span class="normal">266</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">verify_not_recently_disc</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">nodes</span><span class="p">:</span> <span class="nb">set</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">set</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Filters out recently disconnected nodes from the given set.</span>
 
@@ -7693,12 +8010,12 @@ or disconnection events. Nodes remain blacklisted for a fixed period defined by 
     <span class="k">if</span> <span class="ow">not</span> <span class="n">nodes</span><span class="p">:</span>
         <span class="k">return</span> <span class="kc">None</span>
     <span class="n">nodes_not_listed</span> <span class="o">=</span> <span class="n">nodes</span>
-    <span class="bp">self</span><span class="o">.</span><span class="n">_recently_disconnected_lock</span><span class="o">.</span><span class="n">acquire_async</span><span class="p">()</span>
+    <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">_recently_disconnected_lock</span><span class="o">.</span><span class="n">acquire_async</span><span class="p">()</span>
     <span class="n">rec_disc</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_recently_disconnected</span>
     <span class="c1"># logging.info(f&quot;recently disconencted nodes: {rec_disc}&quot;)</span>
     <span class="k">if</span> <span class="n">rec_disc</span><span class="p">:</span>
         <span class="n">nodes_not_listed</span> <span class="o">=</span> <span class="n">nodes</span><span class="o">.</span><span class="n">difference</span><span class="p">(</span><span class="n">rec_disc</span><span class="p">)</span>
-    <span class="bp">self</span><span class="o">.</span><span class="n">_recently_disconnected_lock</span><span class="o">.</span><span class="n">release_async</span><span class="p">()</span>
+    <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">_recently_disconnected_lock</span><span class="o">.</span><span class="n">release_async</span><span class="p">()</span>
     <span class="k">return</span> <span class="n">nodes_not_listed</span>
 </code></pre></div></td></tr></table></div>
             </details>
@@ -7742,7 +8059,7 @@ or disconnection events. Nodes remain blacklisted for a fixed period defined by 
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="June 11, 2025 16:51:46 UTC">June 11, 2025</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="June 26, 2025 13:41:03 UTC">June 26, 2025</span>
   </span>
 
     

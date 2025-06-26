@@ -4809,33 +4809,6 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#nebula.core.situationalawareness.awareness.sareasoner.SAReasoner.accept_connection" class="md-nav__link">
-    <span class="md-ellipsis">
-      accept_connection
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#nebula.core.situationalawareness.awareness.sareasoner.SAReasoner.get_actions" class="md-nav__link">
-    <span class="md-ellipsis">
-      get_actions
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#nebula.core.situationalawareness.awareness.sareasoner.SAReasoner.get_nodes_known" class="md-nav__link">
-    <span class="md-ellipsis">
-      get_nodes_known
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
   <a href="#nebula.core.situationalawareness.awareness.sareasoner.SAReasoner.init" class="md-nav__link">
     <span class="md-ellipsis">
       init
@@ -4848,6 +4821,15 @@
   <a href="#nebula.core.situationalawareness.awareness.sareasoner.SAReasoner.is_additional_participant" class="md-nav__link">
     <span class="md-ellipsis">
       is_additional_participant
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#nebula.core.situationalawareness.awareness.sareasoner.SAReasoner.stop" class="md-nav__link">
+    <span class="md-ellipsis">
+      stop
     </span>
   </a>
   
@@ -6223,33 +6205,6 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#nebula.core.situationalawareness.awareness.sareasoner.SAReasoner.accept_connection" class="md-nav__link">
-    <span class="md-ellipsis">
-      accept_connection
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#nebula.core.situationalawareness.awareness.sareasoner.SAReasoner.get_actions" class="md-nav__link">
-    <span class="md-ellipsis">
-      get_actions
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#nebula.core.situationalawareness.awareness.sareasoner.SAReasoner.get_nodes_known" class="md-nav__link">
-    <span class="md-ellipsis">
-      get_nodes_known
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
   <a href="#nebula.core.situationalawareness.awareness.sareasoner.SAReasoner.init" class="md-nav__link">
     <span class="md-ellipsis">
       init
@@ -6262,6 +6217,15 @@
   <a href="#nebula.core.situationalawareness.awareness.sareasoner.SAReasoner.is_additional_participant" class="md-nav__link">
     <span class="md-ellipsis">
       is_additional_participant
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#nebula.core.situationalawareness.awareness.sareasoner.SAReasoner.stop" class="md-nav__link">
+    <span class="md-ellipsis">
+      stop
     </span>
   </a>
   
@@ -6900,7 +6864,9 @@ or global awareness in distributed systems.</p>
 <span class="normal">396</span>
 <span class="normal">397</span>
 <span class="normal">398</span>
-<span class="normal">399</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">SAReasoner</span><span class="p">(</span><span class="n">ISAReasoner</span><span class="p">):</span>
+<span class="normal">399</span>
+<span class="normal">400</span>
+<span class="normal">401</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">SAReasoner</span><span class="p">(</span><span class="n">ISAReasoner</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Core implementation of the Situational Awareness Reasoner (SAReasoner).</span>
 
@@ -6933,9 +6899,9 @@ or global awareness in distributed systems.</p>
         <span class="bp">self</span><span class="o">.</span><span class="n">_config</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">participant</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_addr</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">participant</span><span class="p">[</span><span class="s2">&quot;network_args&quot;</span><span class="p">][</span><span class="s2">&quot;addr&quot;</span><span class="p">]</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_topology</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">participant</span><span class="p">[</span><span class="s2">&quot;mobility_args&quot;</span><span class="p">][</span><span class="s2">&quot;topology_type&quot;</span><span class="p">]</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_situational_awareness_network</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_situational_awareness_network</span><span class="p">:</span> <span class="n">SANetwork</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_situational_awareness_training</span> <span class="o">=</span> <span class="kc">None</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_restructure_process_lock</span> <span class="o">=</span> <span class="n">Locker</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;restructure_process_lock&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_restructure_process_lock</span> <span class="o">=</span> <span class="n">Locker</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;restructure_process_lock&quot;</span><span class="p">,</span> <span class="n">async_lock</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_restructure_cooldown</span> <span class="o">=</span> <span class="mi">0</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_arbitrator_notification</span> <span class="o">=</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">Event</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_suggestion_buffer</span> <span class="o">=</span> <span class="n">SuggestionBuffer</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_arbitrator_notification</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
@@ -6944,11 +6910,11 @@ or global awareness in distributed systems.</p>
         <span class="n">arb_pol</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">participant</span><span class="p">[</span><span class="s2">&quot;situational_awareness&quot;</span><span class="p">][</span><span class="s2">&quot;sa_reasoner&quot;</span><span class="p">][</span><span class="s2">&quot;arbitration_policy&quot;</span><span class="p">]</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_arbitatrion_policy</span> <span class="o">=</span> <span class="n">factory_arbitration_policy</span><span class="p">(</span><span class="n">arb_pol</span><span class="p">,</span> <span class="kc">True</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_sa_components</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">SAMComponent</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_sa_discovery</span><span class="p">:</span> <span class="n">ISADiscovery</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_sa_discovery</span><span class="p">:</span> <span class="n">ISADiscovery</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_verbose</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">participant</span><span class="p">[</span><span class="s2">&quot;situational_awareness&quot;</span><span class="p">][</span><span class="s2">&quot;sa_reasoner&quot;</span><span class="p">][</span><span class="s2">&quot;verbose&quot;</span><span class="p">]</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">san</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SANetwork</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">san</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SANetwork</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Situational Awareness Network&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_situational_awareness_network</span>
 
@@ -6968,7 +6934,7 @@ or global awareness in distributed systems.</p>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_arbitatrion_policy</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">sad</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ISADiscovery</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">sad</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ISADiscovery</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;SA Discovery&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sa_discovery</span>
 
@@ -6979,7 +6945,7 @@ or global awareness in distributed systems.</p>
 <span class="sd">        Args:</span>
 <span class="sd">            sa_discovery (ISADiscovery): The discovery component to coordinate with.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_sa_discovery</span><span class="p">:</span> <span class="n">ISADiscovery</span> <span class="o">=</span> <span class="n">sa_discovery</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_sa_discovery</span> <span class="o">=</span> <span class="n">sa_discovery</span>
         <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">_loading_sa_components</span><span class="p">()</span>
         <span class="k">await</span> <span class="n">EventManager</span><span class="o">.</span><span class="n">get_instance</span><span class="p">()</span><span class="o">.</span><span class="n">subscribe_node_event</span><span class="p">(</span><span class="n">RoundEndEvent</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_process_round_end_event</span><span class="p">)</span>
         <span class="k">await</span> <span class="n">EventManager</span><span class="o">.</span><span class="n">get_instance</span><span class="p">()</span><span class="o">.</span><span class="n">subscribe_node_event</span><span class="p">(</span><span class="n">AggregationEvent</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_process_aggregation_event</span><span class="p">)</span>
@@ -6999,6 +6965,8 @@ or global awareness in distributed systems.</p>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">get_restructure_process_lock</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">san</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;Situational Awareness Network (san) is not initialized.&quot;</span><span class="p">)</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">san</span><span class="o">.</span><span class="n">get_restructure_process_lock</span><span class="p">()</span>
 
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;                                                     ###############################</span>
@@ -7007,44 +6975,18 @@ or global awareness in distributed systems.</p>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">get_nodes_known</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">neighbors_too</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">neighbors_only</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Retrieve the set of nodes known to the situational awareness reasoner.</span>
-
-<span class="sd">        This may include additional metadata depending on the flags.</span>
-
-<span class="sd">        Args:</span>
-<span class="sd">            neighbors_too (bool, optional): If True, include neighboring nodes in the result. Defaults to False.</span>
-<span class="sd">            neighbors_only (bool, optional): If True, return only neighbors. Defaults to False.</span>
-
-<span class="sd">        Returns:</span>
-<span class="sd">            set: Identifiers of known nodes based on the provided filters.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">san</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;Situational Awareness Network (san) is not initialized.&quot;</span><span class="p">)</span>
         <span class="k">return</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">san</span><span class="o">.</span><span class="n">get_nodes_known</span><span class="p">(</span><span class="n">neighbors_too</span><span class="p">,</span> <span class="n">neighbors_only</span><span class="p">)</span>
 
     <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">accept_connection</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">source</span><span class="p">,</span> <span class="n">joining</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Decide whether to accept a connection request from a source node.</span>
-
-<span class="sd">        Delegates to the underlying reasoner logic to determine acceptance.</span>
-
-<span class="sd">        Args:</span>
-<span class="sd">            source (str): The identifier or address of the requesting node.</span>
-<span class="sd">            joining (bool, optional): If True, this connection is part of a join operation. Defaults to False.</span>
-
-<span class="sd">        Returns:</span>
-<span class="sd">            bool: True if the connection should be accepted, False otherwise.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">san</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;Situational Awareness Network (san) is not initialized.&quot;</span><span class="p">)</span>
         <span class="k">return</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">san</span><span class="o">.</span><span class="n">accept_connection</span><span class="p">(</span><span class="n">source</span><span class="p">,</span> <span class="n">joining</span><span class="p">)</span>
 
     <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">get_actions</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Retrieve the list of situational awareness actions available to execute.</span>
-
-<span class="sd">        Delegates to the underlying reasoner component.</span>
-
-<span class="sd">        Returns:</span>
-<span class="sd">            list: Action identifiers that the reasoner can perform.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">san</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;Situational Awareness Network (san) is not initialized.&quot;</span><span class="p">)</span>
         <span class="k">return</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">san</span><span class="o">.</span><span class="n">get_actions</span><span class="p">()</span>
 
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;                                                     ###############################</span>
@@ -7226,13 +7168,15 @@ or global awareness in distributed systems.</p>
                 <span class="k">await</span> <span class="n">sacomp</span><span class="o">.</span><span class="n">init</span><span class="p">()</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_load_minimal_requirement_config</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="c1">#self._config[&quot;situational_awareness&quot;][&quot;sa_reasoner&quot;][&quot;sa_network&quot;][&quot;addr&quot;] = self._addr</span>
-        <span class="c1">#self._config[&quot;situational_awareness&quot;][&quot;sa_reasoner&quot;][&quot;sa_network&quot;][&quot;sar&quot;] = self</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_config</span><span class="p">[</span><span class="s2">&quot;situational_awareness&quot;</span><span class="p">][</span><span class="s2">&quot;sa_reasoner&quot;</span><span class="p">][</span><span class="s2">&quot;sa_network&quot;</span><span class="p">][</span><span class="s2">&quot;strict_topology&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_config</span><span class="p">[</span><span class="s2">&quot;situational_awareness&quot;</span><span class="p">][</span><span class="s2">&quot;strict_topology&quot;</span><span class="p">]</span>
+        <span class="c1"># self._config[&quot;situational_awareness&quot;][&quot;sa_reasoner&quot;][&quot;sa_network&quot;][&quot;addr&quot;] = self._addr</span>
+        <span class="c1"># self._config[&quot;situational_awareness&quot;][&quot;sa_reasoner&quot;][&quot;sa_network&quot;][&quot;sar&quot;] = self</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_config</span><span class="p">[</span><span class="s2">&quot;situational_awareness&quot;</span><span class="p">][</span><span class="s2">&quot;sa_reasoner&quot;</span><span class="p">][</span><span class="s2">&quot;sa_network&quot;</span><span class="p">][</span><span class="s2">&quot;strict_topology&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_config</span><span class="p">[</span>
+            <span class="s2">&quot;situational_awareness&quot;</span>
+        <span class="p">][</span><span class="s2">&quot;strict_topology&quot;</span><span class="p">]</span>
 
         <span class="c1"># SA Reasoner instance for all SA Reasoner Components</span>
         <span class="n">sar_components</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_config</span><span class="p">[</span><span class="s2">&quot;situational_awareness&quot;</span><span class="p">][</span><span class="s2">&quot;sa_reasoner&quot;</span><span class="p">][</span><span class="s2">&quot;sar_components&quot;</span><span class="p">]</span>
-        <span class="k">for</span> <span class="n">sar_comp</span> <span class="ow">in</span> <span class="n">sar_components</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+        <span class="k">for</span> <span class="n">sar_comp</span> <span class="ow">in</span> <span class="n">sar_components</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_config</span><span class="p">[</span><span class="s2">&quot;situational_awareness&quot;</span><span class="p">][</span><span class="s2">&quot;sa_reasoner&quot;</span><span class="p">][</span><span class="n">sar_comp</span><span class="p">][</span><span class="s2">&quot;sar&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_config</span><span class="p">[</span><span class="s2">&quot;situational_awareness&quot;</span><span class="p">][</span><span class="s2">&quot;sa_reasoner&quot;</span><span class="p">][</span><span class="n">sar_comp</span><span class="p">][</span><span class="s2">&quot;addr&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_addr</span>
 
@@ -7242,6 +7186,30 @@ or global awareness in distributed systems.</p>
             <span class="bp">self</span><span class="o">.</span><span class="n">_situational_awareness_network</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sa_components</span><span class="p">[</span><span class="s2">&quot;sanetwork&quot;</span><span class="p">]</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;SA Network not found&quot;</span><span class="p">)</span>
+
+    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">stop</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Stop the SAReasoner by stopping all SA components and clearing any pending operations.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;🛑  Stopping SAReasoner...&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_arbitrator_notification</span><span class="o">.</span><span class="n">set</span><span class="p">()</span>
+
+        <span class="c1"># Stop all SA components</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sa_components</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">component_name</span><span class="p">,</span> <span class="n">component</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sa_components</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="c1"># Check if component has a stop method</span>
+                    <span class="n">stop_method</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">component</span><span class="p">,</span> <span class="s2">&quot;stop&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="n">stop_method</span> <span class="ow">and</span> <span class="nb">callable</span><span class="p">(</span><span class="n">stop_method</span><span class="p">):</span>
+                        <span class="k">if</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">iscoroutinefunction</span><span class="p">(</span><span class="n">stop_method</span><span class="p">):</span>
+                            <span class="k">await</span> <span class="n">stop_method</span><span class="p">()</span>
+                        <span class="k">else</span><span class="p">:</span>
+                            <span class="n">stop_method</span><span class="p">()</span>
+                        <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;✅  Stopped SA component: </span><span class="si">{</span><span class="n">component_name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+                <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                    <span class="n">logging</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Error stopping SA component </span><span class="si">{</span><span class="n">component_name</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+        <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;✅  SAReasoner stopped successfully&quot;</span><span class="p">)</span>
 </code></pre></div></td></tr></table></div>
               </details>
 
@@ -7370,320 +7338,6 @@ or global awareness in distributed systems.</p>
 <div class="doc doc-object doc-function">
 
 
-<h3 id="nebula.core.situationalawareness.awareness.sareasoner.SAReasoner.accept_connection" class="doc doc-heading">
-            <code class="highlight language-python"><span class="n">accept_connection</span><span class="p">(</span><span class="n">source</span><span class="p">,</span> <span class="n">joining</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span></code>
-
-  <span class="doc doc-labels">
-      <small class="doc doc-label doc-label-async"><code>async</code></small>
-  </span>
-
-<a href="#nebula.core.situationalawareness.awareness.sareasoner.SAReasoner.accept_connection" class="headerlink" title="Permanent link">&para;</a></h3>
-
-
-    <div class="doc doc-contents ">
-
-        <p>Decide whether to accept a connection request from a source node.</p>
-<p>Delegates to the underlying reasoner logic to determine acceptance.</p>
-
-
-<p><span class="doc-section-title">Parameters:</span></p>
-    <table>
-      <thead>
-        <tr>
-          <th>Name</th>
-          <th>Type</th>
-          <th>Description</th>
-          <th>Default</th>
-        </tr>
-      </thead>
-      <tbody>
-          <tr class="doc-section-item">
-            <td>
-                <code>source</code>
-            </td>
-            <td>
-                  <code><span title="str">str</span></code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>The identifier or address of the requesting node.</p>
-              </div>
-            </td>
-            <td>
-                <em>required</em>
-            </td>
-          </tr>
-          <tr class="doc-section-item">
-            <td>
-                <code>joining</code>
-            </td>
-            <td>
-                  <code><span title="bool">bool</span></code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>If True, this connection is part of a join operation. Defaults to False.</p>
-              </div>
-            </td>
-            <td>
-                  <code>False</code>
-            </td>
-          </tr>
-      </tbody>
-    </table>
-
-
-    <p><span class="doc-section-title">Returns:</span></p>
-    <table>
-      <thead>
-        <tr>
-<th>Name</th>          <th>Type</th>
-          <th>Description</th>
-        </tr>
-      </thead>
-      <tbody>
-          <tr class="doc-section-item">
-<td><code>bool</code></td>            <td>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>True if the connection should be accepted, False otherwise.</p>
-              </div>
-            </td>
-          </tr>
-      </tbody>
-    </table>
-
-
-            <details class="quote">
-              <summary>Source code in <code>nebula/core/situationalawareness/awareness/sareasoner.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">179</span>
-<span class="normal">180</span>
-<span class="normal">181</span>
-<span class="normal">182</span>
-<span class="normal">183</span>
-<span class="normal">184</span>
-<span class="normal">185</span>
-<span class="normal">186</span>
-<span class="normal">187</span>
-<span class="normal">188</span>
-<span class="normal">189</span>
-<span class="normal">190</span>
-<span class="normal">191</span>
-<span class="normal">192</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">accept_connection</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">source</span><span class="p">,</span> <span class="n">joining</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Decide whether to accept a connection request from a source node.</span>
-
-<span class="sd">    Delegates to the underlying reasoner logic to determine acceptance.</span>
-
-<span class="sd">    Args:</span>
-<span class="sd">        source (str): The identifier or address of the requesting node.</span>
-<span class="sd">        joining (bool, optional): If True, this connection is part of a join operation. Defaults to False.</span>
-
-<span class="sd">    Returns:</span>
-<span class="sd">        bool: True if the connection should be accepted, False otherwise.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">return</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">san</span><span class="o">.</span><span class="n">accept_connection</span><span class="p">(</span><span class="n">source</span><span class="p">,</span> <span class="n">joining</span><span class="p">)</span>
-</code></pre></div></td></tr></table></div>
-            </details>
-    </div>
-
-</div>
-
-<div class="doc doc-object doc-function">
-
-
-<h3 id="nebula.core.situationalawareness.awareness.sareasoner.SAReasoner.get_actions" class="doc doc-heading">
-            <code class="highlight language-python"><span class="n">get_actions</span><span class="p">()</span></code>
-
-  <span class="doc doc-labels">
-      <small class="doc doc-label doc-label-async"><code>async</code></small>
-  </span>
-
-<a href="#nebula.core.situationalawareness.awareness.sareasoner.SAReasoner.get_actions" class="headerlink" title="Permanent link">&para;</a></h3>
-
-
-    <div class="doc doc-contents ">
-
-        <p>Retrieve the list of situational awareness actions available to execute.</p>
-<p>Delegates to the underlying reasoner component.</p>
-
-
-    <p><span class="doc-section-title">Returns:</span></p>
-    <table>
-      <thead>
-        <tr>
-<th>Name</th>          <th>Type</th>
-          <th>Description</th>
-        </tr>
-      </thead>
-      <tbody>
-          <tr class="doc-section-item">
-<td><code>list</code></td>            <td>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>Action identifiers that the reasoner can perform.</p>
-              </div>
-            </td>
-          </tr>
-      </tbody>
-    </table>
-
-
-            <details class="quote">
-              <summary>Source code in <code>nebula/core/situationalawareness/awareness/sareasoner.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">194</span>
-<span class="normal">195</span>
-<span class="normal">196</span>
-<span class="normal">197</span>
-<span class="normal">198</span>
-<span class="normal">199</span>
-<span class="normal">200</span>
-<span class="normal">201</span>
-<span class="normal">202</span>
-<span class="normal">203</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">get_actions</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Retrieve the list of situational awareness actions available to execute.</span>
-
-<span class="sd">    Delegates to the underlying reasoner component.</span>
-
-<span class="sd">    Returns:</span>
-<span class="sd">        list: Action identifiers that the reasoner can perform.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">return</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">san</span><span class="o">.</span><span class="n">get_actions</span><span class="p">()</span>
-</code></pre></div></td></tr></table></div>
-            </details>
-    </div>
-
-</div>
-
-<div class="doc doc-object doc-function">
-
-
-<h3 id="nebula.core.situationalawareness.awareness.sareasoner.SAReasoner.get_nodes_known" class="doc doc-heading">
-            <code class="highlight language-python"><span class="n">get_nodes_known</span><span class="p">(</span><span class="n">neighbors_too</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">neighbors_only</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span></code>
-
-  <span class="doc doc-labels">
-      <small class="doc doc-label doc-label-async"><code>async</code></small>
-  </span>
-
-<a href="#nebula.core.situationalawareness.awareness.sareasoner.SAReasoner.get_nodes_known" class="headerlink" title="Permanent link">&para;</a></h3>
-
-
-    <div class="doc doc-contents ">
-
-        <p>Retrieve the set of nodes known to the situational awareness reasoner.</p>
-<p>This may include additional metadata depending on the flags.</p>
-
-
-<p><span class="doc-section-title">Parameters:</span></p>
-    <table>
-      <thead>
-        <tr>
-          <th>Name</th>
-          <th>Type</th>
-          <th>Description</th>
-          <th>Default</th>
-        </tr>
-      </thead>
-      <tbody>
-          <tr class="doc-section-item">
-            <td>
-                <code>neighbors_too</code>
-            </td>
-            <td>
-                  <code><span title="bool">bool</span></code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>If True, include neighboring nodes in the result. Defaults to False.</p>
-              </div>
-            </td>
-            <td>
-                  <code>False</code>
-            </td>
-          </tr>
-          <tr class="doc-section-item">
-            <td>
-                <code>neighbors_only</code>
-            </td>
-            <td>
-                  <code><span title="bool">bool</span></code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>If True, return only neighbors. Defaults to False.</p>
-              </div>
-            </td>
-            <td>
-                  <code>False</code>
-            </td>
-          </tr>
-      </tbody>
-    </table>
-
-
-    <p><span class="doc-section-title">Returns:</span></p>
-    <table>
-      <thead>
-        <tr>
-<th>Name</th>          <th>Type</th>
-          <th>Description</th>
-        </tr>
-      </thead>
-      <tbody>
-          <tr class="doc-section-item">
-<td><code>set</code></td>            <td>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>Identifiers of known nodes based on the provided filters.</p>
-              </div>
-            </td>
-          </tr>
-      </tbody>
-    </table>
-
-
-            <details class="quote">
-              <summary>Source code in <code>nebula/core/situationalawareness/awareness/sareasoner.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">164</span>
-<span class="normal">165</span>
-<span class="normal">166</span>
-<span class="normal">167</span>
-<span class="normal">168</span>
-<span class="normal">169</span>
-<span class="normal">170</span>
-<span class="normal">171</span>
-<span class="normal">172</span>
-<span class="normal">173</span>
-<span class="normal">174</span>
-<span class="normal">175</span>
-<span class="normal">176</span>
-<span class="normal">177</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">get_nodes_known</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">neighbors_too</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">neighbors_only</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Retrieve the set of nodes known to the situational awareness reasoner.</span>
-
-<span class="sd">    This may include additional metadata depending on the flags.</span>
-
-<span class="sd">    Args:</span>
-<span class="sd">        neighbors_too (bool, optional): If True, include neighboring nodes in the result. Defaults to False.</span>
-<span class="sd">        neighbors_only (bool, optional): If True, return only neighbors. Defaults to False.</span>
-
-<span class="sd">    Returns:</span>
-<span class="sd">        set: Identifiers of known nodes based on the provided filters.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">return</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">san</span><span class="o">.</span><span class="n">get_nodes_known</span><span class="p">(</span><span class="n">neighbors_too</span><span class="p">,</span> <span class="n">neighbors_only</span><span class="p">)</span>
-</code></pre></div></td></tr></table></div>
-            </details>
-    </div>
-
-</div>
-
-<div class="doc doc-object doc-function">
-
-
 <h3 id="nebula.core.situationalawareness.awareness.sareasoner.SAReasoner.init" class="doc doc-heading">
             <code class="highlight language-python"><span class="n">init</span><span class="p">(</span><span class="n">sa_discovery</span><span class="p">)</span></code>
 
@@ -7749,7 +7403,7 @@ or global awareness in distributed systems.</p>
 <span class="sd">    Args:</span>
 <span class="sd">        sa_discovery (ISADiscovery): The discovery component to coordinate with.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="bp">self</span><span class="o">.</span><span class="n">_sa_discovery</span><span class="p">:</span> <span class="n">ISADiscovery</span> <span class="o">=</span> <span class="n">sa_discovery</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">_sa_discovery</span> <span class="o">=</span> <span class="n">sa_discovery</span>
     <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">_loading_sa_components</span><span class="p">()</span>
     <span class="k">await</span> <span class="n">EventManager</span><span class="o">.</span><span class="n">get_instance</span><span class="p">()</span><span class="o">.</span><span class="n">subscribe_node_event</span><span class="p">(</span><span class="n">RoundEndEvent</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_process_round_end_event</span><span class="p">)</span>
     <span class="k">await</span> <span class="n">EventManager</span><span class="o">.</span><span class="n">get_instance</span><span class="p">()</span><span class="o">.</span><span class="n">subscribe_node_event</span><span class="p">(</span><span class="n">AggregationEvent</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_process_aggregation_event</span><span class="p">)</span>
@@ -7818,6 +7472,77 @@ or global awareness in distributed systems.</p>
 
 </div>
 
+<div class="doc doc-object doc-function">
+
+
+<h3 id="nebula.core.situationalawareness.awareness.sareasoner.SAReasoner.stop" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">stop</span><span class="p">()</span></code>
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-async"><code>async</code></small>
+  </span>
+
+<a href="#nebula.core.situationalawareness.awareness.sareasoner.SAReasoner.stop" class="headerlink" title="Permanent link">&para;</a></h3>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Stop the SAReasoner by stopping all SA components and clearing any pending operations.</p>
+
+
+            <details class="quote">
+              <summary>Source code in <code>nebula/core/situationalawareness/awareness/sareasoner.py</code></summary>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">379</span>
+<span class="normal">380</span>
+<span class="normal">381</span>
+<span class="normal">382</span>
+<span class="normal">383</span>
+<span class="normal">384</span>
+<span class="normal">385</span>
+<span class="normal">386</span>
+<span class="normal">387</span>
+<span class="normal">388</span>
+<span class="normal">389</span>
+<span class="normal">390</span>
+<span class="normal">391</span>
+<span class="normal">392</span>
+<span class="normal">393</span>
+<span class="normal">394</span>
+<span class="normal">395</span>
+<span class="normal">396</span>
+<span class="normal">397</span>
+<span class="normal">398</span>
+<span class="normal">399</span>
+<span class="normal">400</span>
+<span class="normal">401</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">stop</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Stop the SAReasoner by stopping all SA components and clearing any pending operations.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;🛑  Stopping SAReasoner...&quot;</span><span class="p">)</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">_arbitrator_notification</span><span class="o">.</span><span class="n">set</span><span class="p">()</span>
+
+    <span class="c1"># Stop all SA components</span>
+    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sa_components</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">component_name</span><span class="p">,</span> <span class="n">component</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sa_components</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="c1"># Check if component has a stop method</span>
+                <span class="n">stop_method</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">component</span><span class="p">,</span> <span class="s2">&quot;stop&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">stop_method</span> <span class="ow">and</span> <span class="nb">callable</span><span class="p">(</span><span class="n">stop_method</span><span class="p">):</span>
+                    <span class="k">if</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">iscoroutinefunction</span><span class="p">(</span><span class="n">stop_method</span><span class="p">):</span>
+                        <span class="k">await</span> <span class="n">stop_method</span><span class="p">()</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="n">stop_method</span><span class="p">()</span>
+                    <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;✅  Stopped SA component: </span><span class="si">{</span><span class="n">component_name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                <span class="n">logging</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Error stopping SA component </span><span class="si">{</span><span class="n">component_name</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+    <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;✅  SAReasoner stopped successfully&quot;</span><span class="p">)</span>
+</code></pre></div></td></tr></table></div>
+            </details>
+    </div>
+
+</div>
+
 
 
   </div>
@@ -7854,7 +7579,7 @@ or global awareness in distributed systems.</p>
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="June 11, 2025 16:51:47 UTC">June 11, 2025</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="June 26, 2025 13:41:04 UTC">June 26, 2025</span>
   </span>
 
     

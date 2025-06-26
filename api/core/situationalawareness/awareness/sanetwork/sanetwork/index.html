@@ -4756,6 +4756,15 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#nebula.core.situationalawareness.awareness.sanetwork.sanetwork.SANetwork.create_verification_task" class="md-nav__link">
+    <span class="md-ellipsis">
+      create_verification_task
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#nebula.core.situationalawareness.awareness.sanetwork.sanetwork.SANetwork.experiment_finish" class="md-nav__link">
     <span class="md-ellipsis">
       experiment_finish
@@ -4849,6 +4858,15 @@
   <a href="#nebula.core.situationalawareness.awareness.sanetwork.sanetwork.SANetwork.sa_component_actions" class="md-nav__link">
     <span class="md-ellipsis">
       sa_component_actions
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#nebula.core.situationalawareness.awareness.sanetwork.sanetwork.SANetwork.stop" class="md-nav__link">
+    <span class="md-ellipsis">
+      stop
     </span>
   </a>
   
@@ -6282,6 +6300,15 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#nebula.core.situationalawareness.awareness.sanetwork.sanetwork.SANetwork.create_verification_task" class="md-nav__link">
+    <span class="md-ellipsis">
+      create_verification_task
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#nebula.core.situationalawareness.awareness.sanetwork.sanetwork.SANetwork.experiment_finish" class="md-nav__link">
     <span class="md-ellipsis">
       experiment_finish
@@ -6375,6 +6402,15 @@
   <a href="#nebula.core.situationalawareness.awareness.sanetwork.sanetwork.SANetwork.sa_component_actions" class="md-nav__link">
     <span class="md-ellipsis">
       sa_component_actions
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#nebula.core.situationalawareness.awareness.sanetwork.sanetwork.SANetwork.stop" class="md-nav__link">
+    <span class="md-ellipsis">
+      stop
     </span>
   </a>
   
@@ -6957,7 +6993,57 @@ the communication context within the federation.</p>
 <span class="normal">470</span>
 <span class="normal">471</span>
 <span class="normal">472</span>
-<span class="normal">473</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">SANetwork</span><span class="p">(</span><span class="n">SAMComponent</span><span class="p">):</span>
+<span class="normal">473</span>
+<span class="normal">474</span>
+<span class="normal">475</span>
+<span class="normal">476</span>
+<span class="normal">477</span>
+<span class="normal">478</span>
+<span class="normal">479</span>
+<span class="normal">480</span>
+<span class="normal">481</span>
+<span class="normal">482</span>
+<span class="normal">483</span>
+<span class="normal">484</span>
+<span class="normal">485</span>
+<span class="normal">486</span>
+<span class="normal">487</span>
+<span class="normal">488</span>
+<span class="normal">489</span>
+<span class="normal">490</span>
+<span class="normal">491</span>
+<span class="normal">492</span>
+<span class="normal">493</span>
+<span class="normal">494</span>
+<span class="normal">495</span>
+<span class="normal">496</span>
+<span class="normal">497</span>
+<span class="normal">498</span>
+<span class="normal">499</span>
+<span class="normal">500</span>
+<span class="normal">501</span>
+<span class="normal">502</span>
+<span class="normal">503</span>
+<span class="normal">504</span>
+<span class="normal">505</span>
+<span class="normal">506</span>
+<span class="normal">507</span>
+<span class="normal">508</span>
+<span class="normal">509</span>
+<span class="normal">510</span>
+<span class="normal">511</span>
+<span class="normal">512</span>
+<span class="normal">513</span>
+<span class="normal">514</span>
+<span class="normal">515</span>
+<span class="normal">516</span>
+<span class="normal">517</span>
+<span class="normal">518</span>
+<span class="normal">519</span>
+<span class="normal">520</span>
+<span class="normal">521</span>
+<span class="normal">522</span>
+<span class="normal">523</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">SANetwork</span><span class="p">(</span><span class="n">SAMComponent</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Network situational awareness component responsible for monitoring and managing</span>
 <span class="sd">    the communication context within the federation.</span>
@@ -6984,11 +7070,15 @@ the communication context within the federation.</p>
         <span class="bp">self</span><span class="o">.</span><span class="n">_sar</span> <span class="o">=</span> <span class="n">config</span><span class="p">[</span><span class="s2">&quot;sar&quot;</span><span class="p">]</span>  <span class="c1"># sar</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_addr</span> <span class="o">=</span> <span class="n">config</span><span class="p">[</span><span class="s2">&quot;addr&quot;</span><span class="p">]</span>  <span class="c1"># addr</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_neighbor_policy</span> <span class="o">=</span> <span class="n">factory_NeighborPolicy</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_neighbor_policy</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_restructure_process_lock</span> <span class="o">=</span> <span class="n">Locker</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;restructure_process_lock&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_restructure_process_lock</span> <span class="o">=</span> <span class="n">Locker</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;restructure_process_lock&quot;</span><span class="p">,</span> <span class="n">async_lock</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_restructure_cooldown</span> <span class="o">=</span> <span class="mi">0</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_verbose</span> <span class="o">=</span> <span class="n">config</span><span class="p">[</span><span class="s2">&quot;verbose&quot;</span><span class="p">]</span>  <span class="c1"># verbose</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_cm</span> <span class="o">=</span> <span class="n">CommunicationsManager</span><span class="o">.</span><span class="n">get_instance</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_sa_network_agent</span> <span class="o">=</span> <span class="n">SANetworkAgent</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+
+        <span class="c1"># Track verification tasks for proper cleanup during shutdown</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_verification_tasks</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_verification_tasks_lock</span> <span class="o">=</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">Lock</span><span class="p">()</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">sar</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SAReasoner</span><span class="p">:</span>
@@ -7299,7 +7389,7 @@ the communication context within the federation.</p>
 <span class="sd">        4. Release the restructure lock.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Going to reconnect with federation...&quot;</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_restructure_process_lock</span><span class="o">.</span><span class="n">acquire</span><span class="p">()</span>
+        <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">_restructure_process_lock</span><span class="o">.</span><span class="n">acquire_async</span><span class="p">()</span>
         <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">cm</span><span class="o">.</span><span class="n">clear_restrictions</span><span class="p">()</span>
         <span class="c1"># If we got some refs, try to reconnect to them</span>
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">np</span><span class="o">.</span><span class="n">get_nodes_known</span><span class="p">())</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
@@ -7312,7 +7402,7 @@ the communication context within the federation.</p>
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_verbose</span><span class="p">:</span>
                 <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Reconnecting | NO Addrs availables&quot;</span><span class="p">)</span>
             <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">sar</span><span class="o">.</span><span class="n">sad</span><span class="o">.</span><span class="n">start_late_connection_process</span><span class="p">(</span><span class="n">connected</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">msg_type</span><span class="o">=</span><span class="s2">&quot;discover_nodes&quot;</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_restructure_process_lock</span><span class="o">.</span><span class="n">release</span><span class="p">()</span>
+        <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">_restructure_process_lock</span><span class="o">.</span><span class="n">release_async</span><span class="p">()</span>
 
     <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">upgrade_connection_robustness</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">possible_neighbors</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
@@ -7327,7 +7417,7 @@ the communication context within the federation.</p>
 <span class="sd">        Args:</span>
 <span class="sd">            possible_neighbors (set): Addresses of candidate nodes for connection enhancement.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_restructure_process_lock</span><span class="o">.</span><span class="n">acquire</span><span class="p">()</span>
+        <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">_restructure_process_lock</span><span class="o">.</span><span class="n">acquire_async</span><span class="p">()</span>
         <span class="c1"># If we got some refs, try to connect to them</span>
         <span class="k">if</span> <span class="n">possible_neighbors</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">possible_neighbors</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_verbose</span><span class="p">:</span>
@@ -7339,7 +7429,7 @@ the communication context within the federation.</p>
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_verbose</span><span class="p">:</span>
                 <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Reestructuring | NO Addrs availables&quot;</span><span class="p">)</span>
             <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">sar</span><span class="o">.</span><span class="n">sad</span><span class="o">.</span><span class="n">start_late_connection_process</span><span class="p">(</span><span class="n">connected</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">msg_type</span><span class="o">=</span><span class="s2">&quot;discover_nodes&quot;</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_restructure_process_lock</span><span class="o">.</span><span class="n">release</span><span class="p">()</span>
+        <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">_restructure_process_lock</span><span class="o">.</span><span class="n">release_async</span><span class="p">()</span>
 
     <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">stop_connections_with_federation</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
@@ -7379,7 +7469,24 @@ the communication context within the federation.</p>
         <span class="k">if</span> <span class="n">neighbors</span><span class="p">:</span>
             <span class="n">nodes_to_forget</span><span class="o">.</span><span class="n">difference_update</span><span class="p">(</span><span class="n">neighbors</span><span class="p">)</span>
         <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Connections dont stablished: </span><span class="si">{</span><span class="n">nodes_to_forget</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">forget_nodes</span><span class="p">(</span><span class="n">nodes_to_forget</span><span class="p">)</span>
+        <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">forget_nodes</span><span class="p">(</span><span class="n">nodes_to_forget</span><span class="p">)</span>
+
+    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">create_verification_task</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">nodes</span><span class="p">:</span> <span class="nb">set</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Create and track a verification task for neighbor establishment.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            nodes (set): The set of node addresses for which connections were attempted.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            asyncio.Task: The created verification task.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">verification_task</span> <span class="o">=</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">create_task</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">verify_neighbors_stablished</span><span class="p">(</span><span class="n">nodes</span><span class="p">))</span>
+
+        <span class="k">async</span> <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_verification_tasks_lock</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_verification_tasks</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">verification_task</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">verification_task</span>
 
     <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">forget_nodes</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">nodes_to_forget</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
@@ -7389,6 +7496,35 @@ the communication context within the federation.</p>
 <span class="sd">            nodes_to_forget (set): Addresses of nodes to be purged from policy memory.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">np</span><span class="o">.</span><span class="n">forget_nodes</span><span class="p">(</span><span class="n">nodes_to_forget</span><span class="p">)</span>
+
+    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">stop</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Stop the SANetwork component by releasing locks and clearing any pending operations.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;🛑  Stopping SANetwork...&quot;</span><span class="p">)</span>
+
+        <span class="c1"># Cancel all verification tasks</span>
+        <span class="k">async</span> <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_verification_tasks_lock</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_verification_tasks</span><span class="p">:</span>
+                <span class="n">tasks_to_cancel</span> <span class="o">=</span> <span class="p">[</span><span class="n">task</span> <span class="k">for</span> <span class="n">task</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_verification_tasks</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">task</span><span class="o">.</span><span class="n">done</span><span class="p">()]</span>
+                <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;🛑  Cancelling </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">tasks_to_cancel</span><span class="p">)</span><span class="si">}</span><span class="s2"> verification tasks...&quot;</span><span class="p">)</span>
+                <span class="k">for</span> <span class="n">task</span> <span class="ow">in</span> <span class="n">tasks_to_cancel</span><span class="p">:</span>
+                    <span class="n">task</span><span class="o">.</span><span class="n">cancel</span><span class="p">()</span>
+                    <span class="k">try</span><span class="p">:</span>
+                        <span class="k">await</span> <span class="n">task</span>
+                    <span class="k">except</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">CancelledError</span><span class="p">:</span>
+                        <span class="k">pass</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_verification_tasks</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
+                <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;🛑  All verification tasks cancelled&quot;</span><span class="p">)</span>
+
+        <span class="c1"># Release any held locks</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_restructure_process_lock</span><span class="o">.</span><span class="n">locked</span><span class="p">():</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_restructure_process_lock</span><span class="o">.</span><span class="n">release</span><span class="p">()</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="n">logging</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Error releasing restructure_process_lock: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+        <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;✅  SANetwork stopped successfully&quot;</span><span class="p">)</span>
 
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;                                                     ###############################</span>
 <span class="sd">                                                            #       SA NETWORK AGENT      #</span>
@@ -7586,11 +7722,7 @@ the communication context within the federation.</p>
 
             <details class="quote">
               <summary>Source code in <code>nebula/core/situationalawareness/awareness/sanetwork/sanetwork.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">194</span>
-<span class="normal">195</span>
-<span class="normal">196</span>
-<span class="normal">197</span>
-<span class="normal">198</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">198</span>
 <span class="normal">199</span>
 <span class="normal">200</span>
 <span class="normal">201</span>
@@ -7598,7 +7730,11 @@ the communication context within the federation.</p>
 <span class="normal">203</span>
 <span class="normal">204</span>
 <span class="normal">205</span>
-<span class="normal">206</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">accept_connection</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">source</span><span class="p">,</span> <span class="n">joining</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+<span class="normal">206</span>
+<span class="normal">207</span>
+<span class="normal">208</span>
+<span class="normal">209</span>
+<span class="normal">210</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">accept_connection</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">source</span><span class="p">,</span> <span class="n">joining</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Decide whether to accept an incoming connection request from a source node.</span>
 
@@ -7670,11 +7806,7 @@ the system that a new node has been discovered.</p>
 
             <details class="quote">
               <summary>Source code in <code>nebula/core/situationalawareness/awareness/sanetwork/sanetwork.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">253</span>
-<span class="normal">254</span>
-<span class="normal">255</span>
-<span class="normal">256</span>
-<span class="normal">257</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">257</span>
 <span class="normal">258</span>
 <span class="normal">259</span>
 <span class="normal">260</span>
@@ -7683,7 +7815,11 @@ the system that a new node has been discovered.</p>
 <span class="normal">263</span>
 <span class="normal">264</span>
 <span class="normal">265</span>
-<span class="normal">266</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">beacon_received</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">beacon_recieved_event</span><span class="p">:</span> <span class="n">BeaconRecievedEvent</span><span class="p">):</span>
+<span class="normal">266</span>
+<span class="normal">267</span>
+<span class="normal">268</span>
+<span class="normal">269</span>
+<span class="normal">270</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">beacon_received</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">beacon_recieved_event</span><span class="p">:</span> <span class="n">BeaconRecievedEvent</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Process a received beacon event by publishing a NodeFoundEvent for the given address.</span>
 
@@ -7697,6 +7833,116 @@ the system that a new node has been discovered.</p>
     <span class="n">latitude</span><span class="p">,</span> <span class="n">longitude</span> <span class="o">=</span> <span class="n">geoloc</span>
     <span class="n">nfe</span> <span class="o">=</span> <span class="n">NodeFoundEvent</span><span class="p">(</span><span class="n">addr</span><span class="p">)</span>
     <span class="n">asyncio</span><span class="o">.</span><span class="n">create_task</span><span class="p">(</span><span class="n">EventManager</span><span class="o">.</span><span class="n">get_instance</span><span class="p">()</span><span class="o">.</span><span class="n">publish_node_event</span><span class="p">(</span><span class="n">nfe</span><span class="p">))</span>
+</code></pre></div></td></tr></table></div>
+            </details>
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="nebula.core.situationalawareness.awareness.sanetwork.sanetwork.SANetwork.create_verification_task" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">create_verification_task</span><span class="p">(</span><span class="n">nodes</span><span class="p">)</span></code>
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-async"><code>async</code></small>
+  </span>
+
+<a href="#nebula.core.situationalawareness.awareness.sanetwork.sanetwork.SANetwork.create_verification_task" class="headerlink" title="Permanent link">&para;</a></h3>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Create and track a verification task for neighbor establishment.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>nodes</code>
+            </td>
+            <td>
+                  <code><span title="set">set</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The set of node addresses for which connections were attempted.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>asyncio.Task: The created verification task.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+            <details class="quote">
+              <summary>Source code in <code>nebula/core/situationalawareness/awareness/sanetwork/sanetwork.py</code></summary>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">465</span>
+<span class="normal">466</span>
+<span class="normal">467</span>
+<span class="normal">468</span>
+<span class="normal">469</span>
+<span class="normal">470</span>
+<span class="normal">471</span>
+<span class="normal">472</span>
+<span class="normal">473</span>
+<span class="normal">474</span>
+<span class="normal">475</span>
+<span class="normal">476</span>
+<span class="normal">477</span>
+<span class="normal">478</span>
+<span class="normal">479</span>
+<span class="normal">480</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">create_verification_task</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">nodes</span><span class="p">:</span> <span class="nb">set</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Create and track a verification task for neighbor establishment.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        nodes (set): The set of node addresses for which connections were attempted.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        asyncio.Task: The created verification task.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">verification_task</span> <span class="o">=</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">create_task</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">verify_neighbors_stablished</span><span class="p">(</span><span class="n">nodes</span><span class="p">))</span>
+
+    <span class="k">async</span> <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_verification_tasks_lock</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_verification_tasks</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">verification_task</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">verification_task</span>
 </code></pre></div></td></tr></table></div>
             </details>
     </div>
@@ -7754,14 +8000,14 @@ the system that a new node has been discovered.</p>
 
             <details class="quote">
               <summary>Source code in <code>nebula/core/situationalawareness/awareness/sanetwork/sanetwork.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">244</span>
-<span class="normal">245</span>
-<span class="normal">246</span>
-<span class="normal">247</span>
-<span class="normal">248</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">248</span>
 <span class="normal">249</span>
 <span class="normal">250</span>
-<span class="normal">251</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">experiment_finish</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">efe</span><span class="p">:</span> <span class="n">ExperimentFinishEvent</span><span class="p">):</span>
+<span class="normal">251</span>
+<span class="normal">252</span>
+<span class="normal">253</span>
+<span class="normal">254</span>
+<span class="normal">255</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">experiment_finish</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">efe</span><span class="p">:</span> <span class="n">ExperimentFinishEvent</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Handle the completion of an experiment by shutting down the external connection service.</span>
 
@@ -7826,14 +8072,14 @@ the system that a new node has been discovered.</p>
 
             <details class="quote">
               <summary>Source code in <code>nebula/core/situationalawareness/awareness/sanetwork/sanetwork.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">461</span>
-<span class="normal">462</span>
-<span class="normal">463</span>
-<span class="normal">464</span>
-<span class="normal">465</span>
-<span class="normal">466</span>
-<span class="normal">467</span>
-<span class="normal">468</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">forget_nodes</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">nodes_to_forget</span><span class="p">):</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">482</span>
+<span class="normal">483</span>
+<span class="normal">484</span>
+<span class="normal">485</span>
+<span class="normal">486</span>
+<span class="normal">487</span>
+<span class="normal">488</span>
+<span class="normal">489</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">forget_nodes</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">nodes_to_forget</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Instruct the neighbor policy to remove specified nodes from its known set.</span>
 
@@ -7889,14 +8135,14 @@ the system that a new node has been discovered.</p>
 
             <details class="quote">
               <summary>Source code in <code>nebula/core/situationalawareness/awareness/sanetwork/sanetwork.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">217</span>
-<span class="normal">218</span>
-<span class="normal">219</span>
-<span class="normal">220</span>
-<span class="normal">221</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">221</span>
 <span class="normal">222</span>
 <span class="normal">223</span>
-<span class="normal">224</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">get_actions</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="normal">224</span>
+<span class="normal">225</span>
+<span class="normal">226</span>
+<span class="normal">227</span>
+<span class="normal">228</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">get_actions</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Retrieve the set of situational awareness actions applicable to the current network state.</span>
 
@@ -7999,18 +8245,18 @@ the system that a new node has been discovered.</p>
 
             <details class="quote">
               <summary>Source code in <code>nebula/core/situationalawareness/awareness/sanetwork/sanetwork.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">172</span>
-<span class="normal">173</span>
-<span class="normal">174</span>
-<span class="normal">175</span>
-<span class="normal">176</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">176</span>
 <span class="normal">177</span>
 <span class="normal">178</span>
 <span class="normal">179</span>
 <span class="normal">180</span>
 <span class="normal">181</span>
 <span class="normal">182</span>
-<span class="normal">183</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">get_nodes_known</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">neighbors_too</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">neighbors_only</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+<span class="normal">183</span>
+<span class="normal">184</span>
+<span class="normal">185</span>
+<span class="normal">186</span>
+<span class="normal">187</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">get_nodes_known</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">neighbors_too</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">neighbors_only</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Retrieve the list of known nodes in the network.</span>
 
@@ -8066,14 +8312,14 @@ the system that a new node has been discovered.</p>
 
             <details class="quote">
               <summary>Source code in <code>nebula/core/situationalawareness/awareness/sanetwork/sanetwork.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">295</span>
-<span class="normal">296</span>
-<span class="normal">297</span>
-<span class="normal">298</span>
-<span class="normal">299</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">299</span>
 <span class="normal">300</span>
 <span class="normal">301</span>
-<span class="normal">302</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">get_restructure_process_lock</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="normal">302</span>
+<span class="normal">303</span>
+<span class="normal">304</span>
+<span class="normal">305</span>
+<span class="normal">306</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">get_restructure_process_lock</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Retrieve the asynchronous lock protecting the restructure process.</span>
 
@@ -8114,11 +8360,7 @@ subscribing to relevant events, starting beaconing, and configuring neighbor pol
 
             <details class="quote">
               <summary>Source code in <code>nebula/core/situationalawareness/awareness/sanetwork/sanetwork.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 90</span>
-<span class="normal"> 91</span>
-<span class="normal"> 92</span>
-<span class="normal"> 93</span>
-<span class="normal"> 94</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 94</span>
 <span class="normal"> 95</span>
 <span class="normal"> 96</span>
 <span class="normal"> 97</span>
@@ -8146,7 +8388,11 @@ subscribing to relevant events, starting beaconing, and configuring neighbor pol
 <span class="normal">119</span>
 <span class="normal">120</span>
 <span class="normal">121</span>
-<span class="normal">122</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">init</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="normal">122</span>
+<span class="normal">123</span>
+<span class="normal">124</span>
+<span class="normal">125</span>
+<span class="normal">126</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">init</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Initialize the SANetwork component by deploying external connection services,</span>
 <span class="sd">    subscribing to relevant events, starting beaconing, and configuring neighbor policies.</span>
@@ -8236,15 +8482,15 @@ subscribing to relevant events, starting beaconing, and configuring neighbor pol
 
             <details class="quote">
               <summary>Source code in <code>nebula/core/situationalawareness/awareness/sanetwork/sanetwork.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">162</span>
-<span class="normal">163</span>
-<span class="normal">164</span>
-<span class="normal">165</span>
-<span class="normal">166</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">166</span>
 <span class="normal">167</span>
 <span class="normal">168</span>
 <span class="normal">169</span>
-<span class="normal">170</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">meet_node</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">node</span><span class="p">):</span>
+<span class="normal">170</span>
+<span class="normal">171</span>
+<span class="normal">172</span>
+<span class="normal">173</span>
+<span class="normal">174</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">meet_node</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">node</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Propose a meeting (connection) with a newly discovered node if it is not self.</span>
 
@@ -8301,14 +8547,14 @@ subscribing to relevant events, starting beaconing, and configuring neighbor pol
 
             <details class="quote">
               <summary>Source code in <code>nebula/core/situationalawareness/awareness/sanetwork/sanetwork.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">208</span>
-<span class="normal">209</span>
-<span class="normal">210</span>
-<span class="normal">211</span>
-<span class="normal">212</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">212</span>
 <span class="normal">213</span>
 <span class="normal">214</span>
-<span class="normal">215</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">need_more_neighbors</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="normal">215</span>
+<span class="normal">216</span>
+<span class="normal">217</span>
+<span class="normal">218</span>
+<span class="normal">219</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">need_more_neighbors</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Determine if the network requires additional neighbor connections.</span>
 
@@ -8364,14 +8610,14 @@ subscribing to relevant events, starting beaconing, and configuring neighbor pol
 
             <details class="quote">
               <summary>Source code in <code>nebula/core/situationalawareness/awareness/sanetwork/sanetwork.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">185</span>
-<span class="normal">186</span>
-<span class="normal">187</span>
-<span class="normal">188</span>
-<span class="normal">189</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">189</span>
 <span class="normal">190</span>
 <span class="normal">191</span>
-<span class="normal">192</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">neighbors_left</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="normal">192</span>
+<span class="normal">193</span>
+<span class="normal">194</span>
+<span class="normal">195</span>
+<span class="normal">196</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">neighbors_left</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Check whether any direct neighbor connections remain.</span>
 
@@ -8411,11 +8657,7 @@ to rejoin the federation.</p>
 
             <details class="quote">
               <summary>Source code in <code>nebula/core/situationalawareness/awareness/sanetwork/sanetwork.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">367</span>
-<span class="normal">368</span>
-<span class="normal">369</span>
-<span class="normal">370</span>
-<span class="normal">371</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">371</span>
 <span class="normal">372</span>
 <span class="normal">373</span>
 <span class="normal">374</span>
@@ -8436,7 +8678,11 @@ to rejoin the federation.</p>
 <span class="normal">389</span>
 <span class="normal">390</span>
 <span class="normal">391</span>
-<span class="normal">392</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">reconnect_to_federation</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="normal">392</span>
+<span class="normal">393</span>
+<span class="normal">394</span>
+<span class="normal">395</span>
+<span class="normal">396</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">reconnect_to_federation</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Clear any connection restrictions and initiate a late‐connection discovery process</span>
 <span class="sd">    to rejoin the federation.</span>
@@ -8448,7 +8694,7 @@ to rejoin the federation.</p>
 <span class="sd">    4. Release the restructure lock.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Going to reconnect with federation...&quot;</span><span class="p">)</span>
-    <span class="bp">self</span><span class="o">.</span><span class="n">_restructure_process_lock</span><span class="o">.</span><span class="n">acquire</span><span class="p">()</span>
+    <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">_restructure_process_lock</span><span class="o">.</span><span class="n">acquire_async</span><span class="p">()</span>
     <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">cm</span><span class="o">.</span><span class="n">clear_restrictions</span><span class="p">()</span>
     <span class="c1"># If we got some refs, try to reconnect to them</span>
     <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">np</span><span class="o">.</span><span class="n">get_nodes_known</span><span class="p">())</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
@@ -8461,7 +8707,7 @@ to rejoin the federation.</p>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_verbose</span><span class="p">:</span>
             <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Reconnecting | NO Addrs availables&quot;</span><span class="p">)</span>
         <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">sar</span><span class="o">.</span><span class="n">sad</span><span class="o">.</span><span class="n">start_late_connection_process</span><span class="p">(</span><span class="n">connected</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">msg_type</span><span class="o">=</span><span class="s2">&quot;discover_nodes&quot;</span><span class="p">)</span>
-    <span class="bp">self</span><span class="o">.</span><span class="n">_restructure_process_lock</span><span class="o">.</span><span class="n">release</span><span class="p">()</span>
+    <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">_restructure_process_lock</span><span class="o">.</span><span class="n">release_async</span><span class="p">()</span>
 </code></pre></div></td></tr></table></div>
             </details>
     </div>
@@ -8490,16 +8736,16 @@ the robustness of the current network topology.</p>
 
             <details class="quote">
               <summary>Source code in <code>nebula/core/situationalawareness/awareness/sanetwork/sanetwork.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">124</span>
-<span class="normal">125</span>
-<span class="normal">126</span>
-<span class="normal">127</span>
-<span class="normal">128</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">128</span>
 <span class="normal">129</span>
 <span class="normal">130</span>
 <span class="normal">131</span>
 <span class="normal">132</span>
-<span class="normal">133</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">sa_component_actions</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="normal">133</span>
+<span class="normal">134</span>
+<span class="normal">135</span>
+<span class="normal">136</span>
+<span class="normal">137</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">sa_component_actions</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Perform periodic situational awareness checks for network conditions.</span>
 
@@ -8509,6 +8755,87 @@ the robustness of the current network topology.</p>
     <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;SA Network evaluating current scenario&quot;</span><span class="p">)</span>
     <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">_check_external_connection_service_status</span><span class="p">()</span>
     <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">_analize_topology_robustness</span><span class="p">()</span>
+</code></pre></div></td></tr></table></div>
+            </details>
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="nebula.core.situationalawareness.awareness.sanetwork.sanetwork.SANetwork.stop" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">stop</span><span class="p">()</span></code>
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-async"><code>async</code></small>
+  </span>
+
+<a href="#nebula.core.situationalawareness.awareness.sanetwork.sanetwork.SANetwork.stop" class="headerlink" title="Permanent link">&para;</a></h3>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Stop the SANetwork component by releasing locks and clearing any pending operations.</p>
+
+
+            <details class="quote">
+              <summary>Source code in <code>nebula/core/situationalawareness/awareness/sanetwork/sanetwork.py</code></summary>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">491</span>
+<span class="normal">492</span>
+<span class="normal">493</span>
+<span class="normal">494</span>
+<span class="normal">495</span>
+<span class="normal">496</span>
+<span class="normal">497</span>
+<span class="normal">498</span>
+<span class="normal">499</span>
+<span class="normal">500</span>
+<span class="normal">501</span>
+<span class="normal">502</span>
+<span class="normal">503</span>
+<span class="normal">504</span>
+<span class="normal">505</span>
+<span class="normal">506</span>
+<span class="normal">507</span>
+<span class="normal">508</span>
+<span class="normal">509</span>
+<span class="normal">510</span>
+<span class="normal">511</span>
+<span class="normal">512</span>
+<span class="normal">513</span>
+<span class="normal">514</span>
+<span class="normal">515</span>
+<span class="normal">516</span>
+<span class="normal">517</span>
+<span class="normal">518</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">stop</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Stop the SANetwork component by releasing locks and clearing any pending operations.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;🛑  Stopping SANetwork...&quot;</span><span class="p">)</span>
+
+    <span class="c1"># Cancel all verification tasks</span>
+    <span class="k">async</span> <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_verification_tasks_lock</span><span class="p">:</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_verification_tasks</span><span class="p">:</span>
+            <span class="n">tasks_to_cancel</span> <span class="o">=</span> <span class="p">[</span><span class="n">task</span> <span class="k">for</span> <span class="n">task</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_verification_tasks</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">task</span><span class="o">.</span><span class="n">done</span><span class="p">()]</span>
+            <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;🛑  Cancelling </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">tasks_to_cancel</span><span class="p">)</span><span class="si">}</span><span class="s2"> verification tasks...&quot;</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">task</span> <span class="ow">in</span> <span class="n">tasks_to_cancel</span><span class="p">:</span>
+                <span class="n">task</span><span class="o">.</span><span class="n">cancel</span><span class="p">()</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="k">await</span> <span class="n">task</span>
+                <span class="k">except</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">CancelledError</span><span class="p">:</span>
+                    <span class="k">pass</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_verification_tasks</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
+            <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;🛑  All verification tasks cancelled&quot;</span><span class="p">)</span>
+
+    <span class="c1"># Release any held locks</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_restructure_process_lock</span><span class="o">.</span><span class="n">locked</span><span class="p">():</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_restructure_process_lock</span><span class="o">.</span><span class="n">release</span><span class="p">()</span>
+    <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+        <span class="n">logging</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Error releasing restructure_process_lock: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+    <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;✅  SANetwork stopped successfully&quot;</span><span class="p">)</span>
 </code></pre></div></td></tr></table></div>
             </details>
     </div>
@@ -8540,11 +8867,7 @@ the robustness of the current network topology.</p>
 
             <details class="quote">
               <summary>Source code in <code>nebula/core/situationalawareness/awareness/sanetwork/sanetwork.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">421</span>
-<span class="normal">422</span>
-<span class="normal">423</span>
-<span class="normal">424</span>
-<span class="normal">425</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">425</span>
 <span class="normal">426</span>
 <span class="normal">427</span>
 <span class="normal">428</span>
@@ -8554,7 +8877,11 @@ the robustness of the current network topology.</p>
 <span class="normal">432</span>
 <span class="normal">433</span>
 <span class="normal">434</span>
-<span class="normal">435</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">stop_connections_with_federation</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="normal">435</span>
+<span class="normal">436</span>
+<span class="normal">437</span>
+<span class="normal">438</span>
+<span class="normal">439</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">stop_connections_with_federation</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Disconnect from all current federation neighbors after a short delay.</span>
 
@@ -8631,11 +8958,7 @@ the robustness of the current network topology.</p>
 
             <details class="quote">
               <summary>Source code in <code>nebula/core/situationalawareness/awareness/sanetwork/sanetwork.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">394</span>
-<span class="normal">395</span>
-<span class="normal">396</span>
-<span class="normal">397</span>
-<span class="normal">398</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">398</span>
 <span class="normal">399</span>
 <span class="normal">400</span>
 <span class="normal">401</span>
@@ -8656,7 +8979,11 @@ the robustness of the current network topology.</p>
 <span class="normal">416</span>
 <span class="normal">417</span>
 <span class="normal">418</span>
-<span class="normal">419</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">upgrade_connection_robustness</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">possible_neighbors</span><span class="p">):</span>
+<span class="normal">419</span>
+<span class="normal">420</span>
+<span class="normal">421</span>
+<span class="normal">422</span>
+<span class="normal">423</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">upgrade_connection_robustness</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">possible_neighbors</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Attempt to strengthen network robustness by discovering or reconnecting to additional neighbors.</span>
 
@@ -8669,7 +8996,7 @@ the robustness of the current network topology.</p>
 <span class="sd">    Args:</span>
 <span class="sd">        possible_neighbors (set): Addresses of candidate nodes for connection enhancement.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="bp">self</span><span class="o">.</span><span class="n">_restructure_process_lock</span><span class="o">.</span><span class="n">acquire</span><span class="p">()</span>
+    <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">_restructure_process_lock</span><span class="o">.</span><span class="n">acquire_async</span><span class="p">()</span>
     <span class="c1"># If we got some refs, try to connect to them</span>
     <span class="k">if</span> <span class="n">possible_neighbors</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">possible_neighbors</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_verbose</span><span class="p">:</span>
@@ -8681,7 +9008,7 @@ the robustness of the current network topology.</p>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_verbose</span><span class="p">:</span>
             <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Reestructuring | NO Addrs availables&quot;</span><span class="p">)</span>
         <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">sar</span><span class="o">.</span><span class="n">sad</span><span class="o">.</span><span class="n">start_late_connection_process</span><span class="p">(</span><span class="n">connected</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">msg_type</span><span class="o">=</span><span class="s2">&quot;discover_nodes&quot;</span><span class="p">)</span>
-    <span class="bp">self</span><span class="o">.</span><span class="n">_restructure_process_lock</span><span class="o">.</span><span class="n">release</span><span class="p">()</span>
+    <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">_restructure_process_lock</span><span class="o">.</span><span class="n">release_async</span><span class="p">()</span>
 </code></pre></div></td></tr></table></div>
             </details>
     </div>
@@ -8743,11 +9070,7 @@ the robustness of the current network topology.</p>
 
             <details class="quote">
               <summary>Source code in <code>nebula/core/situationalawareness/awareness/sanetwork/sanetwork.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">437</span>
-<span class="normal">438</span>
-<span class="normal">439</span>
-<span class="normal">440</span>
-<span class="normal">441</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">441</span>
 <span class="normal">442</span>
 <span class="normal">443</span>
 <span class="normal">444</span>
@@ -8765,7 +9088,11 @@ the robustness of the current network topology.</p>
 <span class="normal">456</span>
 <span class="normal">457</span>
 <span class="normal">458</span>
-<span class="normal">459</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">verify_neighbors_stablished</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">nodes</span><span class="p">:</span> <span class="nb">set</span><span class="p">):</span>
+<span class="normal">459</span>
+<span class="normal">460</span>
+<span class="normal">461</span>
+<span class="normal">462</span>
+<span class="normal">463</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">verify_neighbors_stablished</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">nodes</span><span class="p">:</span> <span class="nb">set</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Verify that a set of connection attempts has succeeded within a timeout.</span>
 
@@ -8787,7 +9114,7 @@ the robustness of the current network topology.</p>
     <span class="k">if</span> <span class="n">neighbors</span><span class="p">:</span>
         <span class="n">nodes_to_forget</span><span class="o">.</span><span class="n">difference_update</span><span class="p">(</span><span class="n">neighbors</span><span class="p">)</span>
     <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Connections dont stablished: </span><span class="si">{</span><span class="n">nodes_to_forget</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-    <span class="bp">self</span><span class="o">.</span><span class="n">forget_nodes</span><span class="p">(</span><span class="n">nodes_to_forget</span><span class="p">)</span>
+    <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">forget_nodes</span><span class="p">(</span><span class="n">nodes_to_forget</span><span class="p">)</span>
 </code></pre></div></td></tr></table></div>
             </details>
     </div>
@@ -8826,57 +9153,7 @@ the robustness of the current network topology.</p>
 
               <details class="quote">
                 <summary>Source code in <code>nebula/core/situationalawareness/awareness/sanetwork/sanetwork.py</code></summary>
-                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">476</span>
-<span class="normal">477</span>
-<span class="normal">478</span>
-<span class="normal">479</span>
-<span class="normal">480</span>
-<span class="normal">481</span>
-<span class="normal">482</span>
-<span class="normal">483</span>
-<span class="normal">484</span>
-<span class="normal">485</span>
-<span class="normal">486</span>
-<span class="normal">487</span>
-<span class="normal">488</span>
-<span class="normal">489</span>
-<span class="normal">490</span>
-<span class="normal">491</span>
-<span class="normal">492</span>
-<span class="normal">493</span>
-<span class="normal">494</span>
-<span class="normal">495</span>
-<span class="normal">496</span>
-<span class="normal">497</span>
-<span class="normal">498</span>
-<span class="normal">499</span>
-<span class="normal">500</span>
-<span class="normal">501</span>
-<span class="normal">502</span>
-<span class="normal">503</span>
-<span class="normal">504</span>
-<span class="normal">505</span>
-<span class="normal">506</span>
-<span class="normal">507</span>
-<span class="normal">508</span>
-<span class="normal">509</span>
-<span class="normal">510</span>
-<span class="normal">511</span>
-<span class="normal">512</span>
-<span class="normal">513</span>
-<span class="normal">514</span>
-<span class="normal">515</span>
-<span class="normal">516</span>
-<span class="normal">517</span>
-<span class="normal">518</span>
-<span class="normal">519</span>
-<span class="normal">520</span>
-<span class="normal">521</span>
-<span class="normal">522</span>
-<span class="normal">523</span>
-<span class="normal">524</span>
-<span class="normal">525</span>
-<span class="normal">526</span>
+                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">526</span>
 <span class="normal">527</span>
 <span class="normal">528</span>
 <span class="normal">529</span>
@@ -8914,7 +9191,59 @@ the robustness of the current network topology.</p>
 <span class="normal">561</span>
 <span class="normal">562</span>
 <span class="normal">563</span>
-<span class="normal">564</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">SANetworkAgent</span><span class="p">(</span><span class="n">SAModuleAgent</span><span class="p">):</span>
+<span class="normal">564</span>
+<span class="normal">565</span>
+<span class="normal">566</span>
+<span class="normal">567</span>
+<span class="normal">568</span>
+<span class="normal">569</span>
+<span class="normal">570</span>
+<span class="normal">571</span>
+<span class="normal">572</span>
+<span class="normal">573</span>
+<span class="normal">574</span>
+<span class="normal">575</span>
+<span class="normal">576</span>
+<span class="normal">577</span>
+<span class="normal">578</span>
+<span class="normal">579</span>
+<span class="normal">580</span>
+<span class="normal">581</span>
+<span class="normal">582</span>
+<span class="normal">583</span>
+<span class="normal">584</span>
+<span class="normal">585</span>
+<span class="normal">586</span>
+<span class="normal">587</span>
+<span class="normal">588</span>
+<span class="normal">589</span>
+<span class="normal">590</span>
+<span class="normal">591</span>
+<span class="normal">592</span>
+<span class="normal">593</span>
+<span class="normal">594</span>
+<span class="normal">595</span>
+<span class="normal">596</span>
+<span class="normal">597</span>
+<span class="normal">598</span>
+<span class="normal">599</span>
+<span class="normal">600</span>
+<span class="normal">601</span>
+<span class="normal">602</span>
+<span class="normal">603</span>
+<span class="normal">604</span>
+<span class="normal">605</span>
+<span class="normal">606</span>
+<span class="normal">607</span>
+<span class="normal">608</span>
+<span class="normal">609</span>
+<span class="normal">610</span>
+<span class="normal">611</span>
+<span class="normal">612</span>
+<span class="normal">613</span>
+<span class="normal">614</span>
+<span class="normal">615</span>
+<span class="normal">616</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">SANetworkAgent</span><span class="p">(</span><span class="n">SAModuleAgent</span><span class="p">):</span>
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sanetwork</span><span class="p">:</span> <span class="n">SANetwork</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_san</span> <span class="o">=</span> <span class="n">sanetwork</span>
 
@@ -8930,7 +9259,9 @@ the robustness of the current network topology.</p>
     <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">notify_all_suggestions_done</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">event_type</span><span class="p">):</span>
         <span class="k">await</span> <span class="n">SuggestionBuffer</span><span class="o">.</span><span class="n">get_instance</span><span class="p">()</span><span class="o">.</span><span class="n">notify_all_suggestions_done_for_agent</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">event_type</span><span class="p">)</span>
 
-    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">create_and_suggest_action</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">saca</span><span class="p">:</span> <span class="n">SACommandAction</span><span class="p">,</span> <span class="n">function</span><span class="p">:</span> <span class="n">Callable</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">more_suggestions</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">):</span>
+    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">create_and_suggest_action</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">saca</span><span class="p">:</span> <span class="n">SACommandAction</span><span class="p">,</span> <span class="n">function</span><span class="p">:</span> <span class="n">Callable</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">more_suggestions</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span>
+    <span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Create a situational awareness command based on the specified action and suggest it for arbitration.</span>
 
@@ -8970,7 +9301,7 @@ the robustness of the current network topology.</p>
             <span class="n">sa_command_state</span> <span class="o">=</span> <span class="k">await</span> <span class="n">sac</span><span class="o">.</span><span class="n">get_state_future</span><span class="p">()</span>  <span class="c1"># By using &#39;await&#39; we get future.set_result()</span>
             <span class="k">if</span> <span class="n">sa_command_state</span> <span class="o">==</span> <span class="n">SACommandState</span><span class="o">.</span><span class="n">EXECUTED</span><span class="p">:</span>
                 <span class="p">(</span><span class="n">nodes_to_forget</span><span class="p">,)</span> <span class="o">=</span> <span class="n">args</span>
-                <span class="n">asyncio</span><span class="o">.</span><span class="n">create_task</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_san</span><span class="o">.</span><span class="n">verify_neighbors_stablished</span><span class="p">(</span><span class="n">nodes_to_forget</span><span class="p">))</span>
+                <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">_san</span><span class="o">.</span><span class="n">create_verification_task</span><span class="p">(</span><span class="n">nodes_to_forget</span><span class="p">)</span>
         <span class="k">elif</span> <span class="n">saca</span> <span class="o">==</span> <span class="n">SACommandAction</span><span class="o">.</span><span class="n">RECONNECT</span><span class="p">:</span>
             <span class="n">sac</span> <span class="o">=</span> <span class="n">factory_sa_command</span><span class="p">(</span>
                 <span class="s2">&quot;connectivity&quot;</span><span class="p">,</span> <span class="n">SACommandAction</span><span class="o">.</span><span class="n">RECONNECT</span><span class="p">,</span> <span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="n">SACommandPRIO</span><span class="o">.</span><span class="n">HIGH</span><span class="p">,</span> <span class="kc">True</span><span class="p">,</span> <span class="n">function</span>
@@ -9121,57 +9452,7 @@ the robustness of the current network topology.</p>
 
             <details class="quote">
               <summary>Source code in <code>nebula/core/situationalawareness/awareness/sanetwork/sanetwork.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">492</span>
-<span class="normal">493</span>
-<span class="normal">494</span>
-<span class="normal">495</span>
-<span class="normal">496</span>
-<span class="normal">497</span>
-<span class="normal">498</span>
-<span class="normal">499</span>
-<span class="normal">500</span>
-<span class="normal">501</span>
-<span class="normal">502</span>
-<span class="normal">503</span>
-<span class="normal">504</span>
-<span class="normal">505</span>
-<span class="normal">506</span>
-<span class="normal">507</span>
-<span class="normal">508</span>
-<span class="normal">509</span>
-<span class="normal">510</span>
-<span class="normal">511</span>
-<span class="normal">512</span>
-<span class="normal">513</span>
-<span class="normal">514</span>
-<span class="normal">515</span>
-<span class="normal">516</span>
-<span class="normal">517</span>
-<span class="normal">518</span>
-<span class="normal">519</span>
-<span class="normal">520</span>
-<span class="normal">521</span>
-<span class="normal">522</span>
-<span class="normal">523</span>
-<span class="normal">524</span>
-<span class="normal">525</span>
-<span class="normal">526</span>
-<span class="normal">527</span>
-<span class="normal">528</span>
-<span class="normal">529</span>
-<span class="normal">530</span>
-<span class="normal">531</span>
-<span class="normal">532</span>
-<span class="normal">533</span>
-<span class="normal">534</span>
-<span class="normal">535</span>
-<span class="normal">536</span>
-<span class="normal">537</span>
-<span class="normal">538</span>
-<span class="normal">539</span>
-<span class="normal">540</span>
-<span class="normal">541</span>
-<span class="normal">542</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">542</span>
 <span class="normal">543</span>
 <span class="normal">544</span>
 <span class="normal">545</span>
@@ -9193,7 +9474,61 @@ the robustness of the current network topology.</p>
 <span class="normal">561</span>
 <span class="normal">562</span>
 <span class="normal">563</span>
-<span class="normal">564</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">create_and_suggest_action</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">saca</span><span class="p">:</span> <span class="n">SACommandAction</span><span class="p">,</span> <span class="n">function</span><span class="p">:</span> <span class="n">Callable</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">more_suggestions</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">):</span>
+<span class="normal">564</span>
+<span class="normal">565</span>
+<span class="normal">566</span>
+<span class="normal">567</span>
+<span class="normal">568</span>
+<span class="normal">569</span>
+<span class="normal">570</span>
+<span class="normal">571</span>
+<span class="normal">572</span>
+<span class="normal">573</span>
+<span class="normal">574</span>
+<span class="normal">575</span>
+<span class="normal">576</span>
+<span class="normal">577</span>
+<span class="normal">578</span>
+<span class="normal">579</span>
+<span class="normal">580</span>
+<span class="normal">581</span>
+<span class="normal">582</span>
+<span class="normal">583</span>
+<span class="normal">584</span>
+<span class="normal">585</span>
+<span class="normal">586</span>
+<span class="normal">587</span>
+<span class="normal">588</span>
+<span class="normal">589</span>
+<span class="normal">590</span>
+<span class="normal">591</span>
+<span class="normal">592</span>
+<span class="normal">593</span>
+<span class="normal">594</span>
+<span class="normal">595</span>
+<span class="normal">596</span>
+<span class="normal">597</span>
+<span class="normal">598</span>
+<span class="normal">599</span>
+<span class="normal">600</span>
+<span class="normal">601</span>
+<span class="normal">602</span>
+<span class="normal">603</span>
+<span class="normal">604</span>
+<span class="normal">605</span>
+<span class="normal">606</span>
+<span class="normal">607</span>
+<span class="normal">608</span>
+<span class="normal">609</span>
+<span class="normal">610</span>
+<span class="normal">611</span>
+<span class="normal">612</span>
+<span class="normal">613</span>
+<span class="normal">614</span>
+<span class="normal">615</span>
+<span class="normal">616</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">create_and_suggest_action</span><span class="p">(</span>
+    <span class="bp">self</span><span class="p">,</span> <span class="n">saca</span><span class="p">:</span> <span class="n">SACommandAction</span><span class="p">,</span> <span class="n">function</span><span class="p">:</span> <span class="n">Callable</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">more_suggestions</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span>
+<span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Create a situational awareness command based on the specified action and suggest it for arbitration.</span>
 
@@ -9233,7 +9568,7 @@ the robustness of the current network topology.</p>
         <span class="n">sa_command_state</span> <span class="o">=</span> <span class="k">await</span> <span class="n">sac</span><span class="o">.</span><span class="n">get_state_future</span><span class="p">()</span>  <span class="c1"># By using &#39;await&#39; we get future.set_result()</span>
         <span class="k">if</span> <span class="n">sa_command_state</span> <span class="o">==</span> <span class="n">SACommandState</span><span class="o">.</span><span class="n">EXECUTED</span><span class="p">:</span>
             <span class="p">(</span><span class="n">nodes_to_forget</span><span class="p">,)</span> <span class="o">=</span> <span class="n">args</span>
-            <span class="n">asyncio</span><span class="o">.</span><span class="n">create_task</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_san</span><span class="o">.</span><span class="n">verify_neighbors_stablished</span><span class="p">(</span><span class="n">nodes_to_forget</span><span class="p">))</span>
+            <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">_san</span><span class="o">.</span><span class="n">create_verification_task</span><span class="p">(</span><span class="n">nodes_to_forget</span><span class="p">)</span>
     <span class="k">elif</span> <span class="n">saca</span> <span class="o">==</span> <span class="n">SACommandAction</span><span class="o">.</span><span class="n">RECONNECT</span><span class="p">:</span>
         <span class="n">sac</span> <span class="o">=</span> <span class="n">factory_sa_command</span><span class="p">(</span>
             <span class="s2">&quot;connectivity&quot;</span><span class="p">,</span> <span class="n">SACommandAction</span><span class="o">.</span><span class="n">RECONNECT</span><span class="p">,</span> <span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="n">SACommandPRIO</span><span class="o">.</span><span class="n">HIGH</span><span class="p">,</span> <span class="kc">True</span><span class="p">,</span> <span class="n">function</span>
@@ -9308,7 +9643,7 @@ the robustness of the current network topology.</p>
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="June 11, 2025 16:51:47 UTC">June 11, 2025</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="June 26, 2025 13:41:04 UTC">June 26, 2025</span>
   </span>
 
     

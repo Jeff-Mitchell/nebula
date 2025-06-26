@@ -1358,15 +1358,6 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#nebula.addons.mobility.Mobility.round" class="md-nav__link">
-    <span class="md-ellipsis">
-      round
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
   <a href="#nebula.addons.mobility.Mobility.__init__" class="md-nav__link">
     <span class="md-ellipsis">
       __init__
@@ -1424,6 +1415,15 @@
   <a href="#nebula.addons.mobility.Mobility.start" class="md-nav__link">
     <span class="md-ellipsis">
       start
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#nebula.addons.mobility.Mobility.stop" class="md-nav__link">
+    <span class="md-ellipsis">
+      stop
     </span>
   </a>
   
@@ -6090,15 +6090,6 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#nebula.addons.mobility.Mobility.round" class="md-nav__link">
-    <span class="md-ellipsis">
-      round
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
   <a href="#nebula.addons.mobility.Mobility.__init__" class="md-nav__link">
     <span class="md-ellipsis">
       __init__
@@ -6156,6 +6147,15 @@
   <a href="#nebula.addons.mobility.Mobility.start" class="md-nav__link">
     <span class="md-ellipsis">
       start
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#nebula.addons.mobility.Mobility.stop" class="md-nav__link">
+    <span class="md-ellipsis">
+      stop
     </span>
   </a>
   
@@ -6531,7 +6531,33 @@
 <span class="normal">307</span>
 <span class="normal">308</span>
 <span class="normal">309</span>
-<span class="normal">310</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">Mobility</span><span class="p">:</span>
+<span class="normal">310</span>
+<span class="normal">311</span>
+<span class="normal">312</span>
+<span class="normal">313</span>
+<span class="normal">314</span>
+<span class="normal">315</span>
+<span class="normal">316</span>
+<span class="normal">317</span>
+<span class="normal">318</span>
+<span class="normal">319</span>
+<span class="normal">320</span>
+<span class="normal">321</span>
+<span class="normal">322</span>
+<span class="normal">323</span>
+<span class="normal">324</span>
+<span class="normal">325</span>
+<span class="normal">326</span>
+<span class="normal">327</span>
+<span class="normal">328</span>
+<span class="normal">329</span>
+<span class="normal">330</span>
+<span class="normal">331</span>
+<span class="normal">332</span>
+<span class="normal">333</span>
+<span class="normal">334</span>
+<span class="normal">335</span>
+<span class="normal">336</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">Mobility</span><span class="p">:</span>
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">config</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Initializes the mobility module with specified configuration and communication manager.</span>
@@ -6569,43 +6595,47 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Starting mobility module...&quot;</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">config</span> <span class="o">=</span> <span class="n">config</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">grace_time</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">participant</span><span class="p">[</span><span class="s2">&quot;mobility_args&quot;</span><span class="p">][</span><span class="s2">&quot;grace_time_mobility&quot;</span><span class="p">]</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">period</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">participant</span><span class="p">[</span><span class="s2">&quot;mobility_args&quot;</span><span class="p">][</span><span class="s2">&quot;change_geo_interval&quot;</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_verbose</span> <span class="o">=</span> <span class="n">verbose</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_running</span> <span class="o">=</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">Event</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_nodes_distances</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_nodes_distances_lock</span> <span class="o">=</span> <span class="n">Locker</span><span class="p">(</span><span class="s2">&quot;nodes_distances_lock&quot;</span><span class="p">,</span> <span class="n">async_lock</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_mobility_task</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># Track the background task</span>
+
+        <span class="c1"># Mobility configuration</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">mobility</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">participant</span><span class="p">[</span><span class="s2">&quot;mobility_args&quot;</span><span class="p">][</span><span class="s2">&quot;mobility&quot;</span><span class="p">]</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">mobility_type</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">participant</span><span class="p">[</span><span class="s2">&quot;mobility_args&quot;</span><span class="p">][</span><span class="s2">&quot;mobility_type&quot;</span><span class="p">]</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">radius_federation</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">participant</span><span class="p">[</span><span class="s2">&quot;mobility_args&quot;</span><span class="p">][</span><span class="s2">&quot;radius_federation&quot;</span><span class="p">])</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">scheme_mobility</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">participant</span><span class="p">[</span><span class="s2">&quot;mobility_args&quot;</span><span class="p">][</span><span class="s2">&quot;scheme_mobility&quot;</span><span class="p">]</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">round_frequency</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">participant</span><span class="p">[</span><span class="s2">&quot;mobility_args&quot;</span><span class="p">][</span><span class="s2">&quot;round_frequency&quot;</span><span class="p">])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">grace_time</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">participant</span><span class="p">[</span><span class="s2">&quot;mobility_args&quot;</span><span class="p">][</span><span class="s2">&quot;grace_time_mobility&quot;</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">period</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">participant</span><span class="p">[</span><span class="s2">&quot;mobility_args&quot;</span><span class="p">][</span><span class="s2">&quot;change_geo_interval&quot;</span><span class="p">]</span>
         <span class="c1"># INFO: These values may change according to the needs of the federation</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">max_distance_with_direct_connections</span> <span class="o">=</span> <span class="mi">150</span>  <span class="c1"># meters</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">max_movement_random_strategy</span> <span class="o">=</span> <span class="mi">50</span>  <span class="c1"># meters</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">max_movement_nearest_strategy</span> <span class="o">=</span> <span class="mi">50</span>  <span class="c1"># meters</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">max_initiate_approximation</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_distance_with_direct_connections</span> <span class="o">*</span> <span class="mf">1.2</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">radius_federation</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">participant</span><span class="p">[</span><span class="s2">&quot;mobility_args&quot;</span><span class="p">][</span><span class="s2">&quot;radius_federation&quot;</span><span class="p">])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">scheme_mobility</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">participant</span><span class="p">[</span><span class="s2">&quot;mobility_args&quot;</span><span class="p">][</span><span class="s2">&quot;scheme_mobility&quot;</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">round_frequency</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">participant</span><span class="p">[</span><span class="s2">&quot;mobility_args&quot;</span><span class="p">][</span><span class="s2">&quot;round_frequency&quot;</span><span class="p">])</span>
         <span class="c1"># Logging box with mobility information</span>
         <span class="n">mobility_msg</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;Mobility: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">mobility</span><span class="si">}</span><span class="se">\n</span><span class="s2">Mobility type: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">mobility_type</span><span class="si">}</span><span class="se">\n</span><span class="s2">Radius federation: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">radius_federation</span><span class="si">}</span><span class="se">\n</span><span class="s2">Scheme mobility: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">scheme_mobility</span><span class="si">}</span><span class="se">\n</span><span class="s2">Each </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">round_frequency</span><span class="si">}</span><span class="s2"> rounds&quot;</span>
         <span class="n">print_msg_box</span><span class="p">(</span><span class="n">msg</span><span class="o">=</span><span class="n">mobility_msg</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="s2">&quot;Mobility information&quot;</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_nodes_distances</span> <span class="o">=</span> <span class="p">{}</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_nodes_distances_lock</span> <span class="o">=</span> <span class="n">Locker</span><span class="p">(</span><span class="s2">&quot;nodes_distances_lock&quot;</span><span class="p">,</span> <span class="n">async_lock</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_verbose</span> <span class="o">=</span> <span class="n">verbose</span>
 
     <span class="nd">@cached_property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">cm</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">CommunicationsManager</span><span class="o">.</span><span class="n">get_instance</span><span class="p">()</span>
 
-    <span class="nd">@property</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">round</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Gets the current round number from the Communications Manager.</span>
+    <span class="c1"># @property</span>
+    <span class="c1"># def round(self):</span>
+    <span class="c1">#     &quot;&quot;&quot;</span>
+    <span class="c1">#     Gets the current round number from the Communications Manager.</span>
 
-<span class="sd">        This property retrieves the current round number that is being managed by the</span>
-<span class="sd">        CommunicationsManager instance associated with this module. It provides an</span>
-<span class="sd">        interface to access the ongoing round of the communication process without</span>
-<span class="sd">        directly exposing the underlying method in the CommunicationsManager.</span>
+    <span class="c1">#     This property retrieves the current round number that is being managed by the</span>
+    <span class="c1">#     CommunicationsManager instance associated with this module. It provides an</span>
+    <span class="c1">#     interface to access the ongoing round of the communication process without</span>
+    <span class="c1">#     directly exposing the underlying method in the CommunicationsManager.</span>
 
-<span class="sd">        Returns:</span>
-<span class="sd">            int: The current round number managed by the CommunicationsManager.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">cm</span><span class="o">.</span><span class="n">get_round</span><span class="p">()</span>
+    <span class="c1">#     Returns:</span>
+    <span class="c1">#         int: The current round number managed by the CommunicationsManager.</span>
+    <span class="c1">#     &quot;&quot;&quot;</span>
+    <span class="c1">#     return self.cm.get_round()</span>
 
     <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">start</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
@@ -6622,8 +6652,30 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">await</span> <span class="n">EventManager</span><span class="o">.</span><span class="n">get_instance</span><span class="p">()</span><span class="o">.</span><span class="n">subscribe_addonevent</span><span class="p">(</span><span class="n">GPSEvent</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">update_nodes_distances</span><span class="p">)</span>
         <span class="k">await</span> <span class="n">EventManager</span><span class="o">.</span><span class="n">get_instance</span><span class="p">()</span><span class="o">.</span><span class="n">subscribe_addonevent</span><span class="p">(</span><span class="n">GPSEvent</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">update_nodes_distances</span><span class="p">)</span>
-        <span class="n">task</span> <span class="o">=</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">create_task</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">run_mobility</span><span class="p">())</span>
-        <span class="k">return</span> <span class="n">task</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_running</span><span class="o">.</span><span class="n">set</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_mobility_task</span> <span class="o">=</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">create_task</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">run_mobility</span><span class="p">(),</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;Mobility_run_mobility&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_mobility_task</span>
+
+    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">stop</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Stops the mobility module.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Stopping Mobility module...&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_running</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
+
+        <span class="c1"># Cancel the background task</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_mobility_task</span> <span class="ow">and</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_mobility_task</span><span class="o">.</span><span class="n">done</span><span class="p">():</span>
+            <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;🛑  Cancelling Mobility background task...&quot;</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_mobility_task</span><span class="o">.</span><span class="n">cancel</span><span class="p">()</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">_mobility_task</span>
+            <span class="k">except</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">CancelledError</span><span class="p">:</span>
+                <span class="k">pass</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_mobility_task</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;🛑  Mobility background task cancelled&quot;</span><span class="p">)</span>
+
+    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">is_running</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_running</span><span class="o">.</span><span class="n">is_set</span><span class="p">()</span>
 
     <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">update_nodes_distances</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">gpsevent</span><span class="p">:</span> <span class="n">GPSEvent</span><span class="p">):</span>
         <span class="n">distances</span> <span class="o">=</span> <span class="k">await</span> <span class="n">gpsevent</span><span class="o">.</span><span class="n">get_event_data</span><span class="p">()</span>
@@ -6657,7 +6709,7 @@
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">mobility</span><span class="p">:</span>
             <span class="k">return</span>
         <span class="c1"># await asyncio.sleep(self.grace_time)</span>
-        <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
+        <span class="k">while</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_running</span><span class="p">():</span>
             <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">change_geo_location</span><span class="p">()</span>
             <span class="k">await</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">period</span><span class="p">)</span>
 
@@ -6839,54 +6891,6 @@
 
 
 
-
-<div class="doc doc-object doc-attribute">
-
-
-
-<h3 id="nebula.addons.mobility.Mobility.round" class="doc doc-heading">
-            <code class="highlight language-python"><span class="nb">round</span></code>
-
-  <span class="doc doc-labels">
-      <small class="doc doc-label doc-label-property"><code>property</code></small>
-  </span>
-
-<a href="#nebula.addons.mobility.Mobility.round" class="headerlink" title="Permanent link">&para;</a></h3>
-
-
-    <div class="doc doc-contents ">
-
-        <p>Gets the current round number from the Communications Manager.</p>
-<p>This property retrieves the current round number that is being managed by the
-CommunicationsManager instance associated with this module. It provides an
-interface to access the ongoing round of the communication process without
-directly exposing the underlying method in the CommunicationsManager.</p>
-
-
-    <p><span class="doc-section-title">Returns:</span></p>
-    <table>
-      <thead>
-        <tr>
-<th>Name</th>          <th>Type</th>
-          <th>Description</th>
-        </tr>
-      </thead>
-      <tbody>
-          <tr class="doc-section-item">
-<td><code>int</code></td>            <td>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>The current round number managed by the CommunicationsManager.</p>
-              </div>
-            </td>
-          </tr>
-      </tbody>
-    </table>
-
-    </div>
-
-</div>
 
 
 
@@ -7197,7 +7201,11 @@ It also logs the initialized settings for the mobility system.</p>
 <span class="normal">67</span>
 <span class="normal">68</span>
 <span class="normal">69</span>
-<span class="normal">70</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">config</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+<span class="normal">70</span>
+<span class="normal">71</span>
+<span class="normal">72</span>
+<span class="normal">73</span>
+<span class="normal">74</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">config</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Initializes the mobility module with specified configuration and communication manager.</span>
 
@@ -7234,24 +7242,28 @@ It also logs the initialized settings for the mobility system.</p>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Starting mobility module...&quot;</span><span class="p">)</span>
     <span class="bp">self</span><span class="o">.</span><span class="n">config</span> <span class="o">=</span> <span class="n">config</span>
-    <span class="bp">self</span><span class="o">.</span><span class="n">grace_time</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">participant</span><span class="p">[</span><span class="s2">&quot;mobility_args&quot;</span><span class="p">][</span><span class="s2">&quot;grace_time_mobility&quot;</span><span class="p">]</span>
-    <span class="bp">self</span><span class="o">.</span><span class="n">period</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">participant</span><span class="p">[</span><span class="s2">&quot;mobility_args&quot;</span><span class="p">][</span><span class="s2">&quot;change_geo_interval&quot;</span><span class="p">]</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">_verbose</span> <span class="o">=</span> <span class="n">verbose</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">_running</span> <span class="o">=</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">Event</span><span class="p">()</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">_nodes_distances</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">_nodes_distances_lock</span> <span class="o">=</span> <span class="n">Locker</span><span class="p">(</span><span class="s2">&quot;nodes_distances_lock&quot;</span><span class="p">,</span> <span class="n">async_lock</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">_mobility_task</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># Track the background task</span>
+
+    <span class="c1"># Mobility configuration</span>
     <span class="bp">self</span><span class="o">.</span><span class="n">mobility</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">participant</span><span class="p">[</span><span class="s2">&quot;mobility_args&quot;</span><span class="p">][</span><span class="s2">&quot;mobility&quot;</span><span class="p">]</span>
     <span class="bp">self</span><span class="o">.</span><span class="n">mobility_type</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">participant</span><span class="p">[</span><span class="s2">&quot;mobility_args&quot;</span><span class="p">][</span><span class="s2">&quot;mobility_type&quot;</span><span class="p">]</span>
-    <span class="bp">self</span><span class="o">.</span><span class="n">radius_federation</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">participant</span><span class="p">[</span><span class="s2">&quot;mobility_args&quot;</span><span class="p">][</span><span class="s2">&quot;radius_federation&quot;</span><span class="p">])</span>
-    <span class="bp">self</span><span class="o">.</span><span class="n">scheme_mobility</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">participant</span><span class="p">[</span><span class="s2">&quot;mobility_args&quot;</span><span class="p">][</span><span class="s2">&quot;scheme_mobility&quot;</span><span class="p">]</span>
-    <span class="bp">self</span><span class="o">.</span><span class="n">round_frequency</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">participant</span><span class="p">[</span><span class="s2">&quot;mobility_args&quot;</span><span class="p">][</span><span class="s2">&quot;round_frequency&quot;</span><span class="p">])</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">grace_time</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">participant</span><span class="p">[</span><span class="s2">&quot;mobility_args&quot;</span><span class="p">][</span><span class="s2">&quot;grace_time_mobility&quot;</span><span class="p">]</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">period</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">participant</span><span class="p">[</span><span class="s2">&quot;mobility_args&quot;</span><span class="p">][</span><span class="s2">&quot;change_geo_interval&quot;</span><span class="p">]</span>
     <span class="c1"># INFO: These values may change according to the needs of the federation</span>
     <span class="bp">self</span><span class="o">.</span><span class="n">max_distance_with_direct_connections</span> <span class="o">=</span> <span class="mi">150</span>  <span class="c1"># meters</span>
     <span class="bp">self</span><span class="o">.</span><span class="n">max_movement_random_strategy</span> <span class="o">=</span> <span class="mi">50</span>  <span class="c1"># meters</span>
     <span class="bp">self</span><span class="o">.</span><span class="n">max_movement_nearest_strategy</span> <span class="o">=</span> <span class="mi">50</span>  <span class="c1"># meters</span>
     <span class="bp">self</span><span class="o">.</span><span class="n">max_initiate_approximation</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_distance_with_direct_connections</span> <span class="o">*</span> <span class="mf">1.2</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">radius_federation</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">participant</span><span class="p">[</span><span class="s2">&quot;mobility_args&quot;</span><span class="p">][</span><span class="s2">&quot;radius_federation&quot;</span><span class="p">])</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">scheme_mobility</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">participant</span><span class="p">[</span><span class="s2">&quot;mobility_args&quot;</span><span class="p">][</span><span class="s2">&quot;scheme_mobility&quot;</span><span class="p">]</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">round_frequency</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">participant</span><span class="p">[</span><span class="s2">&quot;mobility_args&quot;</span><span class="p">][</span><span class="s2">&quot;round_frequency&quot;</span><span class="p">])</span>
     <span class="c1"># Logging box with mobility information</span>
     <span class="n">mobility_msg</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;Mobility: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">mobility</span><span class="si">}</span><span class="se">\n</span><span class="s2">Mobility type: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">mobility_type</span><span class="si">}</span><span class="se">\n</span><span class="s2">Radius federation: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">radius_federation</span><span class="si">}</span><span class="se">\n</span><span class="s2">Scheme mobility: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">scheme_mobility</span><span class="si">}</span><span class="se">\n</span><span class="s2">Each </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">round_frequency</span><span class="si">}</span><span class="s2"> rounds&quot;</span>
     <span class="n">print_msg_box</span><span class="p">(</span><span class="n">msg</span><span class="o">=</span><span class="n">mobility_msg</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="s2">&quot;Mobility information&quot;</span><span class="p">)</span>
-    <span class="bp">self</span><span class="o">.</span><span class="n">_nodes_distances</span> <span class="o">=</span> <span class="p">{}</span>
-    <span class="bp">self</span><span class="o">.</span><span class="n">_nodes_distances_lock</span> <span class="o">=</span> <span class="n">Locker</span><span class="p">(</span><span class="s2">&quot;nodes_distances_lock&quot;</span><span class="p">,</span> <span class="n">async_lock</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-    <span class="bp">self</span><span class="o">.</span><span class="n">_verbose</span> <span class="o">=</span> <span class="n">verbose</span>
 </code></pre></div></td></tr></table></div>
             </details>
     </div>
@@ -7345,33 +7357,7 @@ Otherwise, it will randomly change the geo location.</p>
 
             <details class="quote">
               <summary>Source code in <code>nebula/addons/mobility.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">254</span>
-<span class="normal">255</span>
-<span class="normal">256</span>
-<span class="normal">257</span>
-<span class="normal">258</span>
-<span class="normal">259</span>
-<span class="normal">260</span>
-<span class="normal">261</span>
-<span class="normal">262</span>
-<span class="normal">263</span>
-<span class="normal">264</span>
-<span class="normal">265</span>
-<span class="normal">266</span>
-<span class="normal">267</span>
-<span class="normal">268</span>
-<span class="normal">269</span>
-<span class="normal">270</span>
-<span class="normal">271</span>
-<span class="normal">272</span>
-<span class="normal">273</span>
-<span class="normal">274</span>
-<span class="normal">275</span>
-<span class="normal">276</span>
-<span class="normal">277</span>
-<span class="normal">278</span>
-<span class="normal">279</span>
-<span class="normal">280</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">280</span>
 <span class="normal">281</span>
 <span class="normal">282</span>
 <span class="normal">283</span>
@@ -7401,7 +7387,33 @@ Otherwise, it will randomly change the geo location.</p>
 <span class="normal">307</span>
 <span class="normal">308</span>
 <span class="normal">309</span>
-<span class="normal">310</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">change_geo_location</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="normal">310</span>
+<span class="normal">311</span>
+<span class="normal">312</span>
+<span class="normal">313</span>
+<span class="normal">314</span>
+<span class="normal">315</span>
+<span class="normal">316</span>
+<span class="normal">317</span>
+<span class="normal">318</span>
+<span class="normal">319</span>
+<span class="normal">320</span>
+<span class="normal">321</span>
+<span class="normal">322</span>
+<span class="normal">323</span>
+<span class="normal">324</span>
+<span class="normal">325</span>
+<span class="normal">326</span>
+<span class="normal">327</span>
+<span class="normal">328</span>
+<span class="normal">329</span>
+<span class="normal">330</span>
+<span class="normal">331</span>
+<span class="normal">332</span>
+<span class="normal">333</span>
+<span class="normal">334</span>
+<span class="normal">335</span>
+<span class="normal">336</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">change_geo_location</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Changes the geographical location of the entity based on the current mobility strategy.</span>
 
@@ -7616,33 +7628,7 @@ is scaled based on the distance and the maximum movement allowed.</p>
 
             <details class="quote">
               <summary>Source code in <code>nebula/addons/mobility.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">176</span>
-<span class="normal">177</span>
-<span class="normal">178</span>
-<span class="normal">179</span>
-<span class="normal">180</span>
-<span class="normal">181</span>
-<span class="normal">182</span>
-<span class="normal">183</span>
-<span class="normal">184</span>
-<span class="normal">185</span>
-<span class="normal">186</span>
-<span class="normal">187</span>
-<span class="normal">188</span>
-<span class="normal">189</span>
-<span class="normal">190</span>
-<span class="normal">191</span>
-<span class="normal">192</span>
-<span class="normal">193</span>
-<span class="normal">194</span>
-<span class="normal">195</span>
-<span class="normal">196</span>
-<span class="normal">197</span>
-<span class="normal">198</span>
-<span class="normal">199</span>
-<span class="normal">200</span>
-<span class="normal">201</span>
-<span class="normal">202</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">202</span>
 <span class="normal">203</span>
 <span class="normal">204</span>
 <span class="normal">205</span>
@@ -7659,7 +7645,33 @@ is scaled based on the distance and the maximum movement allowed.</p>
 <span class="normal">216</span>
 <span class="normal">217</span>
 <span class="normal">218</span>
-<span class="normal">219</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">change_geo_location_nearest_neighbor_strategy</span><span class="p">(</span>
+<span class="normal">219</span>
+<span class="normal">220</span>
+<span class="normal">221</span>
+<span class="normal">222</span>
+<span class="normal">223</span>
+<span class="normal">224</span>
+<span class="normal">225</span>
+<span class="normal">226</span>
+<span class="normal">227</span>
+<span class="normal">228</span>
+<span class="normal">229</span>
+<span class="normal">230</span>
+<span class="normal">231</span>
+<span class="normal">232</span>
+<span class="normal">233</span>
+<span class="normal">234</span>
+<span class="normal">235</span>
+<span class="normal">236</span>
+<span class="normal">237</span>
+<span class="normal">238</span>
+<span class="normal">239</span>
+<span class="normal">240</span>
+<span class="normal">241</span>
+<span class="normal">242</span>
+<span class="normal">243</span>
+<span class="normal">244</span>
+<span class="normal">245</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">change_geo_location_nearest_neighbor_strategy</span><span class="p">(</span>
     <span class="bp">self</span><span class="p">,</span> <span class="n">distance</span><span class="p">,</span> <span class="n">latitude</span><span class="p">,</span> <span class="n">longitude</span><span class="p">,</span> <span class="n">neighbor_latitude</span><span class="p">,</span> <span class="n">neighbor_longitude</span>
 <span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
@@ -7812,36 +7824,36 @@ coordinates, where a random distance (radius) and angle are calculated.</p>
 
             <details class="quote">
               <summary>Source code in <code>nebula/addons/mobility.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">145</span>
-<span class="normal">146</span>
-<span class="normal">147</span>
-<span class="normal">148</span>
-<span class="normal">149</span>
-<span class="normal">150</span>
-<span class="normal">151</span>
-<span class="normal">152</span>
-<span class="normal">153</span>
-<span class="normal">154</span>
-<span class="normal">155</span>
-<span class="normal">156</span>
-<span class="normal">157</span>
-<span class="normal">158</span>
-<span class="normal">159</span>
-<span class="normal">160</span>
-<span class="normal">161</span>
-<span class="normal">162</span>
-<span class="normal">163</span>
-<span class="normal">164</span>
-<span class="normal">165</span>
-<span class="normal">166</span>
-<span class="normal">167</span>
-<span class="normal">168</span>
-<span class="normal">169</span>
-<span class="normal">170</span>
-<span class="normal">171</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">171</span>
 <span class="normal">172</span>
 <span class="normal">173</span>
-<span class="normal">174</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">change_geo_location_random_strategy</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">latitude</span><span class="p">,</span> <span class="n">longitude</span><span class="p">):</span>
+<span class="normal">174</span>
+<span class="normal">175</span>
+<span class="normal">176</span>
+<span class="normal">177</span>
+<span class="normal">178</span>
+<span class="normal">179</span>
+<span class="normal">180</span>
+<span class="normal">181</span>
+<span class="normal">182</span>
+<span class="normal">183</span>
+<span class="normal">184</span>
+<span class="normal">185</span>
+<span class="normal">186</span>
+<span class="normal">187</span>
+<span class="normal">188</span>
+<span class="normal">189</span>
+<span class="normal">190</span>
+<span class="normal">191</span>
+<span class="normal">192</span>
+<span class="normal">193</span>
+<span class="normal">194</span>
+<span class="normal">195</span>
+<span class="normal">196</span>
+<span class="normal">197</span>
+<span class="normal">198</span>
+<span class="normal">199</span>
+<span class="normal">200</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">change_geo_location_random_strategy</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">latitude</span><span class="p">,</span> <span class="n">longitude</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Changes the geographical location of the entity using a random strategy.</span>
 
@@ -7935,36 +7947,36 @@ and network connections as per the defined mobility strategy.</p>
 
             <details class="quote">
               <summary>Source code in <code>nebula/addons/mobility.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">114</span>
-<span class="normal">115</span>
-<span class="normal">116</span>
-<span class="normal">117</span>
-<span class="normal">118</span>
-<span class="normal">119</span>
-<span class="normal">120</span>
-<span class="normal">121</span>
-<span class="normal">122</span>
-<span class="normal">123</span>
-<span class="normal">124</span>
-<span class="normal">125</span>
-<span class="normal">126</span>
-<span class="normal">127</span>
-<span class="normal">128</span>
-<span class="normal">129</span>
-<span class="normal">130</span>
-<span class="normal">131</span>
-<span class="normal">132</span>
-<span class="normal">133</span>
-<span class="normal">134</span>
-<span class="normal">135</span>
-<span class="normal">136</span>
-<span class="normal">137</span>
-<span class="normal">138</span>
-<span class="normal">139</span>
-<span class="normal">140</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">140</span>
 <span class="normal">141</span>
 <span class="normal">142</span>
-<span class="normal">143</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">run_mobility</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="normal">143</span>
+<span class="normal">144</span>
+<span class="normal">145</span>
+<span class="normal">146</span>
+<span class="normal">147</span>
+<span class="normal">148</span>
+<span class="normal">149</span>
+<span class="normal">150</span>
+<span class="normal">151</span>
+<span class="normal">152</span>
+<span class="normal">153</span>
+<span class="normal">154</span>
+<span class="normal">155</span>
+<span class="normal">156</span>
+<span class="normal">157</span>
+<span class="normal">158</span>
+<span class="normal">159</span>
+<span class="normal">160</span>
+<span class="normal">161</span>
+<span class="normal">162</span>
+<span class="normal">163</span>
+<span class="normal">164</span>
+<span class="normal">165</span>
+<span class="normal">166</span>
+<span class="normal">167</span>
+<span class="normal">168</span>
+<span class="normal">169</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">run_mobility</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Executes the mobility operations in a continuous loop.</span>
 
@@ -7991,7 +8003,7 @@ and network connections as per the defined mobility strategy.</p>
     <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">mobility</span><span class="p">:</span>
         <span class="k">return</span>
     <span class="c1"># await asyncio.sleep(self.grace_time)</span>
-    <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
+    <span class="k">while</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_running</span><span class="p">():</span>
         <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">change_geo_location</span><span class="p">()</span>
         <span class="k">await</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">period</span><span class="p">)</span>
 </code></pre></div></td></tr></table></div>
@@ -8102,38 +8114,38 @@ longitude must be between -180 and 180), the previous location is retained.</p>
 
             <details class="quote">
               <summary>Source code in <code>nebula/addons/mobility.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">221</span>
-<span class="normal">222</span>
-<span class="normal">223</span>
-<span class="normal">224</span>
-<span class="normal">225</span>
-<span class="normal">226</span>
-<span class="normal">227</span>
-<span class="normal">228</span>
-<span class="normal">229</span>
-<span class="normal">230</span>
-<span class="normal">231</span>
-<span class="normal">232</span>
-<span class="normal">233</span>
-<span class="normal">234</span>
-<span class="normal">235</span>
-<span class="normal">236</span>
-<span class="normal">237</span>
-<span class="normal">238</span>
-<span class="normal">239</span>
-<span class="normal">240</span>
-<span class="normal">241</span>
-<span class="normal">242</span>
-<span class="normal">243</span>
-<span class="normal">244</span>
-<span class="normal">245</span>
-<span class="normal">246</span>
-<span class="normal">247</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">247</span>
 <span class="normal">248</span>
 <span class="normal">249</span>
 <span class="normal">250</span>
 <span class="normal">251</span>
-<span class="normal">252</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">set_geo_location</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">latitude</span><span class="p">,</span> <span class="n">longitude</span><span class="p">):</span>
+<span class="normal">252</span>
+<span class="normal">253</span>
+<span class="normal">254</span>
+<span class="normal">255</span>
+<span class="normal">256</span>
+<span class="normal">257</span>
+<span class="normal">258</span>
+<span class="normal">259</span>
+<span class="normal">260</span>
+<span class="normal">261</span>
+<span class="normal">262</span>
+<span class="normal">263</span>
+<span class="normal">264</span>
+<span class="normal">265</span>
+<span class="normal">266</span>
+<span class="normal">267</span>
+<span class="normal">268</span>
+<span class="normal">269</span>
+<span class="normal">270</span>
+<span class="normal">271</span>
+<span class="normal">272</span>
+<span class="normal">273</span>
+<span class="normal">274</span>
+<span class="normal">275</span>
+<span class="normal">276</span>
+<span class="normal">277</span>
+<span class="normal">278</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">set_geo_location</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">latitude</span><span class="p">,</span> <span class="n">longitude</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Sets the geographical location of the entity to the specified latitude and longitude.</span>
 
@@ -8218,11 +8230,7 @@ without blocking the execution of other tasks.</p>
 
             <details class="quote">
               <summary>Source code in <code>nebula/addons/mobility.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 91</span>
-<span class="normal"> 92</span>
-<span class="normal"> 93</span>
-<span class="normal"> 94</span>
-<span class="normal"> 95</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 95</span>
 <span class="normal"> 96</span>
 <span class="normal"> 97</span>
 <span class="normal"> 98</span>
@@ -8234,7 +8242,12 @@ without blocking the execution of other tasks.</p>
 <span class="normal">104</span>
 <span class="normal">105</span>
 <span class="normal">106</span>
-<span class="normal">107</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">start</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="normal">107</span>
+<span class="normal">108</span>
+<span class="normal">109</span>
+<span class="normal">110</span>
+<span class="normal">111</span>
+<span class="normal">112</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">start</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Initiates the mobility process by starting the associated task.</span>
 
@@ -8249,8 +8262,68 @@ without blocking the execution of other tasks.</p>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">await</span> <span class="n">EventManager</span><span class="o">.</span><span class="n">get_instance</span><span class="p">()</span><span class="o">.</span><span class="n">subscribe_addonevent</span><span class="p">(</span><span class="n">GPSEvent</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">update_nodes_distances</span><span class="p">)</span>
     <span class="k">await</span> <span class="n">EventManager</span><span class="o">.</span><span class="n">get_instance</span><span class="p">()</span><span class="o">.</span><span class="n">subscribe_addonevent</span><span class="p">(</span><span class="n">GPSEvent</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">update_nodes_distances</span><span class="p">)</span>
-    <span class="n">task</span> <span class="o">=</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">create_task</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">run_mobility</span><span class="p">())</span>
-    <span class="k">return</span> <span class="n">task</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">_running</span><span class="o">.</span><span class="n">set</span><span class="p">()</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">_mobility_task</span> <span class="o">=</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">create_task</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">run_mobility</span><span class="p">(),</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;Mobility_run_mobility&quot;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_mobility_task</span>
+</code></pre></div></td></tr></table></div>
+            </details>
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="nebula.addons.mobility.Mobility.stop" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">stop</span><span class="p">()</span></code>
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-async"><code>async</code></small>
+  </span>
+
+<a href="#nebula.addons.mobility.Mobility.stop" class="headerlink" title="Permanent link">&para;</a></h3>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Stops the mobility module.</p>
+
+
+            <details class="quote">
+              <summary>Source code in <code>nebula/addons/mobility.py</code></summary>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">114</span>
+<span class="normal">115</span>
+<span class="normal">116</span>
+<span class="normal">117</span>
+<span class="normal">118</span>
+<span class="normal">119</span>
+<span class="normal">120</span>
+<span class="normal">121</span>
+<span class="normal">122</span>
+<span class="normal">123</span>
+<span class="normal">124</span>
+<span class="normal">125</span>
+<span class="normal">126</span>
+<span class="normal">127</span>
+<span class="normal">128</span>
+<span class="normal">129</span>
+<span class="normal">130</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">stop</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Stops the mobility module.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Stopping Mobility module...&quot;</span><span class="p">)</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">_running</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
+
+    <span class="c1"># Cancel the background task</span>
+    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_mobility_task</span> <span class="ow">and</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_mobility_task</span><span class="o">.</span><span class="n">done</span><span class="p">():</span>
+        <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;🛑  Cancelling Mobility background task...&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_mobility_task</span><span class="o">.</span><span class="n">cancel</span><span class="p">()</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">_mobility_task</span>
+        <span class="k">except</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">CancelledError</span><span class="p">:</span>
+            <span class="k">pass</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_mobility_task</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;🛑  Mobility background task cancelled&quot;</span><span class="p">)</span>
 </code></pre></div></td></tr></table></div>
             </details>
     </div>
@@ -8293,7 +8366,7 @@ without blocking the execution of other tasks.</p>
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="June 11, 2025 16:51:42 UTC">June 11, 2025</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="June 26, 2025 13:41:00 UTC">June 26, 2025</span>
   </span>
 
     

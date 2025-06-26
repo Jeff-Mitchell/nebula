@@ -6112,8 +6112,7 @@
 
               <details class="quote">
                 <summary>Source code in <code>nebula/addons/trustworthiness/trustworthiness.py</code></summary>
-                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">215</span>
-<span class="normal">216</span>
+                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">216</span>
 <span class="normal">217</span>
 <span class="normal">218</span>
 <span class="normal">219</span>
@@ -6182,11 +6181,12 @@
 <span class="normal">282</span>
 <span class="normal">283</span>
 <span class="normal">284</span>
-<span class="normal">285</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">Trustworthiness</span><span class="p">():</span>
+<span class="normal">285</span>
+<span class="normal">286</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">Trustworthiness</span><span class="p">():</span>
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">engine</span><span class="p">:</span> <span class="n">Engine</span><span class="p">,</span> <span class="n">config</span><span class="p">:</span> <span class="n">Config</span><span class="p">):</span>
         <span class="n">config</span><span class="o">.</span><span class="n">reset_logging_configuration</span><span class="p">()</span>
         <span class="n">print_msg_box</span><span class="p">(</span>
-            <span class="n">msg</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;Name Trustworthiness Module</span><span class="se">\n</span><span class="s2">Role: </span><span class="si">{</span><span class="n">engine</span><span class="o">.</span><span class="n">role</span><span class="o">.</span><span class="n">value</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+            <span class="n">msg</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;Name Trustworthiness Module</span><span class="se">\n</span><span class="s2">Role: </span><span class="si">{</span><span class="n">engine</span><span class="o">.</span><span class="n">rb</span><span class="o">.</span><span class="n">get_role_name</span><span class="p">()</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
             <span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
         <span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_engine</span> <span class="o">=</span> <span class="n">engine</span>
@@ -6195,7 +6195,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_experiment_name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_config</span><span class="o">.</span><span class="n">participant</span><span class="p">[</span><span class="s2">&quot;scenario_args&quot;</span><span class="p">][</span><span class="s2">&quot;name&quot;</span><span class="p">]</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_trust_dir_files</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;/nebula/app/logs/</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_experiment_name</span><span class="si">}</span><span class="s2">/trustworthiness&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_emissions_file</span> <span class="o">=</span> <span class="s1">&#39;emissions.csv&#39;</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_role</span><span class="p">:</span> <span class="n">Role</span> <span class="o">=</span> <span class="n">engine</span><span class="o">.</span><span class="n">role</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_role</span><span class="p">:</span> <span class="n">Role</span> <span class="o">=</span> <span class="n">engine</span><span class="o">.</span><span class="n">rb</span><span class="o">.</span><span class="n">get_role</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_idx</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_config</span><span class="o">.</span><span class="n">participant</span><span class="p">[</span><span class="s2">&quot;device_args&quot;</span><span class="p">][</span><span class="s2">&quot;idx&quot;</span><span class="p">]</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_trust_workload</span><span class="p">:</span> <span class="n">TrustWorkload</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_factory_trust_workload</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_role</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_engine</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_idx</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_trust_dir_files</span><span class="p">)</span>       
 
@@ -6326,7 +6326,7 @@
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="June 11, 2025 16:51:44 UTC">June 11, 2025</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="June 26, 2025 13:41:01 UTC">June 26, 2025</span>
   </span>
 
     

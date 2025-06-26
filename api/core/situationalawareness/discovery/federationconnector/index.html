@@ -5424,6 +5424,15 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#nebula.core.situationalawareness.discovery.federationconnector.FederationConnector.__init__" class="md-nav__link">
+    <span class="md-ellipsis">
+      __init__
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#nebula.core.situationalawareness.discovery.federationconnector.FederationConnector.accept_model_offer" class="md-nav__link">
     <span class="md-ellipsis">
       accept_model_offer
@@ -5454,6 +5463,15 @@
   <a href="#nebula.core.situationalawareness.discovery.federationconnector.FederationConnector.start_late_connection_process" class="md-nav__link">
     <span class="md-ellipsis">
       start_late_connection_process
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#nebula.core.situationalawareness.discovery.federationconnector.FederationConnector.stop" class="md-nav__link">
+    <span class="md-ellipsis">
+      stop
     </span>
   </a>
   
@@ -6148,6 +6166,15 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#nebula.core.situationalawareness.discovery.federationconnector.FederationConnector.__init__" class="md-nav__link">
+    <span class="md-ellipsis">
+      __init__
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#nebula.core.situationalawareness.discovery.federationconnector.FederationConnector.accept_model_offer" class="md-nav__link">
     <span class="md-ellipsis">
       accept_model_offer
@@ -6178,6 +6205,15 @@
   <a href="#nebula.core.situationalawareness.discovery.federationconnector.FederationConnector.start_late_connection_process" class="md-nav__link">
     <span class="md-ellipsis">
       start_late_connection_process
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#nebula.core.situationalawareness.discovery.federationconnector.FederationConnector.stop" class="md-nav__link">
+    <span class="md-ellipsis">
+      stop
     </span>
   </a>
   
@@ -6872,7 +6908,60 @@ Situational Awareness (SA) workflow. Its responsibilities include:</p>
 <span class="normal">618</span>
 <span class="normal">619</span>
 <span class="normal">620</span>
-<span class="normal">621</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">FederationConnector</span><span class="p">(</span><span class="n">ISADiscovery</span><span class="p">):</span>
+<span class="normal">621</span>
+<span class="normal">622</span>
+<span class="normal">623</span>
+<span class="normal">624</span>
+<span class="normal">625</span>
+<span class="normal">626</span>
+<span class="normal">627</span>
+<span class="normal">628</span>
+<span class="normal">629</span>
+<span class="normal">630</span>
+<span class="normal">631</span>
+<span class="normal">632</span>
+<span class="normal">633</span>
+<span class="normal">634</span>
+<span class="normal">635</span>
+<span class="normal">636</span>
+<span class="normal">637</span>
+<span class="normal">638</span>
+<span class="normal">639</span>
+<span class="normal">640</span>
+<span class="normal">641</span>
+<span class="normal">642</span>
+<span class="normal">643</span>
+<span class="normal">644</span>
+<span class="normal">645</span>
+<span class="normal">646</span>
+<span class="normal">647</span>
+<span class="normal">648</span>
+<span class="normal">649</span>
+<span class="normal">650</span>
+<span class="normal">651</span>
+<span class="normal">652</span>
+<span class="normal">653</span>
+<span class="normal">654</span>
+<span class="normal">655</span>
+<span class="normal">656</span>
+<span class="normal">657</span>
+<span class="normal">658</span>
+<span class="normal">659</span>
+<span class="normal">660</span>
+<span class="normal">661</span>
+<span class="normal">662</span>
+<span class="normal">663</span>
+<span class="normal">664</span>
+<span class="normal">665</span>
+<span class="normal">666</span>
+<span class="normal">667</span>
+<span class="normal">668</span>
+<span class="normal">669</span>
+<span class="normal">670</span>
+<span class="normal">671</span>
+<span class="normal">672</span>
+<span class="normal">673</span>
+<span class="normal">674</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">FederationConnector</span><span class="p">(</span><span class="n">ISADiscovery</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Responsible for the discovery and operational management of the federation within the Situational Awareness module.</span>
 
@@ -6890,28 +6979,44 @@ Situational Awareness (SA) workflow. Its responsibilities include:</p>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">aditional_participant</span><span class="p">,</span> <span class="n">selector</span><span class="p">,</span> <span class="n">model_handler</span><span class="p">,</span> <span class="n">engine</span><span class="p">:</span> <span class="s2">&quot;Engine&quot;</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Initialize the FederationConnector.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            aditional_participant (bool): Whether this is an additional participant.</span>
+<span class="sd">            selector: The candidate selector instance.</span>
+<span class="sd">            model_handler: The model handler instance.</span>
+<span class="sd">            engine (Engine): The main engine instance.</span>
+<span class="sd">            verbose (bool): Whether to enable verbose logging.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_aditional_participant</span> <span class="o">=</span> <span class="n">aditional_participant</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_selector</span> <span class="o">=</span> <span class="n">selector</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_model_handler</span> <span class="o">=</span> <span class="n">model_handler</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_engine</span> <span class="o">=</span> <span class="n">engine</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_verbose</span> <span class="o">=</span> <span class="n">verbose</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_sar</span> <span class="o">=</span> <span class="kc">None</span>
+
+        <span class="c1"># Locks for thread safety</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_update_neighbors_lock</span> <span class="o">=</span> <span class="n">Locker</span><span class="p">(</span><span class="s2">&quot;update_neighbors_lock&quot;</span><span class="p">,</span> <span class="n">async_lock</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">pending_confirmation_from_nodes_lock</span> <span class="o">=</span> <span class="n">Locker</span><span class="p">(</span><span class="s2">&quot;pending_confirmation_from_nodes_lock&quot;</span><span class="p">,</span> <span class="n">async_lock</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">discarded_offers_addr_lock</span> <span class="o">=</span> <span class="n">Locker</span><span class="p">(</span><span class="s2">&quot;discarded_offers_addr_lock&quot;</span><span class="p">,</span> <span class="n">async_lock</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">accept_candidates_lock</span> <span class="o">=</span> <span class="n">Locker</span><span class="p">(</span><span class="s2">&quot;accept_candidates_lock&quot;</span><span class="p">,</span> <span class="n">async_lock</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">late_connection_process_lock</span> <span class="o">=</span> <span class="n">Locker</span><span class="p">(</span><span class="s2">&quot;late_connection_process_lock&quot;</span><span class="p">,</span> <span class="n">async_lock</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+        <span class="c1"># Data structures</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">pending_confirmation_from_nodes</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">discarded_offers_addr</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_background_tasks</span> <span class="o">=</span> <span class="p">[]</span>  <span class="c1"># Track background tasks</span>
+
         <span class="n">print_msg_box</span><span class="p">(</span><span class="n">msg</span><span class="o">=</span><span class="s2">&quot;Starting FederationConnector module...&quot;</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="s2">&quot;FederationConnector module&quot;</span><span class="p">)</span>
         <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;🌐  Initializing Federation Connector&quot;</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_engine</span> <span class="o">=</span> <span class="n">engine</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_cm</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">config</span> <span class="o">=</span> <span class="n">engine</span><span class="o">.</span><span class="n">get_config</span><span class="p">()</span>
         <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Initializing Candidate Selector&quot;</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_candidate_selector</span> <span class="o">=</span> <span class="n">factory_CandidateSelector</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_selector</span><span class="p">)</span>
         <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Initializing Model Handler&quot;</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_model_handler</span> <span class="o">=</span> <span class="n">factory_ModelHandler</span><span class="p">(</span><span class="n">model_handler</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_update_neighbors_lock</span> <span class="o">=</span> <span class="n">Locker</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;_update_neighbors_lock&quot;</span><span class="p">,</span> <span class="n">async_lock</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">late_connection_process_lock</span> <span class="o">=</span> <span class="n">Locker</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;late_connection_process_lock&quot;</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">pending_confirmation_from_nodes</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">pending_confirmation_from_nodes_lock</span> <span class="o">=</span> <span class="n">Locker</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;pending_confirmation_from_nodes_lock&quot;</span><span class="p">,</span> <span class="n">async_lock</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">accept_candidates_lock</span> <span class="o">=</span> <span class="n">Locker</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;accept_candidates_lock&quot;</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">recieve_offer_timer</span> <span class="o">=</span> <span class="n">OFFER_TIMEOUT</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">discarded_offers_addr_lock</span> <span class="o">=</span> <span class="n">Locker</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;discarded_offers_addr_lock&quot;</span><span class="p">,</span> <span class="n">async_lock</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">discarded_offers_addr</span> <span class="o">=</span> <span class="p">[]</span>
-
-        <span class="bp">self</span><span class="o">.</span><span class="n">_sa_reasoner</span><span class="p">:</span> <span class="n">ISAReasoner</span> <span class="o">=</span> <span class="kc">None</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_verbose</span> <span class="o">=</span> <span class="n">verbose</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">engine</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
@@ -6936,7 +7041,7 @@ Situational Awareness (SA) workflow. Its responsibilities include:</p>
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">sar</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Situational Awareness Reasoner&quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sa_reasoner</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sar</span>
 
     <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">init</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sa_reasoner</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
@@ -6960,7 +7065,7 @@ Situational Awareness (SA) workflow. Its responsibilities include:</p>
 <span class="sd">            sa_reasoner (ISAReasoner): An instance of the situational awareness reasoner used for decision-making.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Building Federation Connector configurations...&quot;</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_sa_reasoner</span><span class="p">:</span> <span class="n">ISAReasoner</span> <span class="o">=</span> <span class="n">sa_reasoner</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_sar</span><span class="p">:</span> <span class="n">ISAReasoner</span> <span class="o">=</span> <span class="n">sa_reasoner</span>
         <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">_register_message_events_callbacks</span><span class="p">()</span>
         <span class="k">await</span> <span class="n">EventManager</span><span class="o">.</span><span class="n">get_instance</span><span class="p">()</span><span class="o">.</span><span class="n">subscribe_node_event</span><span class="p">(</span><span class="n">UpdateNeighborEvent</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_update_neighbors</span><span class="p">)</span>
         <span class="k">await</span> <span class="n">EventManager</span><span class="o">.</span><span class="n">get_instance</span><span class="p">()</span><span class="o">.</span><span class="n">subscribe</span><span class="p">((</span><span class="s2">&quot;model&quot;</span><span class="p">,</span> <span class="s2">&quot;update&quot;</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">_model_update_callback</span><span class="p">)</span>
@@ -6999,10 +7104,10 @@ Situational Awareness (SA) workflow. Its responsibilities include:</p>
 
     <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">_add_pending_connection_confirmation</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">addr</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Adds a node to the set of pending connection confirmations if it&#39;s not already known or pending.</span>
+<span class="sd">        Adds a node to the pending confirmation set and schedules a cleanup task.</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            addr (str): The address of the node to track for pending confirmation.</span>
+<span class="sd">            addr (str): Address of the node to add to pending confirmations.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">added</span> <span class="o">=</span> <span class="kc">False</span>
         <span class="k">async</span> <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_update_neighbors_lock</span><span class="p">:</span>
@@ -7013,7 +7118,10 @@ Situational Awareness (SA) workflow. Its responsibilities include:</p>
                         <span class="bp">self</span><span class="o">.</span><span class="n">pending_confirmation_from_nodes</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">addr</span><span class="p">)</span>
                         <span class="n">added</span> <span class="o">=</span> <span class="kc">True</span>
         <span class="k">if</span> <span class="n">added</span><span class="p">:</span>
-            <span class="n">asyncio</span><span class="o">.</span><span class="n">create_task</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_clear_pending_confirmations</span><span class="p">(</span><span class="n">node</span><span class="o">=</span><span class="n">addr</span><span class="p">))</span>
+            <span class="n">task</span> <span class="o">=</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">create_task</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_clear_pending_confirmations</span><span class="p">(</span><span class="n">node</span><span class="o">=</span><span class="n">addr</span><span class="p">),</span> <span class="n">name</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;FederationConnector_clear_pending_</span><span class="si">{</span><span class="n">addr</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_background_tasks</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">task</span><span class="p">)</span>
 
     <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">_remove_pending_confirmation_from</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">addr</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
@@ -7050,8 +7158,8 @@ Situational Awareness (SA) workflow. Its responsibilities include:</p>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">async</span> <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">pending_confirmation_from_nodes_lock</span><span class="p">:</span>
             <span class="n">found</span> <span class="o">=</span> <span class="n">addr</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">pending_confirmation_from_nodes</span>
-            <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;pending confirmations:</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">pending_confirmation_from_nodes</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-        <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Waiting confirmation from source: </span><span class="si">{</span><span class="n">addr</span><span class="si">}</span><span class="s2">, status: </span><span class="si">{</span><span class="n">found</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="c1">#     logging.info(f&quot;pending confirmations:{self.pending_confirmation_from_nodes}&quot;)</span>
+        <span class="c1"># logging.info(f&quot;Waiting confirmation from source: {addr}, status: {found}&quot;)</span>
         <span class="k">return</span> <span class="n">found</span>
 
     <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">_confirmation_received</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">addr</span><span class="p">,</span> <span class="n">confirmation</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">joining</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
@@ -7215,7 +7323,7 @@ Situational Awareness (SA) workflow. Its responsibilities include:</p>
 <span class="sd">        to nearby nodes. Nodes that receive this message respond with an `OFFER_MODEL` or `OFFER_METRIC` message,</span>
 <span class="sd">        which contains the necessary information to evaluate and select the most suitable candidates.</span>
 
-<span class="sd">        The process is protected by locks to avoid race conditions, and it continues iteratively until at least </span>
+<span class="sd">        The process is protected by locks to avoid race conditions, and it continues iteratively until at least</span>
 <span class="sd">        one valid candidate is found. Once candidates are selected, a connection message is sent to the best nodes.</span>
 
 <span class="sd">        Args:</span>
@@ -7230,7 +7338,7 @@ Situational Awareness (SA) workflow. Its responsibilities include:</p>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;🌐  Initializing late connection process..&quot;</span><span class="p">)</span>
 
-        <span class="bp">self</span><span class="o">.</span><span class="n">late_connection_process_lock</span><span class="o">.</span><span class="n">acquire</span><span class="p">()</span>
+        <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">late_connection_process_lock</span><span class="o">.</span><span class="n">acquire_async</span><span class="p">()</span>
         <span class="n">best_candidates</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">candidate_selector</span><span class="o">.</span><span class="n">remove_candidates</span><span class="p">()</span>
 
@@ -7246,7 +7354,7 @@ Situational Awareness (SA) workflow. Its responsibilities include:</p>
             <span class="k">await</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">recieve_offer_timer</span><span class="p">)</span>
 
         <span class="c1"># acquire lock to not accept late candidates</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">accept_candidates_lock</span><span class="o">.</span><span class="n">acquire</span><span class="p">()</span>
+        <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">accept_candidates_lock</span><span class="o">.</span><span class="n">acquire_async</span><span class="p">()</span>
 
         <span class="k">if</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">candidate_selector</span><span class="o">.</span><span class="n">any_candidate</span><span class="p">():</span>
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_verbose</span><span class="p">:</span>
@@ -7268,19 +7376,20 @@ Situational Awareness (SA) workflow. Its responsibilities include:</p>
                 <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_verbose</span><span class="p">:</span>
                     <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Error during stablishment&quot;</span><span class="p">)</span>
 
-            <span class="bp">self</span><span class="o">.</span><span class="n">accept_candidates_lock</span><span class="o">.</span><span class="n">release</span><span class="p">()</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">late_connection_process_lock</span><span class="o">.</span><span class="n">release</span><span class="p">()</span>
+            <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">accept_candidates_lock</span><span class="o">.</span><span class="n">release_async</span><span class="p">()</span>
+            <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">late_connection_process_lock</span><span class="o">.</span><span class="n">release_async</span><span class="p">()</span>
             <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">candidate_selector</span><span class="o">.</span><span class="n">remove_candidates</span><span class="p">()</span>
             <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;🌐  Ending late connection process..&quot;</span><span class="p">)</span>
         <span class="c1"># if no candidates, repeat process</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_verbose</span><span class="p">:</span>
                 <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;❗️  No Candidates found...&quot;</span><span class="p">)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">accept_candidates_lock</span><span class="o">.</span><span class="n">release</span><span class="p">()</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">late_connection_process_lock</span><span class="o">.</span><span class="n">release</span><span class="p">()</span>
-            <span class="c1"># if not connected:</span>
-            <span class="c1">#     if self._verbose: logging.info(&quot;❗️  repeating process...&quot;)</span>
-            <span class="c1">#     await self.start_late_connection_process(connected, msg_type, addrs_known)</span>
+            <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">accept_candidates_lock</span><span class="o">.</span><span class="n">release_async</span><span class="p">()</span>
+            <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">late_connection_process_lock</span><span class="o">.</span><span class="n">release_async</span><span class="p">()</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">connected</span><span class="p">:</span>
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_verbose</span><span class="p">:</span>
+                    <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;❗️  repeating process...&quot;</span><span class="p">)</span>
+                <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">start_late_connection_process</span><span class="p">(</span><span class="n">connected</span><span class="p">,</span> <span class="n">msg_type</span><span class="p">,</span> <span class="n">addrs_known</span><span class="p">)</span>
 
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;                                                     ##############################</span>
 <span class="sd">                                                            #     Mobility callbacks     #</span>
@@ -7333,15 +7442,14 @@ Situational Awareness (SA) workflow. Its responsibilities include:</p>
 
             <span class="n">ct_actions</span><span class="p">,</span> <span class="n">df_actions</span> <span class="o">=</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_actions</span><span class="p">()</span>
             <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">ct_actions</span><span class="p">):</span>
-                <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">ct_actions</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+                <span class="c1"># logging.info(f&quot;{ct_actions}&quot;)</span>
                 <span class="n">cnt_msg</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cm</span><span class="o">.</span><span class="n">create_message</span><span class="p">(</span><span class="s2">&quot;link&quot;</span><span class="p">,</span> <span class="s2">&quot;connect_to&quot;</span><span class="p">,</span> <span class="n">addrs</span><span class="o">=</span><span class="n">ct_actions</span><span class="p">)</span>
                 <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">cm</span><span class="o">.</span><span class="n">send_message</span><span class="p">(</span><span class="n">source</span><span class="p">,</span> <span class="n">cnt_msg</span><span class="p">)</span>
 
             <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">df_actions</span><span class="p">):</span>
-                <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;2 acciones&quot;</span><span class="p">)</span>
-                <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">df_actions</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+                <span class="c1"># logging.info(f&quot;{df_actions}&quot;)</span>
                 <span class="k">for</span> <span class="n">addr</span> <span class="ow">in</span> <span class="n">df_actions</span><span class="o">.</span><span class="n">split</span><span class="p">():</span>
-                    <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">cm</span><span class="o">.</span><span class="n">disconnect</span><span class="p">(</span><span class="n">addr</span><span class="p">,</span> <span class="n">mutual_disconnection</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+                    <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">cm</span><span class="o">.</span><span class="n">disconnect</span><span class="p">(</span><span class="n">addr</span><span class="p">,</span> <span class="n">mutual_disconnection</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
 
             <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">_register_late_neighbor</span><span class="p">(</span><span class="n">source</span><span class="p">,</span> <span class="n">joinning_federation</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
@@ -7373,7 +7481,7 @@ Situational Awareness (SA) workflow. Its responsibilities include:</p>
 
             <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">df_actions</span><span class="p">):</span>
                 <span class="k">for</span> <span class="n">addr</span> <span class="ow">in</span> <span class="n">df_actions</span><span class="o">.</span><span class="n">split</span><span class="p">():</span>
-                    <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">cm</span><span class="o">.</span><span class="n">disconnect</span><span class="p">(</span><span class="n">addr</span><span class="p">,</span> <span class="n">mutual_disconnection</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+                    <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">cm</span><span class="o">.</span><span class="n">disconnect</span><span class="p">(</span><span class="n">addr</span><span class="p">,</span> <span class="n">mutual_disconnection</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
                 <span class="c1"># df_msg = self.cm.create_message(&quot;link&quot;, &quot;disconnect_from&quot;, addrs=df_actions)</span>
                 <span class="c1"># await self.cm.send_message(source, df_msg)</span>
 
@@ -7387,7 +7495,7 @@ Situational Awareness (SA) workflow. Its responsibilities include:</p>
             <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">engine</span><span class="o">.</span><span class="n">trainning_in_progress_lock</span><span class="o">.</span><span class="n">acquire_async</span><span class="p">()</span>
             <span class="n">model</span><span class="p">,</span> <span class="n">rounds</span><span class="p">,</span> <span class="nb">round</span> <span class="o">=</span> <span class="p">(</span>
                 <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">cm</span><span class="o">.</span><span class="n">propagator</span><span class="o">.</span><span class="n">get_model_information</span><span class="p">(</span><span class="n">source</span><span class="p">,</span> <span class="s2">&quot;stable&quot;</span><span class="p">)</span>
-                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">engine</span><span class="o">.</span><span class="n">get_round</span><span class="p">()</span> <span class="o">&gt;</span> <span class="mi">0</span>
+                <span class="k">if</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">engine</span><span class="o">.</span><span class="n">get_round</span><span class="p">()</span> <span class="o">&gt;</span> <span class="mi">0</span>
                 <span class="k">else</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">cm</span><span class="o">.</span><span class="n">propagator</span><span class="o">.</span><span class="n">get_model_information</span><span class="p">(</span><span class="n">source</span><span class="p">,</span> <span class="s2">&quot;initialization&quot;</span><span class="p">)</span>
             <span class="p">)</span>
             <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">engine</span><span class="o">.</span><span class="n">trainning_in_progress_lock</span><span class="o">.</span><span class="n">release_async</span><span class="p">()</span>
@@ -7465,13 +7573,47 @@ Situational Awareness (SA) workflow. Its responsibilities include:</p>
         <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;🔗  handle_link_message | Trigger | Received connect_to message from </span><span class="si">{</span><span class="n">source</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
         <span class="n">addrs</span> <span class="o">=</span> <span class="n">message</span><span class="o">.</span><span class="n">addrs</span>
         <span class="k">for</span> <span class="n">addr</span> <span class="ow">in</span> <span class="n">addrs</span><span class="o">.</span><span class="n">split</span><span class="p">():</span>
-            <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">_meet_node</span><span class="p">(</span><span class="n">addr</span><span class="p">)</span>
+            <span class="n">asyncio</span><span class="o">.</span><span class="n">create_task</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_meet_node</span><span class="p">(</span><span class="n">addr</span><span class="p">))</span>
 
     <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">_link_disconnect_from_callback</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">source</span><span class="p">,</span> <span class="n">message</span><span class="p">):</span>
         <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;🔗  handle_link_message | Trigger | Received disconnect_from message from </span><span class="si">{</span><span class="n">source</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-        <span class="n">addrs</span> <span class="o">=</span> <span class="n">message</span><span class="o">.</span><span class="n">addrs</span>
-        <span class="k">for</span> <span class="n">addr</span> <span class="ow">in</span> <span class="n">addrs</span><span class="o">.</span><span class="n">split</span><span class="p">():</span>
-            <span class="k">await</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">create_task</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cm</span><span class="o">.</span><span class="n">disconnect</span><span class="p">(</span><span class="n">addr</span><span class="p">,</span> <span class="n">mutual_disconnection</span><span class="o">=</span><span class="kc">False</span><span class="p">))</span>
+        <span class="k">for</span> <span class="n">addr</span> <span class="ow">in</span> <span class="n">message</span><span class="o">.</span><span class="n">addrs</span><span class="o">.</span><span class="n">split</span><span class="p">():</span>
+            <span class="n">asyncio</span><span class="o">.</span><span class="n">create_task</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cm</span><span class="o">.</span><span class="n">disconnect</span><span class="p">(</span><span class="n">addr</span><span class="p">,</span> <span class="n">mutual_disconnection</span><span class="o">=</span><span class="kc">False</span><span class="p">))</span>
+
+    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">stop</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Stop the FederationConnector by clearing pending confirmations and stopping background tasks.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;🛑  Stopping FederationConnector...&quot;</span><span class="p">)</span>
+
+        <span class="c1"># Cancel all background tasks</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_background_tasks</span><span class="p">:</span>
+            <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;🛑  Cancelling </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_background_tasks</span><span class="p">)</span><span class="si">}</span><span class="s2"> background tasks...&quot;</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">task</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_background_tasks</span><span class="p">:</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">task</span><span class="o">.</span><span class="n">done</span><span class="p">():</span>
+                    <span class="n">task</span><span class="o">.</span><span class="n">cancel</span><span class="p">()</span>
+                    <span class="k">try</span><span class="p">:</span>
+                        <span class="k">await</span> <span class="n">task</span>
+                    <span class="k">except</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">CancelledError</span><span class="p">:</span>
+                        <span class="k">pass</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_background_tasks</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
+            <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;🛑  All background tasks cancelled&quot;</span><span class="p">)</span>
+
+        <span class="c1"># Clear any pending confirmations</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">async</span> <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">pending_confirmation_from_nodes_lock</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">pending_confirmation_from_nodes</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="n">logging</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Error clearing pending confirmations: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+        <span class="c1"># Clear discarded offers</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">async</span> <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">discarded_offers_addr_lock</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">discarded_offers_addr</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="n">logging</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Error clearing discarded offers: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+        <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;✅  FederationConnector stopped successfully&quot;</span><span class="p">)</span>
 </code></pre></div></td></tr></table></div>
               </details>
 
@@ -7597,6 +7739,198 @@ Situational Awareness (SA) workflow. Its responsibilities include:</p>
 </div>
 
 
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="nebula.core.situationalawareness.discovery.federationconnector.FederationConnector.__init__" class="doc doc-heading">
+            <code class="highlight language-python"><span class="fm">__init__</span><span class="p">(</span><span class="n">aditional_participant</span><span class="p">,</span> <span class="n">selector</span><span class="p">,</span> <span class="n">model_handler</span><span class="p">,</span> <span class="n">engine</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span></code>
+
+<a href="#nebula.core.situationalawareness.discovery.federationconnector.FederationConnector.__init__" class="headerlink" title="Permanent link">&para;</a></h3>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Initialize the FederationConnector.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>aditional_participant</code>
+            </td>
+            <td>
+                  <code><span title="bool">bool</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Whether this is an additional participant.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>selector</code>
+            </td>
+            <td>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The candidate selector instance.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>model_handler</code>
+            </td>
+            <td>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The model handler instance.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>engine</code>
+            </td>
+            <td>
+                  <code><a class="autorefs autorefs-internal" title="Engine (nebula.core.engine.Engine)" href="../../../engine/#nebula.core.engine.Engine">Engine</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The main engine instance.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>verbose</code>
+            </td>
+            <td>
+                  <code><span title="bool">bool</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Whether to enable verbose logging.</p>
+              </div>
+            </td>
+            <td>
+                  <code>False</code>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+            <details class="quote">
+              <summary>Source code in <code>nebula/core/situationalawareness/discovery/federationconnector.py</code></summary>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">39</span>
+<span class="normal">40</span>
+<span class="normal">41</span>
+<span class="normal">42</span>
+<span class="normal">43</span>
+<span class="normal">44</span>
+<span class="normal">45</span>
+<span class="normal">46</span>
+<span class="normal">47</span>
+<span class="normal">48</span>
+<span class="normal">49</span>
+<span class="normal">50</span>
+<span class="normal">51</span>
+<span class="normal">52</span>
+<span class="normal">53</span>
+<span class="normal">54</span>
+<span class="normal">55</span>
+<span class="normal">56</span>
+<span class="normal">57</span>
+<span class="normal">58</span>
+<span class="normal">59</span>
+<span class="normal">60</span>
+<span class="normal">61</span>
+<span class="normal">62</span>
+<span class="normal">63</span>
+<span class="normal">64</span>
+<span class="normal">65</span>
+<span class="normal">66</span>
+<span class="normal">67</span>
+<span class="normal">68</span>
+<span class="normal">69</span>
+<span class="normal">70</span>
+<span class="normal">71</span>
+<span class="normal">72</span>
+<span class="normal">73</span>
+<span class="normal">74</span>
+<span class="normal">75</span>
+<span class="normal">76</span>
+<span class="normal">77</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">aditional_participant</span><span class="p">,</span> <span class="n">selector</span><span class="p">,</span> <span class="n">model_handler</span><span class="p">,</span> <span class="n">engine</span><span class="p">:</span> <span class="s2">&quot;Engine&quot;</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Initialize the FederationConnector.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        aditional_participant (bool): Whether this is an additional participant.</span>
+<span class="sd">        selector: The candidate selector instance.</span>
+<span class="sd">        model_handler: The model handler instance.</span>
+<span class="sd">        engine (Engine): The main engine instance.</span>
+<span class="sd">        verbose (bool): Whether to enable verbose logging.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">_aditional_participant</span> <span class="o">=</span> <span class="n">aditional_participant</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">_selector</span> <span class="o">=</span> <span class="n">selector</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">_model_handler</span> <span class="o">=</span> <span class="n">model_handler</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">_engine</span> <span class="o">=</span> <span class="n">engine</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">_verbose</span> <span class="o">=</span> <span class="n">verbose</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">_sar</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="c1"># Locks for thread safety</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">_update_neighbors_lock</span> <span class="o">=</span> <span class="n">Locker</span><span class="p">(</span><span class="s2">&quot;update_neighbors_lock&quot;</span><span class="p">,</span> <span class="n">async_lock</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">pending_confirmation_from_nodes_lock</span> <span class="o">=</span> <span class="n">Locker</span><span class="p">(</span><span class="s2">&quot;pending_confirmation_from_nodes_lock&quot;</span><span class="p">,</span> <span class="n">async_lock</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">discarded_offers_addr_lock</span> <span class="o">=</span> <span class="n">Locker</span><span class="p">(</span><span class="s2">&quot;discarded_offers_addr_lock&quot;</span><span class="p">,</span> <span class="n">async_lock</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">accept_candidates_lock</span> <span class="o">=</span> <span class="n">Locker</span><span class="p">(</span><span class="s2">&quot;accept_candidates_lock&quot;</span><span class="p">,</span> <span class="n">async_lock</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">late_connection_process_lock</span> <span class="o">=</span> <span class="n">Locker</span><span class="p">(</span><span class="s2">&quot;late_connection_process_lock&quot;</span><span class="p">,</span> <span class="n">async_lock</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="c1"># Data structures</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">pending_confirmation_from_nodes</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">discarded_offers_addr</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">_background_tasks</span> <span class="o">=</span> <span class="p">[]</span>  <span class="c1"># Track background tasks</span>
+
+    <span class="n">print_msg_box</span><span class="p">(</span><span class="n">msg</span><span class="o">=</span><span class="s2">&quot;Starting FederationConnector module...&quot;</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="s2">&quot;FederationConnector module&quot;</span><span class="p">)</span>
+    <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;🌐  Initializing Federation Connector&quot;</span><span class="p">)</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">_cm</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">config</span> <span class="o">=</span> <span class="n">engine</span><span class="o">.</span><span class="n">get_config</span><span class="p">()</span>
+    <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Initializing Candidate Selector&quot;</span><span class="p">)</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">_candidate_selector</span> <span class="o">=</span> <span class="n">factory_CandidateSelector</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_selector</span><span class="p">)</span>
+    <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Initializing Model Handler&quot;</span><span class="p">)</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">_model_handler</span> <span class="o">=</span> <span class="n">factory_ModelHandler</span><span class="p">(</span><span class="n">model_handler</span><span class="p">)</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">recieve_offer_timer</span> <span class="o">=</span> <span class="n">OFFER_TIMEOUT</span>
+</code></pre></div></td></tr></table></div>
+            </details>
+    </div>
+
+</div>
 
 <div class="doc doc-object doc-function">
 
@@ -7767,32 +8101,32 @@ Situational Awareness (SA) workflow. Its responsibilities include:</p>
 
             <details class="quote">
               <summary>Source code in <code>nebula/core/situationalawareness/discovery/federationconnector.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">279</span>
-<span class="normal">280</span>
-<span class="normal">281</span>
-<span class="normal">282</span>
-<span class="normal">283</span>
-<span class="normal">284</span>
-<span class="normal">285</span>
-<span class="normal">286</span>
-<span class="normal">287</span>
-<span class="normal">288</span>
-<span class="normal">289</span>
-<span class="normal">290</span>
-<span class="normal">291</span>
-<span class="normal">292</span>
-<span class="normal">293</span>
-<span class="normal">294</span>
-<span class="normal">295</span>
-<span class="normal">296</span>
-<span class="normal">297</span>
-<span class="normal">298</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">298</span>
 <span class="normal">299</span>
 <span class="normal">300</span>
 <span class="normal">301</span>
 <span class="normal">302</span>
 <span class="normal">303</span>
-<span class="normal">304</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">accept_model_offer</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">source</span><span class="p">,</span> <span class="n">decoded_model</span><span class="p">,</span> <span class="n">rounds</span><span class="p">,</span> <span class="nb">round</span><span class="p">,</span> <span class="n">epochs</span><span class="p">,</span> <span class="n">n_neighbors</span><span class="p">,</span> <span class="n">loss</span><span class="p">):</span>
+<span class="normal">304</span>
+<span class="normal">305</span>
+<span class="normal">306</span>
+<span class="normal">307</span>
+<span class="normal">308</span>
+<span class="normal">309</span>
+<span class="normal">310</span>
+<span class="normal">311</span>
+<span class="normal">312</span>
+<span class="normal">313</span>
+<span class="normal">314</span>
+<span class="normal">315</span>
+<span class="normal">316</span>
+<span class="normal">317</span>
+<span class="normal">318</span>
+<span class="normal">319</span>
+<span class="normal">320</span>
+<span class="normal">321</span>
+<span class="normal">322</span>
+<span class="normal">323</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">accept_model_offer</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">source</span><span class="p">,</span> <span class="n">decoded_model</span><span class="p">,</span> <span class="n">rounds</span><span class="p">,</span> <span class="nb">round</span><span class="p">,</span> <span class="n">epochs</span><span class="p">,</span> <span class="n">n_neighbors</span><span class="p">,</span> <span class="n">loss</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Evaluate and possibly accept a model offer from a remote source.</span>
 
@@ -7866,14 +8200,14 @@ Situational Awareness (SA) workflow. Its responsibilities include:</p>
 
             <details class="quote">
               <summary>Source code in <code>nebula/core/situationalawareness/discovery/federationconnector.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">306</span>
-<span class="normal">307</span>
-<span class="normal">308</span>
-<span class="normal">309</span>
-<span class="normal">310</span>
-<span class="normal">311</span>
-<span class="normal">312</span>
-<span class="normal">313</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">get_trainning_info</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">325</span>
+<span class="normal">326</span>
+<span class="normal">327</span>
+<span class="normal">328</span>
+<span class="normal">329</span>
+<span class="normal">330</span>
+<span class="normal">331</span>
+<span class="normal">332</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">get_trainning_info</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Retrieves the current training model information from the model handler.</span>
 
@@ -7951,23 +8285,7 @@ and the necessary configuration for neighbor handling and candidate selection.</
 
             <details class="quote">
               <summary>Source code in <code>nebula/core/situationalawareness/discovery/federationconnector.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 88</span>
-<span class="normal"> 89</span>
-<span class="normal"> 90</span>
-<span class="normal"> 91</span>
-<span class="normal"> 92</span>
-<span class="normal"> 93</span>
-<span class="normal"> 94</span>
-<span class="normal"> 95</span>
-<span class="normal"> 96</span>
-<span class="normal"> 97</span>
-<span class="normal"> 98</span>
-<span class="normal"> 99</span>
-<span class="normal">100</span>
-<span class="normal">101</span>
-<span class="normal">102</span>
-<span class="normal">103</span>
-<span class="normal">104</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">104</span>
 <span class="normal">105</span>
 <span class="normal">106</span>
 <span class="normal">107</span>
@@ -7979,7 +8297,23 @@ and the necessary configuration for neighbor handling and candidate selection.</
 <span class="normal">113</span>
 <span class="normal">114</span>
 <span class="normal">115</span>
-<span class="normal">116</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">init</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sa_reasoner</span><span class="p">):</span>
+<span class="normal">116</span>
+<span class="normal">117</span>
+<span class="normal">118</span>
+<span class="normal">119</span>
+<span class="normal">120</span>
+<span class="normal">121</span>
+<span class="normal">122</span>
+<span class="normal">123</span>
+<span class="normal">124</span>
+<span class="normal">125</span>
+<span class="normal">126</span>
+<span class="normal">127</span>
+<span class="normal">128</span>
+<span class="normal">129</span>
+<span class="normal">130</span>
+<span class="normal">131</span>
+<span class="normal">132</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">init</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sa_reasoner</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Initializes the main components of the federation connector, including the situational awareness reasoner</span>
 <span class="sd">    and the necessary configuration for neighbor handling and candidate selection.</span>
@@ -8001,7 +8335,7 @@ and the necessary configuration for neighbor handling and candidate selection.</
 <span class="sd">        sa_reasoner (ISAReasoner): An instance of the situational awareness reasoner used for decision-making.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Building Federation Connector configurations...&quot;</span><span class="p">)</span>
-    <span class="bp">self</span><span class="o">.</span><span class="n">_sa_reasoner</span><span class="p">:</span> <span class="n">ISAReasoner</span> <span class="o">=</span> <span class="n">sa_reasoner</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">_sar</span><span class="p">:</span> <span class="n">ISAReasoner</span> <span class="o">=</span> <span class="n">sa_reasoner</span>
     <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">_register_message_events_callbacks</span><span class="p">()</span>
     <span class="k">await</span> <span class="n">EventManager</span><span class="o">.</span><span class="n">get_instance</span><span class="p">()</span><span class="o">.</span><span class="n">subscribe_node_event</span><span class="p">(</span><span class="n">UpdateNeighborEvent</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_update_neighbors</span><span class="p">)</span>
     <span class="k">await</span> <span class="n">EventManager</span><span class="o">.</span><span class="n">get_instance</span><span class="p">()</span><span class="o">.</span><span class="n">subscribe</span><span class="p">((</span><span class="s2">&quot;model&quot;</span><span class="p">,</span> <span class="s2">&quot;update&quot;</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">_model_update_callback</span><span class="p">)</span>
@@ -8033,7 +8367,7 @@ and the necessary configuration for neighbor handling and candidate selection.</
 <p>This method initiates the discovery phase by broadcasting a <code>DISCOVER_JOIN</code> or <code>DISCOVER_NODES</code> message
 to nearby nodes. Nodes that receive this message respond with an <code>OFFER_MODEL</code> or <code>OFFER_METRIC</code> message,
 which contains the necessary information to evaluate and select the most suitable candidates.</p>
-<p>The process is protected by locks to avoid race conditions, and it continues iteratively until at least 
+<p>The process is protected by locks to avoid race conditions, and it continues iteratively until at least
 one valid candidate is found. Once candidates are selected, a connection message is sent to the best nodes.</p>
 
 
@@ -8111,26 +8445,7 @@ one valid candidate is found. Once candidates are selected, a connection message
 
             <details class="quote">
               <summary>Source code in <code>nebula/core/situationalawareness/discovery/federationconnector.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">357</span>
-<span class="normal">358</span>
-<span class="normal">359</span>
-<span class="normal">360</span>
-<span class="normal">361</span>
-<span class="normal">362</span>
-<span class="normal">363</span>
-<span class="normal">364</span>
-<span class="normal">365</span>
-<span class="normal">366</span>
-<span class="normal">367</span>
-<span class="normal">368</span>
-<span class="normal">369</span>
-<span class="normal">370</span>
-<span class="normal">371</span>
-<span class="normal">372</span>
-<span class="normal">373</span>
-<span class="normal">374</span>
-<span class="normal">375</span>
-<span class="normal">376</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">376</span>
 <span class="normal">377</span>
 <span class="normal">378</span>
 <span class="normal">379</span>
@@ -8181,7 +8496,30 @@ one valid candidate is found. Once candidates are selected, a connection message
 <span class="normal">424</span>
 <span class="normal">425</span>
 <span class="normal">426</span>
-<span class="normal">427</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">start_late_connection_process</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">connected</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">msg_type</span><span class="o">=</span><span class="s2">&quot;discover_join&quot;</span><span class="p">,</span> <span class="n">addrs_known</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="normal">427</span>
+<span class="normal">428</span>
+<span class="normal">429</span>
+<span class="normal">430</span>
+<span class="normal">431</span>
+<span class="normal">432</span>
+<span class="normal">433</span>
+<span class="normal">434</span>
+<span class="normal">435</span>
+<span class="normal">436</span>
+<span class="normal">437</span>
+<span class="normal">438</span>
+<span class="normal">439</span>
+<span class="normal">440</span>
+<span class="normal">441</span>
+<span class="normal">442</span>
+<span class="normal">443</span>
+<span class="normal">444</span>
+<span class="normal">445</span>
+<span class="normal">446</span>
+<span class="normal">447</span>
+<span class="normal">448</span>
+<span class="normal">449</span>
+<span class="normal">450</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">start_late_connection_process</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">connected</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">msg_type</span><span class="o">=</span><span class="s2">&quot;discover_join&quot;</span><span class="p">,</span> <span class="n">addrs_known</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Starts the late connection process to discover and join an existing federation.</span>
 
@@ -8189,7 +8527,7 @@ one valid candidate is found. Once candidates are selected, a connection message
 <span class="sd">    to nearby nodes. Nodes that receive this message respond with an `OFFER_MODEL` or `OFFER_METRIC` message,</span>
 <span class="sd">    which contains the necessary information to evaluate and select the most suitable candidates.</span>
 
-<span class="sd">    The process is protected by locks to avoid race conditions, and it continues iteratively until at least </span>
+<span class="sd">    The process is protected by locks to avoid race conditions, and it continues iteratively until at least</span>
 <span class="sd">    one valid candidate is found. Once candidates are selected, a connection message is sent to the best nodes.</span>
 
 <span class="sd">    Args:</span>
@@ -8204,7 +8542,7 @@ one valid candidate is found. Once candidates are selected, a connection message
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;🌐  Initializing late connection process..&quot;</span><span class="p">)</span>
 
-    <span class="bp">self</span><span class="o">.</span><span class="n">late_connection_process_lock</span><span class="o">.</span><span class="n">acquire</span><span class="p">()</span>
+    <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">late_connection_process_lock</span><span class="o">.</span><span class="n">acquire_async</span><span class="p">()</span>
     <span class="n">best_candidates</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">candidate_selector</span><span class="o">.</span><span class="n">remove_candidates</span><span class="p">()</span>
 
@@ -8220,7 +8558,7 @@ one valid candidate is found. Once candidates are selected, a connection message
         <span class="k">await</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">recieve_offer_timer</span><span class="p">)</span>
 
     <span class="c1"># acquire lock to not accept late candidates</span>
-    <span class="bp">self</span><span class="o">.</span><span class="n">accept_candidates_lock</span><span class="o">.</span><span class="n">acquire</span><span class="p">()</span>
+    <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">accept_candidates_lock</span><span class="o">.</span><span class="n">acquire_async</span><span class="p">()</span>
 
     <span class="k">if</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">candidate_selector</span><span class="o">.</span><span class="n">any_candidate</span><span class="p">():</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_verbose</span><span class="p">:</span>
@@ -8242,16 +8580,113 @@ one valid candidate is found. Once candidates are selected, a connection message
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_verbose</span><span class="p">:</span>
                 <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Error during stablishment&quot;</span><span class="p">)</span>
 
-        <span class="bp">self</span><span class="o">.</span><span class="n">accept_candidates_lock</span><span class="o">.</span><span class="n">release</span><span class="p">()</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">late_connection_process_lock</span><span class="o">.</span><span class="n">release</span><span class="p">()</span>
+        <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">accept_candidates_lock</span><span class="o">.</span><span class="n">release_async</span><span class="p">()</span>
+        <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">late_connection_process_lock</span><span class="o">.</span><span class="n">release_async</span><span class="p">()</span>
         <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">candidate_selector</span><span class="o">.</span><span class="n">remove_candidates</span><span class="p">()</span>
         <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;🌐  Ending late connection process..&quot;</span><span class="p">)</span>
     <span class="c1"># if no candidates, repeat process</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_verbose</span><span class="p">:</span>
             <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;❗️  No Candidates found...&quot;</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">accept_candidates_lock</span><span class="o">.</span><span class="n">release</span><span class="p">()</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">late_connection_process_lock</span><span class="o">.</span><span class="n">release</span><span class="p">()</span>
+        <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">accept_candidates_lock</span><span class="o">.</span><span class="n">release_async</span><span class="p">()</span>
+        <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">late_connection_process_lock</span><span class="o">.</span><span class="n">release_async</span><span class="p">()</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">connected</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_verbose</span><span class="p">:</span>
+                <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;❗️  repeating process...&quot;</span><span class="p">)</span>
+            <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">start_late_connection_process</span><span class="p">(</span><span class="n">connected</span><span class="p">,</span> <span class="n">msg_type</span><span class="p">,</span> <span class="n">addrs_known</span><span class="p">)</span>
+</code></pre></div></td></tr></table></div>
+            </details>
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="nebula.core.situationalawareness.discovery.federationconnector.FederationConnector.stop" class="doc doc-heading">
+            <code class="highlight language-python"><span class="n">stop</span><span class="p">()</span></code>
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-async"><code>async</code></small>
+  </span>
+
+<a href="#nebula.core.situationalawareness.discovery.federationconnector.FederationConnector.stop" class="headerlink" title="Permanent link">&para;</a></h3>
+
+
+    <div class="doc doc-contents ">
+
+        <p>Stop the FederationConnector by clearing pending confirmations and stopping background tasks.</p>
+
+
+            <details class="quote">
+              <summary>Source code in <code>nebula/core/situationalawareness/discovery/federationconnector.py</code></summary>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">641</span>
+<span class="normal">642</span>
+<span class="normal">643</span>
+<span class="normal">644</span>
+<span class="normal">645</span>
+<span class="normal">646</span>
+<span class="normal">647</span>
+<span class="normal">648</span>
+<span class="normal">649</span>
+<span class="normal">650</span>
+<span class="normal">651</span>
+<span class="normal">652</span>
+<span class="normal">653</span>
+<span class="normal">654</span>
+<span class="normal">655</span>
+<span class="normal">656</span>
+<span class="normal">657</span>
+<span class="normal">658</span>
+<span class="normal">659</span>
+<span class="normal">660</span>
+<span class="normal">661</span>
+<span class="normal">662</span>
+<span class="normal">663</span>
+<span class="normal">664</span>
+<span class="normal">665</span>
+<span class="normal">666</span>
+<span class="normal">667</span>
+<span class="normal">668</span>
+<span class="normal">669</span>
+<span class="normal">670</span>
+<span class="normal">671</span>
+<span class="normal">672</span>
+<span class="normal">673</span>
+<span class="normal">674</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">stop</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Stop the FederationConnector by clearing pending confirmations and stopping background tasks.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;🛑  Stopping FederationConnector...&quot;</span><span class="p">)</span>
+
+    <span class="c1"># Cancel all background tasks</span>
+    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_background_tasks</span><span class="p">:</span>
+        <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;🛑  Cancelling </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_background_tasks</span><span class="p">)</span><span class="si">}</span><span class="s2"> background tasks...&quot;</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">task</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_background_tasks</span><span class="p">:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">task</span><span class="o">.</span><span class="n">done</span><span class="p">():</span>
+                <span class="n">task</span><span class="o">.</span><span class="n">cancel</span><span class="p">()</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="k">await</span> <span class="n">task</span>
+                <span class="k">except</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">CancelledError</span><span class="p">:</span>
+                    <span class="k">pass</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_background_tasks</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
+        <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;🛑  All background tasks cancelled&quot;</span><span class="p">)</span>
+
+    <span class="c1"># Clear any pending confirmations</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="k">async</span> <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">pending_confirmation_from_nodes_lock</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">pending_confirmation_from_nodes</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
+    <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+        <span class="n">logging</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Error clearing pending confirmations: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+    <span class="c1"># Clear discarded offers</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="k">async</span> <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">discarded_offers_addr_lock</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">discarded_offers_addr</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
+    <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+        <span class="n">logging</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Error clearing discarded offers: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+    <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;✅  FederationConnector stopped successfully&quot;</span><span class="p">)</span>
 </code></pre></div></td></tr></table></div>
             </details>
     </div>
@@ -8294,7 +8729,7 @@ one valid candidate is found. Once candidates are selected, a connection message
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="June 11, 2025 16:51:47 UTC">June 11, 2025</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="June 26, 2025 13:41:05 UTC">June 26, 2025</span>
   </span>
 
     

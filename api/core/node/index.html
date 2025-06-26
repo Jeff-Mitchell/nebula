@@ -6176,9 +6176,7 @@ federated learning.</p>
 
             <details class="quote">
               <summary>Source code in <code>nebula/core/node.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 50</span>
-<span class="normal"> 51</span>
-<span class="normal"> 52</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 52</span>
 <span class="normal"> 53</span>
 <span class="normal"> 54</span>
 <span class="normal"> 55</span>
@@ -6357,11 +6355,7 @@ federated learning.</p>
 <span class="normal">228</span>
 <span class="normal">229</span>
 <span class="normal">230</span>
-<span class="normal">231</span>
-<span class="normal">232</span>
-<span class="normal">233</span>
-<span class="normal">234</span>
-<span class="normal">235</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">(</span><span class="n">config</span><span class="p">):</span>
+<span class="normal">231</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">(</span><span class="n">config</span><span class="p">:</span> <span class="n">Config</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Main function to start the NEBULA node.</span>
 
@@ -6474,7 +6468,7 @@ federated learning.</p>
         <span class="n">local_test_set_indices</span><span class="o">=</span><span class="n">dataset</span><span class="o">.</span><span class="n">local_test_indices</span><span class="p">,</span>
         <span class="n">num_workers</span><span class="o">=</span><span class="n">num_workers</span><span class="p">,</span>
         <span class="n">batch_size</span><span class="o">=</span><span class="n">batch_size</span><span class="p">,</span>
-        <span class="n">samples_per_label</span> <span class="o">=</span> <span class="n">samples_per_label</span>
+        <span class="n">samples_per_label</span><span class="o">=</span><span class="n">samples_per_label</span><span class="p">,</span>
     <span class="p">)</span>
 
     <span class="n">trainer</span> <span class="o">=</span> <span class="kc">None</span>
@@ -6487,20 +6481,6 @@ federated learning.</p>
         <span class="n">trainer</span> <span class="o">=</span> <span class="n">Siamese</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Trainer </span><span class="si">{</span><span class="n">trainer_str</span><span class="si">}</span><span class="s2"> not supported&quot;</span><span class="p">)</span>
-
-    <span class="k">if</span> <span class="n">config</span><span class="o">.</span><span class="n">participant</span><span class="p">[</span><span class="s2">&quot;device_args&quot;</span><span class="p">][</span><span class="s2">&quot;malicious&quot;</span><span class="p">]:</span>
-        <span class="n">node_cls</span> <span class="o">=</span> <span class="n">MaliciousNode</span>
-    <span class="k">else</span><span class="p">:</span>
-        <span class="k">if</span> <span class="n">config</span><span class="o">.</span><span class="n">participant</span><span class="p">[</span><span class="s2">&quot;device_args&quot;</span><span class="p">][</span><span class="s2">&quot;role&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="n">Role</span><span class="o">.</span><span class="n">AGGREGATOR</span><span class="o">.</span><span class="n">value</span><span class="p">:</span>
-            <span class="n">node_cls</span> <span class="o">=</span> <span class="n">AggregatorNode</span>
-        <span class="k">elif</span> <span class="n">config</span><span class="o">.</span><span class="n">participant</span><span class="p">[</span><span class="s2">&quot;device_args&quot;</span><span class="p">][</span><span class="s2">&quot;role&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="n">Role</span><span class="o">.</span><span class="n">TRAINER</span><span class="o">.</span><span class="n">value</span><span class="p">:</span>
-            <span class="n">node_cls</span> <span class="o">=</span> <span class="n">TrainerNode</span>
-        <span class="k">elif</span> <span class="n">config</span><span class="o">.</span><span class="n">participant</span><span class="p">[</span><span class="s2">&quot;device_args&quot;</span><span class="p">][</span><span class="s2">&quot;role&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="n">Role</span><span class="o">.</span><span class="n">SERVER</span><span class="o">.</span><span class="n">value</span><span class="p">:</span>
-            <span class="n">node_cls</span> <span class="o">=</span> <span class="n">ServerNode</span>
-        <span class="k">elif</span> <span class="n">config</span><span class="o">.</span><span class="n">participant</span><span class="p">[</span><span class="s2">&quot;device_args&quot;</span><span class="p">][</span><span class="s2">&quot;role&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="n">Role</span><span class="o">.</span><span class="n">IDLE</span><span class="o">.</span><span class="n">value</span><span class="p">:</span>
-            <span class="n">node_cls</span> <span class="o">=</span> <span class="n">IdleNode</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Role </span><span class="si">{</span><span class="n">config</span><span class="o">.</span><span class="n">participant</span><span class="p">[</span><span class="s1">&#39;device_args&#39;</span><span class="p">][</span><span class="s1">&#39;role&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2"> not supported&quot;</span><span class="p">)</span>
 
     <span class="n">VARIABILITY</span> <span class="o">=</span> <span class="mf">0.5</span>
 
@@ -6526,9 +6506,10 @@ federated learning.</p>
             <span class="n">value</span> <span class="o">=</span> <span class="n">value</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
         <span class="n">value</span><span class="p">[</span><span class="n">keys</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]]</span> <span class="o">=</span> <span class="n">randomize_value</span><span class="p">(</span><span class="n">value</span><span class="p">[</span><span class="n">keys</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]],</span> <span class="n">VARIABILITY</span><span class="p">)</span>
 
-    <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Starting node </span><span class="si">{</span><span class="n">idx</span><span class="si">}</span><span class="s2"> with model </span><span class="si">{</span><span class="n">model_name</span><span class="si">}</span><span class="s2">, trainer </span><span class="si">{</span><span class="n">trainer</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">, and as </span><span class="si">{</span><span class="n">node_cls</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="n">role</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">participant</span><span class="p">[</span><span class="s2">&quot;device_args&quot;</span><span class="p">][</span><span class="s2">&quot;role&quot;</span><span class="p">]</span>
+    <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Starting node </span><span class="si">{</span><span class="n">idx</span><span class="si">}</span><span class="s2"> with model </span><span class="si">{</span><span class="n">model_name</span><span class="si">}</span><span class="s2">, trainer </span><span class="si">{</span><span class="n">trainer</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">, and as </span><span class="si">{</span><span class="n">role</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 
-    <span class="n">node</span> <span class="o">=</span> <span class="n">node_cls</span><span class="p">(</span>
+    <span class="n">node</span> <span class="o">=</span> <span class="n">Engine</span><span class="p">(</span>
         <span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span>
         <span class="n">datamodule</span><span class="o">=</span><span class="n">datamodule</span><span class="p">,</span>
         <span class="n">config</span><span class="o">=</span><span class="n">config</span><span class="p">,</span>
@@ -6547,6 +6528,13 @@ federated learning.</p>
 
     <span class="k">if</span> <span class="n">node</span><span class="o">.</span><span class="n">cm</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
         <span class="k">await</span> <span class="n">node</span><span class="o">.</span><span class="n">cm</span><span class="o">.</span><span class="n">network_wait</span><span class="p">()</span>
+
+    <span class="c1"># Ensure shutdown is always called and awaited before main() returns</span>
+    <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="s2">&quot;shutdown&quot;</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">callable</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">shutdown</span><span class="p">):</span>
+        <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Calling node.shutdown() for final cleanup and Docker removal...&quot;</span><span class="p">)</span>
+        <span class="k">await</span> <span class="n">node</span><span class="o">.</span><span class="n">shutdown</span><span class="p">()</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">logging</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">&quot;Node does not have a shutdown() method; skipping explicit shutdown.&quot;</span><span class="p">)</span>
 </code></pre></div></td></tr></table></div>
             </details>
     </div>
@@ -6580,7 +6568,7 @@ federated learning.</p>
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="June 11, 2025 16:51:45 UTC">June 11, 2025</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="June 26, 2025 13:41:02 UTC">June 26, 2025</span>
   </span>
 
     

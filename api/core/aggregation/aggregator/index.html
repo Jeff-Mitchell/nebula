@@ -6288,7 +6288,23 @@
 <span class="normal">153</span>
 <span class="normal">154</span>
 <span class="normal">155</span>
-<span class="normal">156</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">Aggregator</span><span class="p">(</span><span class="n">ABC</span><span class="p">):</span>
+<span class="normal">156</span>
+<span class="normal">157</span>
+<span class="normal">158</span>
+<span class="normal">159</span>
+<span class="normal">160</span>
+<span class="normal">161</span>
+<span class="normal">162</span>
+<span class="normal">163</span>
+<span class="normal">164</span>
+<span class="normal">165</span>
+<span class="normal">166</span>
+<span class="normal">167</span>
+<span class="normal">168</span>
+<span class="normal">169</span>
+<span class="normal">170</span>
+<span class="normal">171</span>
+<span class="normal">172</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">Aggregator</span><span class="p">(</span><span class="n">ABC</span><span class="p">):</span>
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">config</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">engine</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">config</span> <span class="o">=</span> <span class="n">config</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">engine</span><span class="p">:</span> <span class="n">Engine</span> <span class="o">=</span> <span class="n">engine</span>
@@ -6321,7 +6337,7 @@
             <span class="k">return</span> <span class="kc">None</span>
 
     <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">init</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">us</span><span class="o">.</span><span class="n">init</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="p">)</span>
+        <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">us</span><span class="o">.</span><span class="n">init</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">engine</span><span class="o">.</span><span class="n">rb</span><span class="o">.</span><span class="n">get_role_name</span><span class="p">(</span><span class="kc">True</span><span class="p">))</span>
 
     <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">update_federation_nodes</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">federation_nodes</span><span class="p">:</span> <span class="nb">set</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
@@ -6329,25 +6345,37 @@
 
 <span class="sd">        This method informs the update handler (`us`) about the new set of federation nodes, </span>
 <span class="sd">        clears any pending models, and attempts to acquire the aggregation lock to prepare </span>
-<span class="sd">        for model aggregation. If the aggregation process is already running, it raises an exception.</span>
+<span class="sd">        for model aggregation. If the aggregation process is already running, it releases the lock</span>
+<span class="sd">        and tries again to ensure proper cleanup between rounds.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            federation_nodes (set): A set of addresses representing the nodes expected to contribute </span>
 <span class="sd">                                    updates for the next aggregation round.</span>
 
 <span class="sd">        Raises:</span>
-<span class="sd">            Exception: If the aggregation process is already running and the lock is currently held.</span>
+<span class="sd">            Exception: If the aggregation process is already running and the lock cannot be released.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">us</span><span class="o">.</span><span class="n">round_expected_updates</span><span class="p">(</span><span class="n">federation_nodes</span><span class="o">=</span><span class="n">federation_nodes</span><span class="p">)</span>
 
-        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_aggregation_done_lock</span><span class="o">.</span><span class="n">locked</span><span class="p">():</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_federation_nodes</span> <span class="o">=</span> <span class="n">federation_nodes</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_pending_models_to_aggregate</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
-            <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">_aggregation_done_lock</span><span class="o">.</span><span class="n">acquire_async</span><span class="p">(</span>
-                <span class="n">timeout</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">participant</span><span class="p">[</span><span class="s2">&quot;aggregator_args&quot;</span><span class="p">][</span><span class="s2">&quot;aggregation_timeout&quot;</span><span class="p">]</span>
-            <span class="p">)</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s2">&quot;It is not possible to set nodes to aggregate when the aggregation is running.&quot;</span><span class="p">)</span>
+        <span class="c1"># If the aggregation lock is held, release it to prepare for the new round</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_aggregation_done_lock</span><span class="o">.</span><span class="n">locked</span><span class="p">():</span>
+            <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;🔄  update_federation_nodes | Aggregation lock is held, releasing for new round&quot;</span><span class="p">)</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">_aggregation_done_lock</span><span class="o">.</span><span class="n">release_async</span><span class="p">()</span>
+            <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                <span class="n">logging</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;🔄  update_federation_nodes | Error releasing aggregation lock: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+                <span class="c1"># If we can&#39;t release the lock, we might be in the middle of aggregation</span>
+                <span class="c1"># In this case, we should wait a bit and try again</span>
+                <span class="k">await</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mf">0.1</span><span class="p">)</span>
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_aggregation_done_lock</span><span class="o">.</span><span class="n">locked</span><span class="p">():</span>
+                    <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s2">&quot;It is not possible to set nodes to aggregate when the aggregation is running.&quot;</span><span class="p">)</span>
+
+        <span class="c1"># Now acquire the lock for the new round</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_federation_nodes</span> <span class="o">=</span> <span class="n">federation_nodes</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_pending_models_to_aggregate</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
+        <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">_aggregation_done_lock</span><span class="o">.</span><span class="n">acquire_async</span><span class="p">(</span>
+            <span class="n">timeout</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">participant</span><span class="p">[</span><span class="s2">&quot;aggregator_args&quot;</span><span class="p">][</span><span class="s2">&quot;aggregation_timeout&quot;</span><span class="p">]</span>
+        <span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">get_nodes_pending_models_to_aggregate</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_federation_nodes</span>
@@ -6369,7 +6397,7 @@
 <span class="sd">            TimeoutError: If the aggregation lock is not acquired within the defined timeout.</span>
 <span class="sd">            asyncio.CancelledError: If the aggregation lock acquisition is cancelled.</span>
 <span class="sd">            Exception: For any other unexpected errors during the aggregation process.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        &quot;&quot;&quot;</span>            
         <span class="k">try</span><span class="p">:</span>
             <span class="n">timeout</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">participant</span><span class="p">[</span><span class="s2">&quot;aggregator_args&quot;</span><span class="p">][</span><span class="s2">&quot;aggregation_timeout&quot;</span><span class="p">]</span>
             <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Aggregation timeout: </span><span class="si">{</span><span class="n">timeout</span><span class="si">}</span><span class="s2"> starts...&quot;</span><span class="p">)</span>
@@ -6403,6 +6431,10 @@
 
         <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">us</span><span class="o">.</span><span class="n">stop_notifying_updates</span><span class="p">()</span>
         <span class="n">updates</span> <span class="o">=</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">us</span><span class="o">.</span><span class="n">get_round_updates</span><span class="p">()</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">updates</span><span class="p">:</span>
+            <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;🔄  get_aggregation | No updates has been received..resolving conflict to continue...&quot;</span><span class="p">)</span>
+            <span class="n">updates</span> <span class="o">=</span> <span class="p">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_addr</span><span class="p">:</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">engine</span><span class="o">.</span><span class="n">resolve_missing_updates</span><span class="p">()}</span>
+
         <span class="n">missing_nodes</span> <span class="o">=</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">us</span><span class="o">.</span><span class="n">get_round_missing_nodes</span><span class="p">()</span>
         <span class="k">if</span> <span class="n">missing_nodes</span><span class="p">:</span>
             <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;🔄  get_aggregation | Aggregation incomplete, missing models from: </span><span class="si">{</span><span class="n">missing_nodes</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
@@ -6554,19 +6586,7 @@ Finally, it runs the aggregation algorithm and returns the result.</p>
 
             <details class="quote">
               <summary>Source code in <code>nebula/core/aggregation/aggregator.py</code></summary>
-              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 82</span>
-<span class="normal"> 83</span>
-<span class="normal"> 84</span>
-<span class="normal"> 85</span>
-<span class="normal"> 86</span>
-<span class="normal"> 87</span>
-<span class="normal"> 88</span>
-<span class="normal"> 89</span>
-<span class="normal"> 90</span>
-<span class="normal"> 91</span>
-<span class="normal"> 92</span>
-<span class="normal"> 93</span>
-<span class="normal"> 94</span>
+              <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 94</span>
 <span class="normal"> 95</span>
 <span class="normal"> 96</span>
 <span class="normal"> 97</span>
@@ -6614,7 +6634,23 @@ Finally, it runs the aggregation algorithm and returns the result.</p>
 <span class="normal">139</span>
 <span class="normal">140</span>
 <span class="normal">141</span>
-<span class="normal">142</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">get_aggregation</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="normal">142</span>
+<span class="normal">143</span>
+<span class="normal">144</span>
+<span class="normal">145</span>
+<span class="normal">146</span>
+<span class="normal">147</span>
+<span class="normal">148</span>
+<span class="normal">149</span>
+<span class="normal">150</span>
+<span class="normal">151</span>
+<span class="normal">152</span>
+<span class="normal">153</span>
+<span class="normal">154</span>
+<span class="normal">155</span>
+<span class="normal">156</span>
+<span class="normal">157</span>
+<span class="normal">158</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">get_aggregation</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Handles the aggregation process for a training round.</span>
 
@@ -6631,7 +6667,7 @@ Finally, it runs the aggregation algorithm and returns the result.</p>
 <span class="sd">        TimeoutError: If the aggregation lock is not acquired within the defined timeout.</span>
 <span class="sd">        asyncio.CancelledError: If the aggregation lock acquisition is cancelled.</span>
 <span class="sd">        Exception: For any other unexpected errors during the aggregation process.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    &quot;&quot;&quot;</span>            
     <span class="k">try</span><span class="p">:</span>
         <span class="n">timeout</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">participant</span><span class="p">[</span><span class="s2">&quot;aggregator_args&quot;</span><span class="p">][</span><span class="s2">&quot;aggregation_timeout&quot;</span><span class="p">]</span>
         <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Aggregation timeout: </span><span class="si">{</span><span class="n">timeout</span><span class="si">}</span><span class="s2"> starts...&quot;</span><span class="p">)</span>
@@ -6665,6 +6701,10 @@ Finally, it runs the aggregation algorithm and returns the result.</p>
 
     <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">us</span><span class="o">.</span><span class="n">stop_notifying_updates</span><span class="p">()</span>
     <span class="n">updates</span> <span class="o">=</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">us</span><span class="o">.</span><span class="n">get_round_updates</span><span class="p">()</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">updates</span><span class="p">:</span>
+        <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;🔄  get_aggregation | No updates has been received..resolving conflict to continue...&quot;</span><span class="p">)</span>
+        <span class="n">updates</span> <span class="o">=</span> <span class="p">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_addr</span><span class="p">:</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">engine</span><span class="o">.</span><span class="n">resolve_missing_updates</span><span class="p">()}</span>
+
     <span class="n">missing_nodes</span> <span class="o">=</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">us</span><span class="o">.</span><span class="n">get_round_missing_nodes</span><span class="p">()</span>
     <span class="k">if</span> <span class="n">missing_nodes</span><span class="p">:</span>
         <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;🔄  get_aggregation | Aggregation incomplete, missing models from: </span><span class="si">{</span><span class="n">missing_nodes</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
@@ -6699,7 +6739,8 @@ Finally, it runs the aggregation algorithm and returns the result.</p>
         <p>Updates the current set of nodes expected to participate in the upcoming aggregation round.</p>
 <p>This method informs the update handler (<code>us</code>) about the new set of federation nodes, 
 clears any pending models, and attempts to acquire the aggregation lock to prepare 
-for model aggregation. If the aggregation process is already running, it raises an exception.</p>
+for model aggregation. If the aggregation process is already running, it releases the lock
+and tries again to ensure proper cleanup between rounds.</p>
 
 
 <p><span class="doc-section-title">Parameters:</span></p>
@@ -6749,7 +6790,7 @@ for model aggregation. If the aggregation process is already running, it raises 
             </td>
             <td>
               <div class="doc-md-description">
-                <p>If the aggregation process is already running and the lock is currently held.</p>
+                <p>If the aggregation process is already running and the lock cannot be released.</p>
               </div>
             </td>
           </tr>
@@ -6783,31 +6824,55 @@ for model aggregation. If the aggregation process is already running, it raises 
 <span class="normal">74</span>
 <span class="normal">75</span>
 <span class="normal">76</span>
-<span class="normal">77</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">update_federation_nodes</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">federation_nodes</span><span class="p">:</span> <span class="nb">set</span><span class="p">):</span>
+<span class="normal">77</span>
+<span class="normal">78</span>
+<span class="normal">79</span>
+<span class="normal">80</span>
+<span class="normal">81</span>
+<span class="normal">82</span>
+<span class="normal">83</span>
+<span class="normal">84</span>
+<span class="normal">85</span>
+<span class="normal">86</span>
+<span class="normal">87</span>
+<span class="normal">88</span>
+<span class="normal">89</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">update_federation_nodes</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">federation_nodes</span><span class="p">:</span> <span class="nb">set</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Updates the current set of nodes expected to participate in the upcoming aggregation round.</span>
 
 <span class="sd">    This method informs the update handler (`us`) about the new set of federation nodes, </span>
 <span class="sd">    clears any pending models, and attempts to acquire the aggregation lock to prepare </span>
-<span class="sd">    for model aggregation. If the aggregation process is already running, it raises an exception.</span>
+<span class="sd">    for model aggregation. If the aggregation process is already running, it releases the lock</span>
+<span class="sd">    and tries again to ensure proper cleanup between rounds.</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        federation_nodes (set): A set of addresses representing the nodes expected to contribute </span>
 <span class="sd">                                updates for the next aggregation round.</span>
 
 <span class="sd">    Raises:</span>
-<span class="sd">        Exception: If the aggregation process is already running and the lock is currently held.</span>
+<span class="sd">        Exception: If the aggregation process is already running and the lock cannot be released.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">us</span><span class="o">.</span><span class="n">round_expected_updates</span><span class="p">(</span><span class="n">federation_nodes</span><span class="o">=</span><span class="n">federation_nodes</span><span class="p">)</span>
 
-    <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_aggregation_done_lock</span><span class="o">.</span><span class="n">locked</span><span class="p">():</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_federation_nodes</span> <span class="o">=</span> <span class="n">federation_nodes</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_pending_models_to_aggregate</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
-        <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">_aggregation_done_lock</span><span class="o">.</span><span class="n">acquire_async</span><span class="p">(</span>
-            <span class="n">timeout</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">participant</span><span class="p">[</span><span class="s2">&quot;aggregator_args&quot;</span><span class="p">][</span><span class="s2">&quot;aggregation_timeout&quot;</span><span class="p">]</span>
-        <span class="p">)</span>
-    <span class="k">else</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s2">&quot;It is not possible to set nodes to aggregate when the aggregation is running.&quot;</span><span class="p">)</span>
+    <span class="c1"># If the aggregation lock is held, release it to prepare for the new round</span>
+    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_aggregation_done_lock</span><span class="o">.</span><span class="n">locked</span><span class="p">():</span>
+        <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;🔄  update_federation_nodes | Aggregation lock is held, releasing for new round&quot;</span><span class="p">)</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">_aggregation_done_lock</span><span class="o">.</span><span class="n">release_async</span><span class="p">()</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="n">logging</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;🔄  update_federation_nodes | Error releasing aggregation lock: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="c1"># If we can&#39;t release the lock, we might be in the middle of aggregation</span>
+            <span class="c1"># In this case, we should wait a bit and try again</span>
+            <span class="k">await</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mf">0.1</span><span class="p">)</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_aggregation_done_lock</span><span class="o">.</span><span class="n">locked</span><span class="p">():</span>
+                <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s2">&quot;It is not possible to set nodes to aggregate when the aggregation is running.&quot;</span><span class="p">)</span>
+
+    <span class="c1"># Now acquire the lock for the new round</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">_federation_nodes</span> <span class="o">=</span> <span class="n">federation_nodes</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">_pending_models_to_aggregate</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
+    <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">_aggregation_done_lock</span><span class="o">.</span><span class="n">acquire_async</span><span class="p">(</span>
+        <span class="n">timeout</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">participant</span><span class="p">[</span><span class="s2">&quot;aggregator_args&quot;</span><span class="p">][</span><span class="s2">&quot;aggregation_timeout&quot;</span><span class="p">]</span>
+    <span class="p">)</span>
 </code></pre></div></td></tr></table></div>
             </details>
     </div>
@@ -6850,7 +6915,7 @@ for model aggregation. If the aggregation process is already running, it raises 
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="June 11, 2025 16:51:45 UTC">June 11, 2025</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="June 26, 2025 13:41:03 UTC">June 26, 2025</span>
   </span>
 
     
