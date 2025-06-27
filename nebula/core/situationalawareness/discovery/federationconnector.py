@@ -132,6 +132,41 @@ class FederationConnector(ISADiscovery):
         await self.candidate_selector.set_config([0, 0.5, 0.5])
         # self.engine.trainer.get_loss(), self.config.participant["molibity_args"]["weight_distance"], self.config.participant["molibity_args"]["weight_het"]
 
+    async def stop(self):
+        """
+        Stop the FederationConnector by clearing pending confirmations and stopping background tasks.
+        """
+        logging.info("🛑  Stopping FederationConnector...")
+
+        # Cancel all background tasks
+        if self._background_tasks:
+            logging.info(f"🛑  Cancelling {len(self._background_tasks)} background tasks...")
+            for task in self._background_tasks:
+                if not task.done():
+                    task.cancel()
+                    try:
+                        await task
+                    except asyncio.CancelledError:
+                        pass
+            self._background_tasks.clear()
+            logging.info("🛑  All background tasks cancelled")
+
+        # Clear any pending confirmations
+        try:
+            async with self.pending_confirmation_from_nodes_lock:
+                self.pending_confirmation_from_nodes.clear()
+        except Exception as e:
+            logging.warning(f"Error clearing pending confirmations: {e}")
+
+        # Clear discarded offers
+        try:
+            async with self.discarded_offers_addr_lock:
+                self.discarded_offers_addr.clear()
+        except Exception as e:
+            logging.warning(f"Error clearing discarded offers: {e}")
+
+        logging.info("✅  FederationConnector stopped successfully")
+
     """
                 ##############################
                 #        CONNECTIONS         #
@@ -638,37 +673,4 @@ class FederationConnector(ISADiscovery):
         for addr in message.addrs.split():
             asyncio.create_task(self.cm.disconnect(addr, mutual_disconnection=False))
 
-    async def stop(self):
-        """
-        Stop the FederationConnector by clearing pending confirmations and stopping background tasks.
-        """
-        logging.info("🛑  Stopping FederationConnector...")
-
-        # Cancel all background tasks
-        if self._background_tasks:
-            logging.info(f"🛑  Cancelling {len(self._background_tasks)} background tasks...")
-            for task in self._background_tasks:
-                if not task.done():
-                    task.cancel()
-                    try:
-                        await task
-                    except asyncio.CancelledError:
-                        pass
-            self._background_tasks.clear()
-            logging.info("🛑  All background tasks cancelled")
-
-        # Clear any pending confirmations
-        try:
-            async with self.pending_confirmation_from_nodes_lock:
-                self.pending_confirmation_from_nodes.clear()
-        except Exception as e:
-            logging.warning(f"Error clearing pending confirmations: {e}")
-
-        # Clear discarded offers
-        try:
-            async with self.discarded_offers_addr_lock:
-                self.discarded_offers_addr.clear()
-        except Exception as e:
-            logging.warning(f"Error clearing discarded offers: {e}")
-
-        logging.info("✅  FederationConnector stopped successfully")
+    

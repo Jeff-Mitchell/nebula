@@ -4,6 +4,7 @@ import math
 import random
 import time
 from functools import cached_property
+from nebula.config.config import Config
 
 from nebula.addons.functions import print_msg_box
 from nebula.core.eventmanager import EventManager
@@ -13,7 +14,7 @@ from nebula.core.utils.locker import Locker
 
 
 class Mobility:
-    def __init__(self, config, verbose=False):
+    def __init__(self, config:Config, verbose=False):
         """
         Initializes the mobility module with specified configuration and communication manager.
 
@@ -58,7 +59,7 @@ class Mobility:
 
         # Mobility configuration
         self.mobility = self.config.participant["mobility_args"]["mobility"]
-        self.mobility_type = self.config.participant["mobility_args"]["mobility_type"]
+        #self.mobility_type = self.config.participant["mobility_args"]["mobility_type"]
         self.grace_time = self.config.participant["mobility_args"]["grace_time_mobility"]
         self.period = self.config.participant["mobility_args"]["change_geo_interval"]
         # INFO: These values may change according to the needs of the federation
@@ -67,30 +68,15 @@ class Mobility:
         self.max_movement_nearest_strategy = 50  # meters
         self.max_initiate_approximation = self.max_distance_with_direct_connections * 1.2
         self.radius_federation = float(config.participant["mobility_args"]["radius_federation"])
-        self.scheme_mobility = config.participant["mobility_args"]["scheme_mobility"]
+        #self.scheme_mobility = config.participant["mobility_args"]["scheme_mobility"]
         self.round_frequency = int(config.participant["mobility_args"]["round_frequency"])
         # Logging box with mobility information
-        mobility_msg = f"Mobility: {self.mobility}\nMobility type: {self.mobility_type}\nRadius federation: {self.radius_federation}\nScheme mobility: {self.scheme_mobility}\nEach {self.round_frequency} rounds"
+        mobility_msg = f"Mobility: {self.mobility}\nRadius federation: {self.radius_federation}\nEach {self.round_frequency} rounds"
         print_msg_box(msg=mobility_msg, indent=2, title="Mobility information")
 
     @cached_property
     def cm(self):
         return CommunicationsManager.get_instance()
-
-    # @property
-    # def round(self):
-    #     """
-    #     Gets the current round number from the Communications Manager.
-
-    #     This property retrieves the current round number that is being managed by the
-    #     CommunicationsManager instance associated with this module. It provides an
-    #     interface to access the ongoing round of the communication process without
-    #     directly exposing the underlying method in the CommunicationsManager.
-
-    #     Returns:
-    #         int: The current round number managed by the CommunicationsManager.
-    #     """
-    #     return self.cm.get_round()
 
     async def start(self):
         """

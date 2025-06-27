@@ -21,6 +21,7 @@ class SACommandAction(Enum):
     MAINTAIN_CONNECTIONS = "maintain_connections"
     ADJUST_WEIGHT = "adjust_weight"
     DISCARD_UPDATE = "discard_update"
+    ISOLATION = "isolation"
 
 
 class SACommandPRIO(Enum):

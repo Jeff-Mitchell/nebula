@@ -284,15 +284,15 @@ class NebulaConnectionService(ExternalConnectionService):
         if self.server:
             if self.server.transport:
                 self.server.transport.close()
-            self.server = None
+            #self.server = None
         if self.client:
             await self.client.stop()
             if self.client.transport:
                 self.client.transport.close()
-            self.client = None
+            #self.client = None
         if self.beacon:
             await self.stop_beacon()
-            self.beacon = None
+            #self.beacon = None
         self._running.clear()
 
     async def start_beacon(self):

@@ -21,6 +21,10 @@ class ISADiscovery(ABC):
             sa_reasoner (ISAReasoner): The reasoner instance to coordinate with.
         """
         raise NotImplementedError
+    
+    @abstractmethod
+    async def stop(self):
+        raise NotImplementedError
 
     @abstractmethod
     async def start_late_connection_process(self, connected=False, msg_type="discover_join", addrs_known=None):
@@ -61,6 +65,10 @@ class ISAReasoner(ABC):
         Args:
             sa_discovery (ISADiscovery): The discovery instance to coordinate with.
         """
+        raise NotImplementedError
+    
+    @abstractmethod
+    async def stop(self):
         raise NotImplementedError
 
     @abstractmethod

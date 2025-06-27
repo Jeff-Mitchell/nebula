@@ -138,6 +138,30 @@ class SAReasoner(ISAReasoner):
         await self._loading_sa_components()
         await EventManager.get_instance().subscribe_node_event(RoundEndEvent, self._process_round_end_event)
         await EventManager.get_instance().subscribe_node_event(AggregationEvent, self._process_aggregation_event)
+        
+    async def stop(self):
+        """
+        Stop the SAReasoner by stopping all SA components and clearing any pending operations.
+        """
+        logging.info("🛑  Stopping SAReasoner...")
+        self._arbitrator_notification.set()
+
+        # Stop all SA components
+        if self._sa_components:
+            for component_name, component in self._sa_components.items():
+                try:
+                    # Check if component has a stop method
+                    stop_method = getattr(component, "stop", None)
+                    if stop_method and callable(stop_method):
+                        if asyncio.iscoroutinefunction(stop_method):
+                            await stop_method()
+                        else:
+                            stop_method()
+                        logging.info(f"✅  Stopped SA component: {component_name}")
+                except Exception as e:
+                    logging.warning(f"Error stopping SA component {component_name}: {e}")
+
+        logging.info("✅  SAReasoner stopped successfully")
 
     def is_additional_participant(self):
         """
@@ -376,26 +400,4 @@ class SAReasoner(ISAReasoner):
         else:
             raise ValueError("SA Network not found")
 
-    async def stop(self):
-        """
-        Stop the SAReasoner by stopping all SA components and clearing any pending operations.
-        """
-        logging.info("🛑  Stopping SAReasoner...")
-        self._arbitrator_notification.set()
-
-        # Stop all SA components
-        if self._sa_components:
-            for component_name, component in self._sa_components.items():
-                try:
-                    # Check if component has a stop method
-                    stop_method = getattr(component, "stop", None)
-                    if stop_method and callable(stop_method):
-                        if asyncio.iscoroutinefunction(stop_method):
-                            await stop_method()
-                        else:
-                            stop_method()
-                        logging.info(f"✅  Stopped SA component: {component_name}")
-                except Exception as e:
-                    logging.warning(f"Error stopping SA component {component_name}: {e}")
-
-        logging.info("✅  SAReasoner stopped successfully")
+    
