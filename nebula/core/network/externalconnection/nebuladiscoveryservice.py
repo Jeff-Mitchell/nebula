@@ -200,7 +200,7 @@ class NebulaBeacon:
 
     async def _proces_change_location_event(self, cle: ChangeLocationEvent):
         lat, long = await cle.get_event_data()
-        # logging.info(f"Location changed to: ({lat},{long})")
+        #logging.info(f"Location changed to: ({lat},{long})")
         self._latitude, self._longitude = lat, long
 
     async def stop(self):

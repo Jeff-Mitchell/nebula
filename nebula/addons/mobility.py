@@ -51,7 +51,7 @@ class Mobility:
         """
         logging.info("Starting mobility module...")
         self.config = config
-        self._verbose = verbose
+        self._verbose = False
         self._running = asyncio.Event()
         self._nodes_distances = {}
         self._nodes_distances_lock = Locker("nodes_distances_lock", async_lock=True)
@@ -59,7 +59,7 @@ class Mobility:
 
         # Mobility configuration
         self.mobility = self.config.participant["mobility_args"]["mobility"]
-        #self.mobility_type = self.config.participant["mobility_args"]["mobility_type"]
+        self.mobility_type = self.config.participant["mobility_args"]["mobility_type"]
         self.grace_time = self.config.participant["mobility_args"]["grace_time_mobility"]
         self.period = self.config.participant["mobility_args"]["change_geo_interval"]
         # INFO: These values may change according to the needs of the federation
@@ -91,7 +91,6 @@ class Mobility:
             asyncio.Task: An asyncio Task object representing the scheduled
                            `run_mobility` operation.
         """
-        await EventManager.get_instance().subscribe_addonevent(GPSEvent, self.update_nodes_distances)
         await EventManager.get_instance().subscribe_addonevent(GPSEvent, self.update_nodes_distances)
         self._running.set()
         self._mobility_task = asyncio.create_task(self.run_mobility(), name="Mobility_run_mobility")
@@ -149,6 +148,8 @@ class Mobility:
         """
         if not self.mobility:
             return
+        if self._verbose:
+            logging.info("[MOBILITY]: Changing geo location according to strategy...")
         # await asyncio.sleep(self.grace_time)
         while await self.is_running():
             await self.change_geo_location()

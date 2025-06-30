@@ -46,8 +46,8 @@ class ScheduledIsolation():
         config, 
         on_isolation_trigger: Callable[[TopologyState], Awaitable[None]] = None
     ):
-        self._isolation_round_start = None                      # config["scheduled_isolation"]["round_start"]
-        self._isolation_round_period = None                     # config["scheduled_isolation"]["round_period"]
+        self._isolation_round_start = 5#None                      # config["scheduled_isolation"]["round_start"]
+        self._isolation_round_period = 2#None                     # config["scheduled_isolation"]["round_period"]
         self._isolation_round_end = self._isolation_round_start + self._isolation_round_period if self._isolation_round_period else None
         self._on_isolation_trigger = on_isolation_trigger
         self._isolation = False
@@ -57,19 +57,22 @@ class ScheduledIsolation():
         logging.info(f"Scheduled isolation | Round start: {self._isolation_round_start} | Isolation period: {period}")
         
         await EventManager.get_instance().subscribe_node_event(RoundStartEvent, self._check_isolation)
+    
+    def set_isolation(self):
+        self._isolation = True
         
     def is_already_isolated(self):
         return self._isolation
         
     async def _check_isolation(self, rse: RoundStartEvent):
-        current_round, _ = await rse.get_event_data()
+        current_round, *_ = await rse.get_event_data()
         if current_round >= self._isolation_round_start and not self._isolation:
             logging.info("Isolation condition is ACTIVE")
-            self._isolation = True
-            await  self._on_isolation_trigger(TopologyState.ISOLATED)
+            await self._on_isolation_trigger(TopologyState.ISOLATED)
         elif self._isolation_round_end and current_round > self._isolation_round_end:
             logging.info("Isolation condition is INACTIVE")
-            await  self._on_isolation_trigger(TopologyState.TRANSITION)
+            await self._on_isolation_trigger(TopologyState.TRANSITION)
+            await EventManager.get_instance().unsubscribe_event(RoundStartEvent, self._check_isolation)
         
 
 class SANetwork(SAMComponent):
@@ -100,12 +103,6 @@ class SANetwork(SAMComponent):
         self._topology_state = TopologyState.ACTIVE
         self._topology_state_lock = Locker("topology_state_lock", async_lock=True)
         
-        self._scheduled_isolation = (
-            ScheduledIsolation(config, self.set_topology_state)
-            if config.get("scheduled_isolation", False)
-            else None
-        )
-        
         self._sar = config["sar"]  # sar
         self._addr = config["addr"]  # addr
         self._neighbor_policy = factory_NeighborPolicy(self._neighbor_policy)
@@ -114,6 +111,21 @@ class SANetwork(SAMComponent):
         self._verbose = config["verbose"]  # verbose
         self._cm = CommunicationsManager.get_instance()
         self._sa_network_agent = SANetworkAgent(self)
+        
+        ip_part = self._addr.split(":")[0]
+        last_octet = int(ip_part.split(".")[-1])
+        self._scheduled_isolation = None
+        
+        if last_octet == 5:
+            self._scheduled_isolation = (
+            ScheduledIsolation(config, self.set_topology_state)
+        )
+        
+        # self._scheduled_isolation = (
+        #     ScheduledIsolation(config, self.set_topology_state)
+        #     if config.get("scheduled_isolation", False)
+        #     else None
+        # )
 
         # Track verification tasks for proper cleanup during shutdown
         self._verification_tasks = set()
@@ -145,7 +157,7 @@ class SANetwork(SAMComponent):
     
     async def set_topology_state(self, new_state: TopologyState):
         async with self._topology_state_lock:
-            logging.info(f"Set topology state from: {self._topology_state.value} -- to: {new_state.value}")
+            logging.info(f"Set topology state from: {self._topology_state.value} to: {new_state.value}")
             self._topology_state = new_state
 
     async def init(self):
@@ -161,6 +173,7 @@ class SANetwork(SAMComponent):
         5. Register this agent with the situational awareness network agent.
         """
         if self._scheduled_isolation:
+            logging.info("Preparing scheduled isolation...")
             await self._scheduled_isolation.init()
 
         if not self.sar.is_additional_participant():
@@ -193,21 +206,23 @@ class SANetwork(SAMComponent):
         the robustness of the current network topology.
         """
         current_state = (await self.get_topology_state())
-        logging.info("SA Network evaluating current scenario")
+        logging.info("SA-Network evaluating current scenario")
         logging.info(f"Current SA-Network state: {current_state.value}")
         if current_state == TopologyState.ACTIVE: 
             await self._check_external_connection_service_status()
             await self._analize_topology_robustness()
         elif current_state == TopologyState.ISOLATED:
-            if not self._scheduled_isolation.is_already_isolated:
+            if not self._scheduled_isolation.is_already_isolated():
+                self._scheduled_isolation.set_isolation()
                 await self.cm.stop_external_connection_service()
-                await self._isolation_protocol()
+                #await self._isolation_protocol()
                 await self.sana.create_and_suggest_action(SACommandAction.ISOLATION, self._isolation_protocol, False, None)
             await self.sana.notify_all_suggestions_done(RoundEndEvent)        
         elif current_state == TopologyState.TRANSITION:
             await self.cm.bl.clear_blacklist()
             await self.set_topology_state(TopologyState.ACTIVE)
             await self._check_external_connection_service_status()
+            #await self.cm.start_beacon()
             await self._analize_topology_robustness()
 
                 
@@ -506,7 +521,7 @@ class SANetwork(SAMComponent):
         """
         logging.info("Starting isolation protocol...")
         neighbors = await self.np.get_nodes_known(neighbors_only=True)
-        await self.np.forget_nodes(forget_all=True)
+        await self.np.forget_nodes(None, forget_all=True)
         for n in neighbors:
             await self.cm.add_to_blacklist(n)
         for n in neighbors:
@@ -690,6 +705,6 @@ class SANetworkAgent(SAModuleAgent):
                 await self.notify_all_suggestions_done(RoundEndEvent)
         elif saca == SACommandAction.ISOLATION:
             sac = factory_sa_command(
-                "connectivity", SACommandAction.ISOLATION, self, "", SACommandPRIO.CRITICAL, False, function, None
+                "connectivity", SACommandAction.ISOLATION, self, "", SACommandPRIO.CRITICAL, False, function
             )
             await self.suggest_action(sac)
