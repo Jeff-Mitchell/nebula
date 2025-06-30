@@ -615,7 +615,7 @@ class FederationConnector(ISADiscovery):
     async def _discover_discover_nodes_callback(self, source, message):
         logging.info(f"🔍  handle_discover_message | Trigger | Received discover_node message from {source} ")
         if len(await self.engine.get_federation_nodes()) > 0:
-            if await self._accept_connection(source, joining=False):
+            if await self._accept_connection(source, joining=True):
                 msg = self.cm.create_message(
                     "offer",
                     "offer_metric",
@@ -624,6 +624,8 @@ class FederationConnector(ISADiscovery):
                 )
                 logging.info(f"Sending offer metric to {source}")
                 await self.cm.send_message(source, msg)
+            else:
+                logging.info("Discover rejected, connection not accepted...")
         else:
             logging.info(f"🔗  Dissmissing discover nodes from {source} | no active connections at the moment")
 
