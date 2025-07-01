@@ -41,6 +41,7 @@ from nebula.core.role import Role
 from nebula.core.noderole import AggregatorNode, IdleNode, MaliciousNode, ServerNode, TrainerNode
 from nebula.core.training.lightning import Lightning
 from nebula.core.training.siamese import Siamese
+from nebula.core.training.pqlightning import PQLightning
 
 # os.environ["PYTORCH_ENABLE_MPS_FALLBACK"] = "1"
 # os.environ["TORCH_LOGS"] = "+dynamo"
@@ -166,7 +167,7 @@ async def main(config):
     trainer = None
     trainer_str = config.participant["training_args"]["trainer"]
     if trainer_str == "lightning":
-        trainer = Lightning
+        trainer = PQLightning
     elif trainer_str == "scikit":
         raise NotImplementedError
     elif trainer_str == "siamese":
