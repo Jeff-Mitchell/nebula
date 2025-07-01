@@ -560,7 +560,7 @@ class FederationConnector(ISADiscovery):
             logging.info("❗️ Connection refused | Device not initialized yet...")
             return
 
-        if await self._accept_connection(source, joining=False):
+        if await self._accept_connection(source, joining=True):
             logging.info(f"🔗  handle_connection_message | Trigger | restructure connection accepted from {source}")
             await self.cm.connect(source, direct=True)
 
