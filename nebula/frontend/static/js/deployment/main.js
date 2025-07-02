@@ -8,6 +8,7 @@ import SaManager from './situational-awareness.js';
 import GraphSettings from './graph-settings.js';
 import Utils from './utils.js';
 import TrustworthinessManager from './trustworthiness.js';
+import NetworkManager from './network.js';
 
 const DeploymentManager = (function() {
     function initialize() {
@@ -29,6 +30,7 @@ const DeploymentManager = (function() {
         AttackManager.initializeEventListeners();
         MobilityManager.initializeMobility();
         ReputationManager.initializeReputationSystem();
+        NetworkManager.initializeNetworkSystem();
         SaManager.initializeSa();
         TrustworthinessManager.initializeTrustworthinessSystem();
         GraphSettings.initializeDistanceControls();
@@ -39,6 +41,7 @@ const DeploymentManager = (function() {
         window.AttackManager = AttackManager;
         window.MobilityManager = MobilityManager;
         window.ReputationManager = ReputationManager;
+        window.NetworkManager = NetworkManager;
         window.SaManager = SaManager;
         window.TrustworthinessManager = TrustworthinessManager;
         window.GraphSettings = GraphSettings;

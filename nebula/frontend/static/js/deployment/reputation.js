@@ -146,11 +146,6 @@ const ReputationManager = (function () {
 
         if (saveBtn) {
             saveBtn.addEventListener("click", () => {
-                // Aquí puedes recoger la configuración y hacer algo con ella
-                const config = ReputationManager.getReputationConfig();
-                console.log("Configuración guardada:", config);
-
-                // Cerrar modal usando Bootstrap 5
                 if (modal) {
                     const bsModal = bootstrap.Modal.getInstance(modal);
                     if (bsModal) {
