@@ -62,12 +62,12 @@ a:hover {
     transition: all 0.5s;
     z-index: 997;
     padding: 10px 0;
-    background: #1d2253;
+    background: linear-gradient(135deg, #1d2253, #383e80);
 }
 
 #header.header-scrolled,
 #header.header-inner-pages {
-    background: #1d2253;
+    background: linear-gradient(135deg, #1d2253, #383e80);
     padding: 10px 0;
 }
 
@@ -691,15 +691,15 @@ td {
 }
 
 .btn-dark {
-    color: #ffffff;
-    background-color: #1d2253;
-    border-color: #1d2253;
+  color: #ffffff;
+  background: linear-gradient(135deg, #1d2253, #444b9c);
+  border: 1px solid #1d2253;
+  /* Opcional: para suavizar la transición al pasar el ratón */
+  transition: background 0.3s ease;
 }
 
 .btn-dark:hover {
-    color: #ffffff;
-    background-color: #1d2253d2;
-    border-color: #1d2253d2;
+  background: linear-gradient(135deg, #363e8a, #6b73ce);
 }
 
 .btn-dark-outline {

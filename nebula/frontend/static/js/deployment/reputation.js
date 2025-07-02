@@ -1,16 +1,34 @@
 // Reputation System Module (Modal-Aware)
 const ReputationManager = (function () {
-    let modal; // Referencia al contenedor modal
+    let modal; 
 
-    function initializeReputationSystem(modalId = "reputation-modal") {
+    function initializeReputationSystem(modalId = "reputationModal") {
         modal = document.getElementById(modalId);
         if (!modal) {
             console.warn("Reputation modal container not found.");
             return;
         }
+
+        const switchInput = document.getElementById("reputationSwitch");
+        const configButton = document.getElementById("reputationConfigureBtn");
+
+        if (!switchInput || !configButton) {
+            console.warn("Not found switch/button");
+            return;
+        }
+
+        // Show/hide button according to initial switch state
+        configButton.style.display = switchInput.checked ? "inline-block" : "none";
+
+        // Listener to show/hide configure button when switch changes 
+        switchInput.addEventListener("change", () => {
+            configButton.style.display = switchInput.checked ? "inline-block" : "none";
+        });
+
         setupWeightingFactor();
         setupWeightValidation();
         setupInitialReputation();
+        setupModalButtons();
     }
 
     function withinModal(selector) {
@@ -55,7 +73,7 @@ const ReputationManager = (function () {
 
     function getReputationConfig() {
         return {
-            enabled: withinModal("#reputationSwitch").checked,
+            enabled: document.getElementById("reputationSwitch").checked,
             initialReputation: parseFloat(withinModal("#initial-reputation").value) || 0.2,
             weightingFactor: withinModal("#weighting-factor").value,
             metrics: {
@@ -83,7 +101,7 @@ const ReputationManager = (function () {
         if (!config || !modal) return;
 
         // Set reputation enabled/disabled
-        withinModal("#reputationSwitch").checked = config.enabled;
+        document.getElementById("reputationSwitch").checked = config.enabled;
         withinModal("#reputation-metrics").style.display = config.enabled ? "block" : "none";
         withinModal("#reputation-settings").style.display = config.enabled ? "block" : "none";
         withinModal("#weighting-settings").style.display = config.enabled ? "block" : "none";
@@ -115,16 +133,45 @@ const ReputationManager = (function () {
         validateWeights();
     }
 
-    function resetReputationConfig() {
+    function setupModalButtons() {
+        const resetBtn = withinModal("#resetReputation");
+        const saveBtn = withinModal("#saveReputation");
+        const modal = document.getElementById("reputationModal");
+
+        if (resetBtn) {
+            resetBtn.addEventListener("click", () => {
+                ReputationManager.resetReputationConfig(true);
+            });
+        }
+
+        if (saveBtn) {
+            saveBtn.addEventListener("click", () => {
+                // Aquí puedes recoger la configuración y hacer algo con ella
+                const config = ReputationManager.getReputationConfig();
+                console.log("Configuración guardada:", config);
+
+                // Cerrar modal usando Bootstrap 5
+                if (modal) {
+                    const bsModal = bootstrap.Modal.getInstance(modal);
+                    if (bsModal) {
+                        bsModal.hide();
+                    }
+                }
+            });
+        }
+    }
+
+    function resetReputationConfig(rep_switch=false) {
         if (!modal) return;
 
-        withinModal("#reputationSwitch").checked = false;
-        withinModal("#reputation-metrics").style.display = "none";
-        withinModal("#reputation-settings").style.display = "none";
-        withinModal("#weighting-settings").style.display = "none";
+        document.getElementById("reputationSwitch").checked = rep_switch;
         withinModal("#initial-reputation").value = "0.2";
         withinModal("#weighting-factor").value = "dynamic";
-        withinModal("#weight-warning").style.display = "none";
+        
+        if (!rep_switch){
+            const switchInput = document.getElementById("reputationSwitch");
+            switchInput.dispatchEvent(new Event('change'));
+        }
 
         // Reset metrics
         withinModal("#model-similarity").checked = false;
@@ -149,23 +196,5 @@ const ReputationManager = (function () {
         resetReputationConfig,
     };
 })();
-
-document.addEventListener("DOMContentLoaded", () => {
-    const switchInput = document.getElementById("reputationSwitch");
-    const configButton = document.getElementById("reputationConfigureBtn");
-
-    if (!switchInput || !configButton) {
-        console.warn("No se encontró switch o botón");
-        return;
-    }
-
-    // Show/hide button according to initial switch state
-    configButton.style.display = switchInput.checked ? "inline-block" : "none";
-
-    // Listener to show/hide configure button when switch changes 
-    switchInput.addEventListener("change", () => {
-        configButton.style.display = switchInput.checked ? "inline-block" : "none";
-    });
-});
 
 export default ReputationManager;

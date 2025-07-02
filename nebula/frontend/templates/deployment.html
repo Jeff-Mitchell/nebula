@@ -505,7 +505,7 @@
                 </div>
                 <!-- Advanced Robustness -->
                 <div class="form-group row container-shadow tiny grey">
-                    <h5 class="step-number">Robustness <i class="fa fa-shield"></i>
+                    <h5 class="step-number">Adversarial Attacks <i class="fa fa-fighter-jet" aria-hidden="true"></i>
                     </h5>
                     <h5 class="step-title">Attack Type</h5>
                     <div class="form-check form-check-inline">
@@ -633,7 +633,7 @@
                     <!-- Switch + configure Button -->
                     <div class="form-check form-switch" style="margin-left: 23px;">
                         <input class="form-check-input" type="checkbox" id="reputationSwitch"
-                        style="display: inline; width: 80px; height: 30px;">
+                        style="display: inline; width: 80px; height: 30px; margin-right: 20px">
                         <button type="button" class="btn btn-dark btn-sm"  id="reputationConfigureBtn" style="display: none;" data-bs-toggle="modal" data-bs-target="#reputationModal">
                             Configure
                         </button>
@@ -673,9 +673,7 @@
                             </div>
 
                             <div id="reputation-metrics">
-                                <h5 class="step-title">Reputation Metrics</h5>
-                                <p>Model-based metrics</p>
-
+                                <h5 class="step-title">Model-based metrics</h5>
                                 <div class="form-check">
                                 <input class="form-check-input" type="checkbox" id="model-similarity" name="modelSimilarity">
                                 <label class="form-check-label" for="model-similarity">Model Similarity</label>
@@ -683,7 +681,6 @@
                                     name="weightModelSimilarity" step="0.01" value="0" placeholder="Weight to model similarity"
                                     style="display: none; width: 30%; margin-top:2px;">
                                 </div>
-
                                 <div class="form-check">
                                 <input class="form-check-input" type="checkbox" id="fraction-parameters-changed"
                                     name="fractionParametersChanged">
@@ -692,9 +689,7 @@
                                     name="weightFractionParametersChanged" step="0.01" value="0"
                                     placeholder="Weight to fraction parameters changed" style="display: none; width: 30%; margin-top:2px;">
                                 </div>
-
-                                <p>Communication-based metrics</p>
-
+                                <h5 class="step-title">Communication-based metrics</h5>
                                 <div class="form-check">
                                 <input class="form-check-input" type="checkbox" id="num-messages" name="numMessages">
                                 <label class="form-check-label" for="num-messages">Number of Messages</label>
@@ -702,7 +697,6 @@
                                     step="0.01" value="0" placeholder="Weight to number of messages"
                                     style="display: none; width: 30%; margin-top:2px;">
                                 </div>
-
                                 <div class="form-check">
                                 <input class="form-check-input" type="checkbox" id="model-arrival-latency" name="modelArrivalLatency">
                                 <label class="form-check-label" for="model-arrival-latency">Model Arrival Latency</label>
@@ -710,7 +704,6 @@
                                     name="weightModelArrivalLatency" step="0.01" value="0" placeholder="Weight to model arrival latency"
                                     style="display: none; width: 30%; margin-top:2px;">
                                 </div>
-
                                 <p id="weight-warning" style="color: red; display: none;">Total weight must not exceed 1.</p>
                             </div>
                         </div>
