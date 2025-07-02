@@ -326,10 +326,13 @@ async def run_scenario(
     # Manager for the actual scenario
     scenarioManagement = ScenarioManagement(scenario_data, user)
 
+    logging.info(f"[FER] scenario run_scenario {scenario_data}")
+
     await update_scenario(
         scenario_name=scenarioManagement.scenario_name,
         start_time=scenarioManagement.start_date_scenario,
         end_time="",
+        scenario=db_scenario,
         scenario=scenario_data,
         status="running",
         role=role,

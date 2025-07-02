@@ -82,6 +82,7 @@ async def list_users(all_info=False):
         result = await conn.fetch("SELECT * FROM users")
 
     if not all_info:
+        # In PostgreSQL, you can access columns by key from DictCursor
         result = [user["user"] for user in result]
 
     return result
