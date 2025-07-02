@@ -12,28 +12,28 @@
         <meta name="author" content="Enrique Tomás Martínez Beltrán, Alberto Huertas Celdrán, Alejandro Avilés Serrano, Fernando Torres Vega">
       
       
-        <link rel="canonical" href="https://docs.nebula-dfl.com/api/core/datasets/mnist/">
+        <link rel="canonical" href="https://docs.nebula-dfl.com/git-workflow/">
       
       
-        <link rel="prev" href="../fashionmnist/fashionmnist/">
+        <link rel="prev" href="../developerguide/">
       
       
-        <link rel="next" href="mnist/">
+        <link rel="next" href="../api/">
       
       
-      <link rel="icon" href="../../../../assets/images/favicon.png">
+      <link rel="icon" href="../assets/images/favicon.png">
       <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.15">
     
     
       
-        <title>mnist - NEBULA</title>
+        <title>Git Workflow - NEBULA</title>
       
     
     
-      <link rel="stylesheet" href="../../../../assets/stylesheets/main.342714a4.min.css">
+      <link rel="stylesheet" href="../assets/stylesheets/main.342714a4.min.css">
       
         
-        <link rel="stylesheet" href="../../../../assets/stylesheets/palette.06af60db.min.css">
+        <link rel="stylesheet" href="../assets/stylesheets/palette.06af60db.min.css">
       
       
 
@@ -52,11 +52,11 @@
       
     
     
-      <link rel="stylesheet" href="../../../../assets/_mkdocstrings.css">
+      <link rel="stylesheet" href="../assets/_mkdocstrings.css">
     
-      <link rel="stylesheet" href="../../../../css/toc.css">
+      <link rel="stylesheet" href="../css/toc.css">
     
-    <script>__md_scope=new URL("../../../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
     
       
 
@@ -82,7 +82,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#documentation-for-mnist-module" class="md-skip">
+        <a href="#git-workflow-best-practices" class="md-skip">
           Skip to content
         </a>
       
@@ -96,7 +96,7 @@
 
 <header class="md-header" data-md-component="header">
   <nav class="md-header__inner md-grid" aria-label="Header">
-    <a href="../../../.." title="NEBULA" class="md-header__button md-logo" aria-label="NEBULA" data-md-component="logo">
+    <a href=".." title="NEBULA" class="md-header__button md-logo" aria-label="NEBULA" data-md-component="logo">
       
   
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
@@ -116,7 +116,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              mnist
+              Git Workflow
             
           </span>
         </div>
@@ -227,7 +227,7 @@
   
   
     <li class="md-tabs__item">
-      <a href="../../../.." class="md-tabs__link">
+      <a href=".." class="md-tabs__link">
         
   
   
@@ -246,7 +246,7 @@
   
   
     <li class="md-tabs__item">
-      <a href="../../../../installation/" class="md-tabs__link">
+      <a href="../installation/" class="md-tabs__link">
         
   
   
@@ -265,7 +265,7 @@
   
   
     <li class="md-tabs__item">
-      <a href="../../../../userguide/" class="md-tabs__link">
+      <a href="../userguide/" class="md-tabs__link">
         
   
   
@@ -284,7 +284,7 @@
   
   
     <li class="md-tabs__item">
-      <a href="../../../../developerguide/" class="md-tabs__link">
+      <a href="../developerguide/" class="md-tabs__link">
         
   
   
@@ -301,9 +301,11 @@
   
   
   
+    
   
-    <li class="md-tabs__item">
-      <a href="../../../../git-workflow/" class="md-tabs__link">
+  
+    <li class="md-tabs__item md-tabs__item--active">
+      <a href="./" class="md-tabs__link">
         
   
   
@@ -320,13 +322,11 @@
   
   
   
-    
-  
   
     
     
-      <li class="md-tabs__item md-tabs__item--active">
-        <a href="../../../" class="md-tabs__link">
+      <li class="md-tabs__item">
+        <a href="../api/" class="md-tabs__link">
           
   
   
@@ -344,7 +344,7 @@
   
   
     <li class="md-tabs__item">
-      <a href="../../../../contributing/" class="md-tabs__link">
+      <a href="../contributing/" class="md-tabs__link">
         
   
   
@@ -363,7 +363,7 @@
   
   
     <li class="md-tabs__item">
-      <a href="../../../../changelog/" class="md-tabs__link">
+      <a href="../changelog/" class="md-tabs__link">
         
   
   
@@ -382,7 +382,7 @@
   
   
     <li class="md-tabs__item">
-      <a href="../../../../commercial-faq/" class="md-tabs__link">
+      <a href="../commercial-faq/" class="md-tabs__link">
         
   
   
@@ -406,8 +406,6 @@
           
             
               
-                
-              
               <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
                 <div class="md-sidebar__scrollwrap">
                   <div class="md-sidebar__inner">
@@ -419,7 +417,7 @@
 
 <nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
   <label class="md-nav__title" for="__drawer">
-    <a href="../../../.." title="NEBULA" class="md-nav__button md-logo" aria-label="NEBULA" data-md-component="logo">
+    <a href=".." title="NEBULA" class="md-nav__button md-logo" aria-label="NEBULA" data-md-component="logo">
       
   
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
@@ -449,7 +447,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../.." class="md-nav__link">
+      <a href=".." class="md-nav__link">
         
   
   
@@ -471,7 +469,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../installation/" class="md-nav__link">
+      <a href="../installation/" class="md-nav__link">
         
   
   
@@ -493,7 +491,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../userguide/" class="md-nav__link">
+      <a href="../userguide/" class="md-nav__link">
         
   
   
@@ -515,7 +513,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../developerguide/" class="md-nav__link">
+      <a href="../developerguide/" class="md-nav__link">
         
   
   
@@ -534,10 +532,32 @@
       
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="../../../../git-workflow/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    Git Workflow
+    
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         
   
   
@@ -548,6 +568,137 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#1-branch-model" class="md-nav__link">
+    <span class="md-ellipsis">
+      1. Branch Model
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="1. Branch Model">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#11-branch-types" class="md-nav__link">
+    <span class="md-ellipsis">
+      1.1 Branch Types
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-naming-conventions" class="md-nav__link">
+    <span class="md-ellipsis">
+      2. Naming Conventions
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-conventional-commits" class="md-nav__link">
+    <span class="md-ellipsis">
+      3. Conventional Commits
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-endtoend-workflow" class="md-nav__link">
+    <span class="md-ellipsis">
+      4. End‑to‑End Workflow
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="4. End‑to‑End Workflow">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#41-releasing" class="md-nav__link">
+    <span class="md-ellipsis">
+      4.1 Releasing
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#42-hotfixing" class="md-nav__link">
+    <span class="md-ellipsis">
+      4.2 Hotfixing
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#5-code-review-checklist" class="md-nav__link">
+    <span class="md-ellipsis">
+      5. Code Review Checklist
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#6-housekeeping-commands" class="md-nav__link">
+    <span class="md-ellipsis">
+      6. House‑Keeping Commands
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#7-additional-tips" class="md-nav__link">
+    <span class="md-ellipsis">
+      7. Additional Tips
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#8-resources" class="md-nav__link">
+    <span class="md-ellipsis">
+      8. Resources
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -556,29 +707,24 @@
       
   
   
-    
   
   
-  
     
     
     
     
       
-        
-        
-      
       
     
     
-    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6" checked>
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6" >
         
           
-          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="">
+          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="0">
             
   
   
@@ -591,7 +737,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="true">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_6">
             <span class="md-nav__icon md-icon"></span>
             API Reference
@@ -602,8 +748,6 @@
                 
   
   
-    
-  
   
   
     
@@ -614,15 +758,15 @@
       
     
     
-    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6_1" checked>
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6_1" >
         
           
           <div class="md-nav__link md-nav__container">
-            <a href="../../../" class="md-nav__link ">
+            <a href="../api/" class="md-nav__link ">
               
   
   
@@ -641,7 +785,7 @@
             
           </div>
         
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_6_1_label" aria-expanded="true">
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_6_1_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_6_1">
             <span class="md-nav__icon md-icon"></span>
             nebula
@@ -670,7 +814,7 @@
         
           
           <div class="md-nav__link md-nav__container">
-            <a href="../../../addons/" class="md-nav__link ">
+            <a href="../api/addons/" class="md-nav__link ">
               
   
   
@@ -718,7 +862,7 @@
         
           
           <div class="md-nav__link md-nav__container">
-            <a href="../../../addons/attacks/" class="md-nav__link ">
+            <a href="../api/addons/attacks/" class="md-nav__link ">
               
   
   
@@ -751,7 +895,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../addons/attacks/attacks/" class="md-nav__link">
+      <a href="../api/addons/attacks/attacks/" class="md-nav__link">
         
   
   
@@ -789,7 +933,7 @@
         
           
           <div class="md-nav__link md-nav__container">
-            <a href="../../../addons/attacks/communications/" class="md-nav__link ">
+            <a href="../api/addons/attacks/communications/" class="md-nav__link ">
               
   
   
@@ -822,7 +966,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../addons/attacks/communications/communicationattack/" class="md-nav__link">
+      <a href="../api/addons/attacks/communications/communicationattack/" class="md-nav__link">
         
   
   
@@ -845,7 +989,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../addons/attacks/communications/delayerattack/" class="md-nav__link">
+      <a href="../api/addons/attacks/communications/delayerattack/" class="md-nav__link">
         
   
   
@@ -868,7 +1012,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../addons/attacks/communications/floodingattack/" class="md-nav__link">
+      <a href="../api/addons/attacks/communications/floodingattack/" class="md-nav__link">
         
   
   
@@ -914,7 +1058,7 @@
         
           
           <div class="md-nav__link md-nav__container">
-            <a href="../../../addons/attacks/dataset/" class="md-nav__link ">
+            <a href="../api/addons/attacks/dataset/" class="md-nav__link ">
               
   
   
@@ -947,7 +1091,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../addons/attacks/dataset/datapoison/" class="md-nav__link">
+      <a href="../api/addons/attacks/dataset/datapoison/" class="md-nav__link">
         
   
   
@@ -970,7 +1114,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../addons/attacks/dataset/datasetattack/" class="md-nav__link">
+      <a href="../api/addons/attacks/dataset/datasetattack/" class="md-nav__link">
         
   
   
@@ -993,7 +1137,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../addons/attacks/dataset/labelflipping/" class="md-nav__link">
+      <a href="../api/addons/attacks/dataset/labelflipping/" class="md-nav__link">
         
   
   
@@ -1039,7 +1183,7 @@
         
           
           <div class="md-nav__link md-nav__container">
-            <a href="../../../addons/attacks/model/" class="md-nav__link ">
+            <a href="../api/addons/attacks/model/" class="md-nav__link ">
               
   
   
@@ -1072,7 +1216,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../addons/attacks/model/gllneuroninversion/" class="md-nav__link">
+      <a href="../api/addons/attacks/model/gllneuroninversion/" class="md-nav__link">
         
   
   
@@ -1095,7 +1239,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../addons/attacks/model/modelattack/" class="md-nav__link">
+      <a href="../api/addons/attacks/model/modelattack/" class="md-nav__link">
         
   
   
@@ -1118,7 +1262,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../addons/attacks/model/modelpoison/" class="md-nav__link">
+      <a href="../api/addons/attacks/model/modelpoison/" class="md-nav__link">
         
   
   
@@ -1141,7 +1285,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../addons/attacks/model/swappingweights/" class="md-nav__link">
+      <a href="../api/addons/attacks/model/swappingweights/" class="md-nav__link">
         
   
   
@@ -1180,7 +1324,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../addons/env/" class="md-nav__link">
+      <a href="../api/addons/env/" class="md-nav__link">
         
   
   
@@ -1203,7 +1347,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../addons/functions/" class="md-nav__link">
+      <a href="../api/addons/functions/" class="md-nav__link">
         
   
   
@@ -1241,7 +1385,7 @@
         
           
           <div class="md-nav__link md-nav__container">
-            <a href="../../../addons/gps/" class="md-nav__link ">
+            <a href="../api/addons/gps/" class="md-nav__link ">
               
   
   
@@ -1274,7 +1418,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../addons/gps/gpsmodule/" class="md-nav__link">
+      <a href="../api/addons/gps/gpsmodule/" class="md-nav__link">
         
   
   
@@ -1297,7 +1441,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../addons/gps/nebulagps/" class="md-nav__link">
+      <a href="../api/addons/gps/nebulagps/" class="md-nav__link">
         
   
   
@@ -1328,7 +1472,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../addons/mobility/" class="md-nav__link">
+      <a href="../api/addons/mobility/" class="md-nav__link">
         
   
   
@@ -1366,7 +1510,7 @@
         
           
           <div class="md-nav__link md-nav__container">
-            <a href="../../../addons/networksimulation/" class="md-nav__link ">
+            <a href="../api/addons/networksimulation/" class="md-nav__link ">
               
   
   
@@ -1399,7 +1543,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../addons/networksimulation/nebulanetworksimulator/" class="md-nav__link">
+      <a href="../api/addons/networksimulation/nebulanetworksimulator/" class="md-nav__link">
         
   
   
@@ -1422,7 +1566,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../addons/networksimulation/networksimulator/" class="md-nav__link">
+      <a href="../api/addons/networksimulation/networksimulator/" class="md-nav__link">
         
   
   
@@ -1453,7 +1597,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../addons/reporter/" class="md-nav__link">
+      <a href="../api/addons/reporter/" class="md-nav__link">
         
   
   
@@ -1491,7 +1635,7 @@
         
           
           <div class="md-nav__link md-nav__container">
-            <a href="../../../addons/reputation/" class="md-nav__link ">
+            <a href="../api/addons/reputation/" class="md-nav__link ">
               
   
   
@@ -1524,7 +1668,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../addons/reputation/reputation/" class="md-nav__link">
+      <a href="../api/addons/reputation/reputation/" class="md-nav__link">
         
   
   
@@ -1555,7 +1699,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../addons/topologymanager/" class="md-nav__link">
+      <a href="../api/addons/topologymanager/" class="md-nav__link">
         
   
   
@@ -1593,7 +1737,7 @@
         
           
           <div class="md-nav__link md-nav__container">
-            <a href="../../../addons/trustworthiness/" class="md-nav__link ">
+            <a href="../api/addons/trustworthiness/" class="md-nav__link ">
               
   
   
@@ -1626,7 +1770,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../addons/trustworthiness/calculation/" class="md-nav__link">
+      <a href="../api/addons/trustworthiness/calculation/" class="md-nav__link">
         
   
   
@@ -1649,7 +1793,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../addons/trustworthiness/factsheet/" class="md-nav__link">
+      <a href="../api/addons/trustworthiness/factsheet/" class="md-nav__link">
         
   
   
@@ -1672,7 +1816,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../addons/trustworthiness/graphics/" class="md-nav__link">
+      <a href="../api/addons/trustworthiness/graphics/" class="md-nav__link">
         
   
   
@@ -1695,7 +1839,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../addons/trustworthiness/metric/" class="md-nav__link">
+      <a href="../api/addons/trustworthiness/metric/" class="md-nav__link">
         
   
   
@@ -1718,7 +1862,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../addons/trustworthiness/pillar/" class="md-nav__link">
+      <a href="../api/addons/trustworthiness/pillar/" class="md-nav__link">
         
   
   
@@ -1741,7 +1885,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../addons/trustworthiness/trustworthiness/" class="md-nav__link">
+      <a href="../api/addons/trustworthiness/trustworthiness/" class="md-nav__link">
         
   
   
@@ -1764,7 +1908,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../addons/trustworthiness/utils/" class="md-nav__link">
+      <a href="../api/addons/trustworthiness/utils/" class="md-nav__link">
         
   
   
@@ -1795,7 +1939,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../addons/waf/" class="md-nav__link">
+      <a href="../api/addons/waf/" class="md-nav__link">
         
   
   
@@ -1841,7 +1985,7 @@
         
           
           <div class="md-nav__link md-nav__container">
-            <a href="../../../controller/" class="md-nav__link ">
+            <a href="../api/controller/" class="md-nav__link ">
               
   
   
@@ -1874,7 +2018,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../controller/controller/" class="md-nav__link">
+      <a href="../api/controller/controller/" class="md-nav__link">
         
   
   
@@ -1897,7 +2041,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../controller/database/" class="md-nav__link">
+      <a href="../api/controller/database/" class="md-nav__link">
         
   
   
@@ -1920,7 +2064,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../controller/http_helpers/" class="md-nav__link">
+      <a href="../api/controller/http_helpers/" class="md-nav__link">
         
   
   
@@ -1943,7 +2087,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../controller/scenarios/" class="md-nav__link">
+      <a href="../api/controller/scenarios/" class="md-nav__link">
         
   
   
@@ -1971,8 +2115,6 @@
                 
   
   
-    
-  
   
   
     
@@ -1983,15 +2125,15 @@
       
     
     
-    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6_1_3" checked>
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6_1_3" >
         
           
           <div class="md-nav__link md-nav__container">
-            <a href="../../" class="md-nav__link ">
+            <a href="../api/core/" class="md-nav__link ">
               
   
   
@@ -2010,7 +2152,7 @@
             
           </div>
         
-        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_6_1_3_label" aria-expanded="true">
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_6_1_3_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_6_1_3">
             <span class="md-nav__icon md-icon"></span>
             core
@@ -2024,7 +2166,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../addonmanager/" class="md-nav__link">
+      <a href="../api/core/addonmanager/" class="md-nav__link">
         
   
   
@@ -2062,7 +2204,7 @@
         
           
           <div class="md-nav__link md-nav__container">
-            <a href="../../aggregation/" class="md-nav__link ">
+            <a href="../api/core/aggregation/" class="md-nav__link ">
               
   
   
@@ -2095,7 +2237,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../aggregation/aggregator/" class="md-nav__link">
+      <a href="../api/core/aggregation/aggregator/" class="md-nav__link">
         
   
   
@@ -2118,7 +2260,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../aggregation/fedavg/" class="md-nav__link">
+      <a href="../api/core/aggregation/fedavg/" class="md-nav__link">
         
   
   
@@ -2141,7 +2283,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../aggregation/krum/" class="md-nav__link">
+      <a href="../api/core/aggregation/krum/" class="md-nav__link">
         
   
   
@@ -2164,7 +2306,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../aggregation/median/" class="md-nav__link">
+      <a href="../api/core/aggregation/median/" class="md-nav__link">
         
   
   
@@ -2187,7 +2329,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../aggregation/trimmedmean/" class="md-nav__link">
+      <a href="../api/core/aggregation/trimmedmean/" class="md-nav__link">
         
   
   
@@ -2225,7 +2367,7 @@
         
           
           <div class="md-nav__link md-nav__container">
-            <a href="../../aggregation/updatehandlers/" class="md-nav__link ">
+            <a href="../api/core/aggregation/updatehandlers/" class="md-nav__link ">
               
   
   
@@ -2258,7 +2400,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../aggregation/updatehandlers/cflupdatehandler/" class="md-nav__link">
+      <a href="../api/core/aggregation/updatehandlers/cflupdatehandler/" class="md-nav__link">
         
   
   
@@ -2281,7 +2423,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../aggregation/updatehandlers/dflupdatehandler/" class="md-nav__link">
+      <a href="../api/core/aggregation/updatehandlers/dflupdatehandler/" class="md-nav__link">
         
   
   
@@ -2304,7 +2446,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../aggregation/updatehandlers/sdflupdatehandler/" class="md-nav__link">
+      <a href="../api/core/aggregation/updatehandlers/sdflupdatehandler/" class="md-nav__link">
         
   
   
@@ -2327,7 +2469,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../aggregation/updatehandlers/updatehandler/" class="md-nav__link">
+      <a href="../api/core/aggregation/updatehandlers/updatehandler/" class="md-nav__link">
         
   
   
@@ -2363,8 +2505,6 @@
                 
   
   
-    
-  
   
   
     
@@ -2375,15 +2515,15 @@
       
     
     
-    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6_1_3_3" checked>
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6_1_3_3" >
         
           
           <div class="md-nav__link md-nav__container">
-            <a href="../" class="md-nav__link ">
+            <a href="../api/core/datasets/" class="md-nav__link ">
               
   
   
@@ -2402,7 +2542,7 @@
             
           </div>
         
-        <nav class="md-nav" data-md-level="4" aria-labelledby="__nav_6_1_3_3_label" aria-expanded="true">
+        <nav class="md-nav" data-md-level="4" aria-labelledby="__nav_6_1_3_3_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_6_1_3_3">
             <span class="md-nav__icon md-icon"></span>
             datasets
@@ -2416,7 +2556,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../changeablesubset/" class="md-nav__link">
+      <a href="../api/core/datasets/changeablesubset/" class="md-nav__link">
         
   
   
@@ -2454,7 +2594,7 @@
         
           
           <div class="md-nav__link md-nav__container">
-            <a href="../cifar10/" class="md-nav__link ">
+            <a href="../api/core/datasets/cifar10/" class="md-nav__link ">
               
   
   
@@ -2487,7 +2627,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../cifar10/cifar10/" class="md-nav__link">
+      <a href="../api/core/datasets/cifar10/cifar10/" class="md-nav__link">
         
   
   
@@ -2533,7 +2673,7 @@
         
           
           <div class="md-nav__link md-nav__container">
-            <a href="../cifar100/" class="md-nav__link ">
+            <a href="../api/core/datasets/cifar100/" class="md-nav__link ">
               
   
   
@@ -2566,7 +2706,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../cifar100/cifar100/" class="md-nav__link">
+      <a href="../api/core/datasets/cifar100/cifar100/" class="md-nav__link">
         
   
   
@@ -2597,7 +2737,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../datamodule/" class="md-nav__link">
+      <a href="../api/core/datasets/datamodule/" class="md-nav__link">
         
   
   
@@ -2635,7 +2775,7 @@
         
           
           <div class="md-nav__link md-nav__container">
-            <a href="../emnist/" class="md-nav__link ">
+            <a href="../api/core/datasets/emnist/" class="md-nav__link ">
               
   
   
@@ -2668,7 +2808,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../emnist/emnist/" class="md-nav__link">
+      <a href="../api/core/datasets/emnist/emnist/" class="md-nav__link">
         
   
   
@@ -2714,7 +2854,7 @@
         
           
           <div class="md-nav__link md-nav__container">
-            <a href="../fashionmnist/" class="md-nav__link ">
+            <a href="../api/core/datasets/fashionmnist/" class="md-nav__link ">
               
   
   
@@ -2747,7 +2887,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../fashionmnist/fashionmnist/" class="md-nav__link">
+      <a href="../api/core/datasets/fashionmnist/fashionmnist/" class="md-nav__link">
         
   
   
@@ -2775,8 +2915,6 @@
                 
   
   
-    
-  
   
   
     
@@ -2787,15 +2925,15 @@
       
     
     
-    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6_1_3_3_7" checked>
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6_1_3_3_7" >
         
           
           <div class="md-nav__link md-nav__container">
-            <a href="./" class="md-nav__link md-nav__link--active">
+            <a href="../api/core/datasets/mnist/" class="md-nav__link ">
               
   
   
@@ -2808,13 +2946,13 @@
             </a>
             
               
-              <label class="md-nav__link md-nav__link--active" for="__nav_6_1_3_3_7" id="__nav_6_1_3_3_7_label" tabindex="0">
+              <label class="md-nav__link " for="__nav_6_1_3_3_7" id="__nav_6_1_3_3_7_label" tabindex="0">
                 <span class="md-nav__icon md-icon"></span>
               </label>
             
           </div>
         
-        <nav class="md-nav" data-md-level="5" aria-labelledby="__nav_6_1_3_3_7_label" aria-expanded="true">
+        <nav class="md-nav" data-md-level="5" aria-labelledby="__nav_6_1_3_3_7_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_6_1_3_3_7">
             <span class="md-nav__icon md-icon"></span>
             mnist
@@ -2828,7 +2966,7 @@
   
   
     <li class="md-nav__item">
-      <a href="mnist/" class="md-nav__link">
+      <a href="../api/core/datasets/mnist/mnist/" class="md-nav__link">
         
   
   
@@ -2859,7 +2997,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../nebuladataset/" class="md-nav__link">
+      <a href="../api/core/datasets/nebuladataset/" class="md-nav__link">
         
   
   
@@ -2890,7 +3028,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../engine/" class="md-nav__link">
+      <a href="../api/core/engine/" class="md-nav__link">
         
   
   
@@ -2913,7 +3051,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../eventmanager/" class="md-nav__link">
+      <a href="../api/core/eventmanager/" class="md-nav__link">
         
   
   
@@ -2951,7 +3089,7 @@
         
           
           <div class="md-nav__link md-nav__container">
-            <a href="../../models/" class="md-nav__link ">
+            <a href="../api/core/models/" class="md-nav__link ">
               
   
   
@@ -2999,7 +3137,7 @@
         
           
           <div class="md-nav__link md-nav__container">
-            <a href="../../models/cifar10/" class="md-nav__link ">
+            <a href="../api/core/models/cifar10/" class="md-nav__link ">
               
   
   
@@ -3032,7 +3170,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../models/cifar10/cnn/" class="md-nav__link">
+      <a href="../api/core/models/cifar10/cnn/" class="md-nav__link">
         
   
   
@@ -3055,7 +3193,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../models/cifar10/cnnV2/" class="md-nav__link">
+      <a href="../api/core/models/cifar10/cnnV2/" class="md-nav__link">
         
   
   
@@ -3078,7 +3216,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../models/cifar10/cnnV3/" class="md-nav__link">
+      <a href="../api/core/models/cifar10/cnnV3/" class="md-nav__link">
         
   
   
@@ -3101,7 +3239,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../models/cifar10/fastermobilenet/" class="md-nav__link">
+      <a href="../api/core/models/cifar10/fastermobilenet/" class="md-nav__link">
         
   
   
@@ -3124,7 +3262,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../models/cifar10/resnet/" class="md-nav__link">
+      <a href="../api/core/models/cifar10/resnet/" class="md-nav__link">
         
   
   
@@ -3147,7 +3285,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../models/cifar10/simplemobilenet/" class="md-nav__link">
+      <a href="../api/core/models/cifar10/simplemobilenet/" class="md-nav__link">
         
   
   
@@ -3193,7 +3331,7 @@
         
           
           <div class="md-nav__link md-nav__container">
-            <a href="../../models/cifar100/" class="md-nav__link ">
+            <a href="../api/core/models/cifar100/" class="md-nav__link ">
               
   
   
@@ -3226,7 +3364,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../models/cifar100/cnn/" class="md-nav__link">
+      <a href="../api/core/models/cifar100/cnn/" class="md-nav__link">
         
   
   
@@ -3272,7 +3410,7 @@
         
           
           <div class="md-nav__link md-nav__container">
-            <a href="../../models/emnist/" class="md-nav__link ">
+            <a href="../api/core/models/emnist/" class="md-nav__link ">
               
   
   
@@ -3305,7 +3443,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../models/emnist/cnn/" class="md-nav__link">
+      <a href="../api/core/models/emnist/cnn/" class="md-nav__link">
         
   
   
@@ -3328,7 +3466,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../models/emnist/mlp/" class="md-nav__link">
+      <a href="../api/core/models/emnist/mlp/" class="md-nav__link">
         
   
   
@@ -3374,7 +3512,7 @@
         
           
           <div class="md-nav__link md-nav__container">
-            <a href="../../models/fashionmnist/" class="md-nav__link ">
+            <a href="../api/core/models/fashionmnist/" class="md-nav__link ">
               
   
   
@@ -3407,7 +3545,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../models/fashionmnist/cnn/" class="md-nav__link">
+      <a href="../api/core/models/fashionmnist/cnn/" class="md-nav__link">
         
   
   
@@ -3430,7 +3568,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../models/fashionmnist/mlp/" class="md-nav__link">
+      <a href="../api/core/models/fashionmnist/mlp/" class="md-nav__link">
         
   
   
@@ -3476,7 +3614,7 @@
         
           
           <div class="md-nav__link md-nav__container">
-            <a href="../../models/mnist/" class="md-nav__link ">
+            <a href="../api/core/models/mnist/" class="md-nav__link ">
               
   
   
@@ -3509,7 +3647,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../models/mnist/cnn/" class="md-nav__link">
+      <a href="../api/core/models/mnist/cnn/" class="md-nav__link">
         
   
   
@@ -3532,7 +3670,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../models/mnist/mlp/" class="md-nav__link">
+      <a href="../api/core/models/mnist/mlp/" class="md-nav__link">
         
   
   
@@ -3563,7 +3701,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../models/nebulamodel/" class="md-nav__link">
+      <a href="../api/core/models/nebulamodel/" class="md-nav__link">
         
   
   
@@ -3601,7 +3739,7 @@
         
           
           <div class="md-nav__link md-nav__container">
-            <a href="../../models/sentiment140/" class="md-nav__link ">
+            <a href="../api/core/models/sentiment140/" class="md-nav__link ">
               
   
   
@@ -3634,7 +3772,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../models/sentiment140/cnn/" class="md-nav__link">
+      <a href="../api/core/models/sentiment140/cnn/" class="md-nav__link">
         
   
   
@@ -3657,7 +3795,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../models/sentiment140/rnn/" class="md-nav__link">
+      <a href="../api/core/models/sentiment140/rnn/" class="md-nav__link">
         
   
   
@@ -3696,7 +3834,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../nebulaevents/" class="md-nav__link">
+      <a href="../api/core/nebulaevents/" class="md-nav__link">
         
   
   
@@ -3734,7 +3872,7 @@
         
           
           <div class="md-nav__link md-nav__container">
-            <a href="../../network/" class="md-nav__link ">
+            <a href="../api/core/network/" class="md-nav__link ">
               
   
   
@@ -3767,7 +3905,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../network/actions/" class="md-nav__link">
+      <a href="../api/core/network/actions/" class="md-nav__link">
         
   
   
@@ -3790,7 +3928,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../network/blacklist/" class="md-nav__link">
+      <a href="../api/core/network/blacklist/" class="md-nav__link">
         
   
   
@@ -3813,7 +3951,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../network/communications/" class="md-nav__link">
+      <a href="../api/core/network/communications/" class="md-nav__link">
         
   
   
@@ -3836,7 +3974,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../network/connection/" class="md-nav__link">
+      <a href="../api/core/network/connection/" class="md-nav__link">
         
   
   
@@ -3859,7 +3997,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../network/discoverer/" class="md-nav__link">
+      <a href="../api/core/network/discoverer/" class="md-nav__link">
         
   
   
@@ -3897,7 +4035,7 @@
         
           
           <div class="md-nav__link md-nav__container">
-            <a href="../../network/externalconnection/" class="md-nav__link ">
+            <a href="../api/core/network/externalconnection/" class="md-nav__link ">
               
   
   
@@ -3930,7 +4068,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../network/externalconnection/externalconnectionservice/" class="md-nav__link">
+      <a href="../api/core/network/externalconnection/externalconnectionservice/" class="md-nav__link">
         
   
   
@@ -3953,7 +4091,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../network/externalconnection/nebuladiscoveryservice/" class="md-nav__link">
+      <a href="../api/core/network/externalconnection/nebuladiscoveryservice/" class="md-nav__link">
         
   
   
@@ -3984,7 +4122,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../network/forwarder/" class="md-nav__link">
+      <a href="../api/core/network/forwarder/" class="md-nav__link">
         
   
   
@@ -4007,7 +4145,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../network/health/" class="md-nav__link">
+      <a href="../api/core/network/health/" class="md-nav__link">
         
   
   
@@ -4030,7 +4168,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../network/messages/" class="md-nav__link">
+      <a href="../api/core/network/messages/" class="md-nav__link">
         
   
   
@@ -4053,7 +4191,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../network/propagator/" class="md-nav__link">
+      <a href="../api/core/network/propagator/" class="md-nav__link">
         
   
   
@@ -4084,7 +4222,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../node/" class="md-nav__link">
+      <a href="../api/core/node/" class="md-nav__link">
         
   
   
@@ -4107,7 +4245,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../noderole/" class="md-nav__link">
+      <a href="../api/core/noderole/" class="md-nav__link">
         
   
   
@@ -4145,7 +4283,7 @@
         
           
           <div class="md-nav__link md-nav__container">
-            <a href="../../pb/" class="md-nav__link ">
+            <a href="../api/core/pb/" class="md-nav__link ">
               
   
   
@@ -4178,7 +4316,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../pb/nebula_pb2/" class="md-nav__link">
+      <a href="../api/core/pb/nebula_pb2/" class="md-nav__link">
         
   
   
@@ -4209,7 +4347,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../role/" class="md-nav__link">
+      <a href="../api/core/role/" class="md-nav__link">
         
   
   
@@ -4247,7 +4385,7 @@
         
           
           <div class="md-nav__link md-nav__container">
-            <a href="../../situationalawareness/" class="md-nav__link ">
+            <a href="../api/core/situationalawareness/" class="md-nav__link ">
               
   
   
@@ -4295,7 +4433,7 @@
         
           
           <div class="md-nav__link md-nav__container">
-            <a href="../../situationalawareness/awareness/" class="md-nav__link ">
+            <a href="../api/core/situationalawareness/awareness/" class="md-nav__link ">
               
   
   
@@ -4343,7 +4481,7 @@
         
           
           <div class="md-nav__link md-nav__container">
-            <a href="../../situationalawareness/awareness/arbitrationpolicies/" class="md-nav__link ">
+            <a href="../api/core/situationalawareness/awareness/arbitrationpolicies/" class="md-nav__link ">
               
   
   
@@ -4376,7 +4514,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../situationalawareness/awareness/arbitrationpolicies/arbitrationpolicy/" class="md-nav__link">
+      <a href="../api/core/situationalawareness/awareness/arbitrationpolicies/arbitrationpolicy/" class="md-nav__link">
         
   
   
@@ -4399,7 +4537,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../situationalawareness/awareness/arbitrationpolicies/staticarbitrationpolicy/" class="md-nav__link">
+      <a href="../api/core/situationalawareness/awareness/arbitrationpolicies/staticarbitrationpolicy/" class="md-nav__link">
         
   
   
@@ -4445,7 +4583,7 @@
         
           
           <div class="md-nav__link md-nav__container">
-            <a href="../../situationalawareness/awareness/sanetwork/" class="md-nav__link ">
+            <a href="../api/core/situationalawareness/awareness/sanetwork/" class="md-nav__link ">
               
   
   
@@ -4493,7 +4631,7 @@
         
           
           <div class="md-nav__link md-nav__container">
-            <a href="../../situationalawareness/awareness/sanetwork/neighborpolicies/" class="md-nav__link ">
+            <a href="../api/core/situationalawareness/awareness/sanetwork/neighborpolicies/" class="md-nav__link ">
               
   
   
@@ -4526,7 +4664,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../situationalawareness/awareness/sanetwork/neighborpolicies/distanceneighborpolicy/" class="md-nav__link">
+      <a href="../api/core/situationalawareness/awareness/sanetwork/neighborpolicies/distanceneighborpolicy/" class="md-nav__link">
         
   
   
@@ -4549,7 +4687,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../situationalawareness/awareness/sanetwork/neighborpolicies/fcneighborpolicy/" class="md-nav__link">
+      <a href="../api/core/situationalawareness/awareness/sanetwork/neighborpolicies/fcneighborpolicy/" class="md-nav__link">
         
   
   
@@ -4572,7 +4710,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../situationalawareness/awareness/sanetwork/neighborpolicies/idleneighborpolicy/" class="md-nav__link">
+      <a href="../api/core/situationalawareness/awareness/sanetwork/neighborpolicies/idleneighborpolicy/" class="md-nav__link">
         
   
   
@@ -4595,7 +4733,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../situationalawareness/awareness/sanetwork/neighborpolicies/neighborpolicy/" class="md-nav__link">
+      <a href="../api/core/situationalawareness/awareness/sanetwork/neighborpolicies/neighborpolicy/" class="md-nav__link">
         
   
   
@@ -4618,7 +4756,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../situationalawareness/awareness/sanetwork/neighborpolicies/ringneighborpolicy/" class="md-nav__link">
+      <a href="../api/core/situationalawareness/awareness/sanetwork/neighborpolicies/ringneighborpolicy/" class="md-nav__link">
         
   
   
@@ -4641,7 +4779,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../situationalawareness/awareness/sanetwork/neighborpolicies/starneighborpolicy/" class="md-nav__link">
+      <a href="../api/core/situationalawareness/awareness/sanetwork/neighborpolicies/starneighborpolicy/" class="md-nav__link">
         
   
   
@@ -4672,7 +4810,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../situationalawareness/awareness/sanetwork/sanetwork/" class="md-nav__link">
+      <a href="../api/core/situationalawareness/awareness/sanetwork/sanetwork/" class="md-nav__link">
         
   
   
@@ -4703,7 +4841,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../situationalawareness/awareness/sareasoner/" class="md-nav__link">
+      <a href="../api/core/situationalawareness/awareness/sareasoner/" class="md-nav__link">
         
   
   
@@ -4741,7 +4879,7 @@
         
           
           <div class="md-nav__link md-nav__container">
-            <a href="../../situationalawareness/awareness/satraining/" class="md-nav__link ">
+            <a href="../api/core/situationalawareness/awareness/satraining/" class="md-nav__link ">
               
   
   
@@ -4774,7 +4912,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../situationalawareness/awareness/satraining/satraining/" class="md-nav__link">
+      <a href="../api/core/situationalawareness/awareness/satraining/satraining/" class="md-nav__link">
         
   
   
@@ -4812,7 +4950,7 @@
         
           
           <div class="md-nav__link md-nav__container">
-            <a href="../../situationalawareness/awareness/satraining/trainingpolicy/" class="md-nav__link ">
+            <a href="../api/core/situationalawareness/awareness/satraining/trainingpolicy/" class="md-nav__link ">
               
   
   
@@ -4845,7 +4983,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../situationalawareness/awareness/satraining/trainingpolicy/bpstrainingpolicy/" class="md-nav__link">
+      <a href="../api/core/situationalawareness/awareness/satraining/trainingpolicy/bpstrainingpolicy/" class="md-nav__link">
         
   
   
@@ -4868,7 +5006,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../situationalawareness/awareness/satraining/trainingpolicy/fastreboot/" class="md-nav__link">
+      <a href="../api/core/situationalawareness/awareness/satraining/trainingpolicy/fastreboot/" class="md-nav__link">
         
   
   
@@ -4891,7 +5029,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../situationalawareness/awareness/satraining/trainingpolicy/htstrainingpolicy/" class="md-nav__link">
+      <a href="../api/core/situationalawareness/awareness/satraining/trainingpolicy/htstrainingpolicy/" class="md-nav__link">
         
   
   
@@ -4914,7 +5052,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../situationalawareness/awareness/satraining/trainingpolicy/qdstrainingpolicy/" class="md-nav__link">
+      <a href="../api/core/situationalawareness/awareness/satraining/trainingpolicy/qdstrainingpolicy/" class="md-nav__link">
         
   
   
@@ -4937,7 +5075,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../situationalawareness/awareness/satraining/trainingpolicy/trainingpolicy/" class="md-nav__link">
+      <a href="../api/core/situationalawareness/awareness/satraining/trainingpolicy/trainingpolicy/" class="md-nav__link">
         
   
   
@@ -4991,7 +5129,7 @@
         
           
           <div class="md-nav__link md-nav__container">
-            <a href="../../situationalawareness/awareness/sautils/" class="md-nav__link ">
+            <a href="../api/core/situationalawareness/awareness/sautils/" class="md-nav__link ">
               
   
   
@@ -5024,7 +5162,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../situationalawareness/awareness/sautils/sacommand/" class="md-nav__link">
+      <a href="../api/core/situationalawareness/awareness/sautils/sacommand/" class="md-nav__link">
         
   
   
@@ -5047,7 +5185,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../situationalawareness/awareness/sautils/samoduleagent/" class="md-nav__link">
+      <a href="../api/core/situationalawareness/awareness/sautils/samoduleagent/" class="md-nav__link">
         
   
   
@@ -5070,7 +5208,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../situationalawareness/awareness/sautils/sasystemmonitor/" class="md-nav__link">
+      <a href="../api/core/situationalawareness/awareness/sautils/sasystemmonitor/" class="md-nav__link">
         
   
   
@@ -5101,7 +5239,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../situationalawareness/awareness/suggestionbuffer/" class="md-nav__link">
+      <a href="../api/core/situationalawareness/awareness/suggestionbuffer/" class="md-nav__link">
         
   
   
@@ -5147,7 +5285,7 @@
         
           
           <div class="md-nav__link md-nav__container">
-            <a href="../../situationalawareness/discovery/" class="md-nav__link ">
+            <a href="../api/core/situationalawareness/discovery/" class="md-nav__link ">
               
   
   
@@ -5195,7 +5333,7 @@
         
           
           <div class="md-nav__link md-nav__container">
-            <a href="../../situationalawareness/discovery/candidateselection/" class="md-nav__link ">
+            <a href="../api/core/situationalawareness/discovery/candidateselection/" class="md-nav__link ">
               
   
   
@@ -5228,7 +5366,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../situationalawareness/discovery/candidateselection/candidateselector/" class="md-nav__link">
+      <a href="../api/core/situationalawareness/discovery/candidateselection/candidateselector/" class="md-nav__link">
         
   
   
@@ -5251,7 +5389,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../situationalawareness/discovery/candidateselection/distcandidateselector/" class="md-nav__link">
+      <a href="../api/core/situationalawareness/discovery/candidateselection/distcandidateselector/" class="md-nav__link">
         
   
   
@@ -5274,7 +5412,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../situationalawareness/discovery/candidateselection/fccandidateselector/" class="md-nav__link">
+      <a href="../api/core/situationalawareness/discovery/candidateselection/fccandidateselector/" class="md-nav__link">
         
   
   
@@ -5297,7 +5435,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../situationalawareness/discovery/candidateselection/ringcandidateselector/" class="md-nav__link">
+      <a href="../api/core/situationalawareness/discovery/candidateselection/ringcandidateselector/" class="md-nav__link">
         
   
   
@@ -5320,7 +5458,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../situationalawareness/discovery/candidateselection/stdcandidateselector/" class="md-nav__link">
+      <a href="../api/core/situationalawareness/discovery/candidateselection/stdcandidateselector/" class="md-nav__link">
         
   
   
@@ -5351,7 +5489,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../situationalawareness/discovery/federationconnector/" class="md-nav__link">
+      <a href="../api/core/situationalawareness/discovery/federationconnector/" class="md-nav__link">
         
   
   
@@ -5389,7 +5527,7 @@
         
           
           <div class="md-nav__link md-nav__container">
-            <a href="../../situationalawareness/discovery/modelhandlers/" class="md-nav__link ">
+            <a href="../api/core/situationalawareness/discovery/modelhandlers/" class="md-nav__link ">
               
   
   
@@ -5422,7 +5560,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../situationalawareness/discovery/modelhandlers/aggmodelhandler/" class="md-nav__link">
+      <a href="../api/core/situationalawareness/discovery/modelhandlers/aggmodelhandler/" class="md-nav__link">
         
   
   
@@ -5445,7 +5583,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../situationalawareness/discovery/modelhandlers/defaultmodelhandler/" class="md-nav__link">
+      <a href="../api/core/situationalawareness/discovery/modelhandlers/defaultmodelhandler/" class="md-nav__link">
         
   
   
@@ -5468,7 +5606,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../situationalawareness/discovery/modelhandlers/modelhandler/" class="md-nav__link">
+      <a href="../api/core/situationalawareness/discovery/modelhandlers/modelhandler/" class="md-nav__link">
         
   
   
@@ -5491,7 +5629,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../situationalawareness/discovery/modelhandlers/stdmodelhandler/" class="md-nav__link">
+      <a href="../api/core/situationalawareness/discovery/modelhandlers/stdmodelhandler/" class="md-nav__link">
         
   
   
@@ -5530,7 +5668,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../situationalawareness/situationalawareness/" class="md-nav__link">
+      <a href="../api/core/situationalawareness/situationalawareness/" class="md-nav__link">
         
   
   
@@ -5576,7 +5714,7 @@
         
           
           <div class="md-nav__link md-nav__container">
-            <a href="../../training/" class="md-nav__link ">
+            <a href="../api/core/training/" class="md-nav__link ">
               
   
   
@@ -5609,7 +5747,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../training/lightning/" class="md-nav__link">
+      <a href="../api/core/training/lightning/" class="md-nav__link">
         
   
   
@@ -5632,7 +5770,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../training/scikit/" class="md-nav__link">
+      <a href="../api/core/training/scikit/" class="md-nav__link">
         
   
   
@@ -5655,7 +5793,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../training/siamese/" class="md-nav__link">
+      <a href="../api/core/training/siamese/" class="md-nav__link">
         
   
   
@@ -5709,7 +5847,7 @@
         
           
           <div class="md-nav__link md-nav__container">
-            <a href="../../../frontend/" class="md-nav__link ">
+            <a href="../api/frontend/" class="md-nav__link ">
               
   
   
@@ -5742,7 +5880,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../frontend/app/" class="md-nav__link">
+      <a href="../api/frontend/app/" class="md-nav__link">
         
   
   
@@ -5788,7 +5926,7 @@
         
           
           <div class="md-nav__link md-nav__container">
-            <a href="../../../physical/" class="md-nav__link ">
+            <a href="../api/physical/" class="md-nav__link ">
               
   
   
@@ -5821,7 +5959,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../physical/api/" class="md-nav__link">
+      <a href="../api/physical/api/" class="md-nav__link">
         
   
   
@@ -5852,7 +5990,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../utils/" class="md-nav__link">
+      <a href="../api/utils/" class="md-nav__link">
         
   
   
@@ -5890,7 +6028,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../contributing/" class="md-nav__link">
+      <a href="../contributing/" class="md-nav__link">
         
   
   
@@ -5912,7 +6050,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../changelog/" class="md-nav__link">
+      <a href="../changelog/" class="md-nav__link">
         
   
   
@@ -5934,7 +6072,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../../commercial-faq/" class="md-nav__link">
+      <a href="../commercial-faq/" class="md-nav__link">
         
   
   
@@ -5957,9 +6095,7 @@
             
             
               
-                
-              
-              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" hidden>
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
                 <div class="md-sidebar__scrollwrap">
                   <div class="md-sidebar__inner">
                     
@@ -5978,9 +6114,111 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#nebula.core.datasets.mnist" class="md-nav__link">
+  <a href="#1-branch-model" class="md-nav__link">
     <span class="md-ellipsis">
-      mnist
+      1. Branch Model
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="1. Branch Model">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#11-branch-types" class="md-nav__link">
+    <span class="md-ellipsis">
+      1.1 Branch Types
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-naming-conventions" class="md-nav__link">
+    <span class="md-ellipsis">
+      2. Naming Conventions
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-conventional-commits" class="md-nav__link">
+    <span class="md-ellipsis">
+      3. Conventional Commits
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-endtoend-workflow" class="md-nav__link">
+    <span class="md-ellipsis">
+      4. End‑to‑End Workflow
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="4. End‑to‑End Workflow">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#41-releasing" class="md-nav__link">
+    <span class="md-ellipsis">
+      4.1 Releasing
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#42-hotfixing" class="md-nav__link">
+    <span class="md-ellipsis">
+      4.2 Hotfixing
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#5-code-review-checklist" class="md-nav__link">
+    <span class="md-ellipsis">
+      5. Code Review Checklist
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#6-housekeeping-commands" class="md-nav__link">
+    <span class="md-ellipsis">
+      6. House‑Keeping Commands
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#7-additional-tips" class="md-nav__link">
+    <span class="md-ellipsis">
+      7. Additional Tips
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#8-resources" class="md-nav__link">
+    <span class="md-ellipsis">
+      8. Resources
     </span>
   </a>
   
@@ -5999,49 +6237,239 @@
               <article class="md-content__inner md-typeset">
                 
                   
-  
-
 
 
   
   
 
 
-<h1 id="documentation-for-mnist-module">Documentation for Mnist Module<a class="headerlink" href="#documentation-for-mnist-module" title="Permanent link">&para;</a></h1>
-
-
-<div class="doc doc-object doc-module">
-
-
-
-<a id="nebula.core.datasets.mnist"></a>
-    <div class="doc doc-contents first">
-
-
-
-
-
-
-
-
-
-  <div class="doc doc-children">
-
-
-
-
-
-
-
-
-
-
-
-  </div>
-
-    </div>
-
-</div>
+<h1 id="git-workflow-best-practices">🚀 Git Workflow &amp; Best Practices<a class="headerlink" href="#git-workflow-best-practices" title="Permanent link">&para;</a></h1>
+<p>A concise, opinionated workflow for the <strong>Frontend</strong>, <strong>Controller</strong>, and <strong>Core</strong> teams working on NEBULA Platform.</p>
+<p>Following these conventions minimises merge conflicts, preserves history, and accelerates delivery.</p>
+<hr />
+<h2 id="1-branch-model">1. Branch Model<a class="headerlink" href="#1-branch-model" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code>main     ──▶ production (always deployable)
+│
+├─ develop            ──▶ integration branch
+│   ├─ feature/&lt;scope&gt;-&lt;desc&gt;
+│   ├─ bugfix/&lt;scope&gt;-&lt;desc&gt;
+│   ├─ hotfix/&lt;scope&gt;-&lt;desc&gt;
+│   └─ release/&lt;version&gt;
+</code></pre></div>
+<h3 id="11-branch-types">1.1 Branch Types<a class="headerlink" href="#11-branch-types" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Branch</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>main</code></td>
+<td>Stable, released code. <strong>Direct commits are blocked.</strong></td>
+</tr>
+<tr>
+<td><code>develop</code></td>
+<td>Integration of completed work before a release.</td>
+</tr>
+<tr>
+<td><code>feature/*</code></td>
+<td>New functionality.</td>
+</tr>
+<tr>
+<td><code>bugfix/*</code></td>
+<td>Non‑critical fixes.</td>
+</tr>
+<tr>
+<td><code>hotfix/*</code></td>
+<td><strong>Critical</strong> production patches.</td>
+</tr>
+<tr>
+<td><code>release/*</code></td>
+<td>Final hardening + version bump before shipping.</td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<p><strong>Rule of thumb:</strong> <em>Every change flows through a Pull Request (PR) — never push to <code>main</code> or <code>develop</code> directly.</em></p>
+</blockquote>
+<hr />
+<h2 id="2-naming-conventions">2. Naming Conventions<a class="headerlink" href="#2-naming-conventions" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Type</th>
+<th>Pattern</th>
+<th>Example</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Feature</td>
+<td><code>feature/&lt;component&gt;-&lt;desc&gt;</code></td>
+<td><code>feature/frontend-login-page</code></td>
+</tr>
+<tr>
+<td>Bugfix</td>
+<td><code>bugfix/&lt;component&gt;-&lt;desc&gt;</code></td>
+<td><code>bugfix/controller-null-pointer</code></td>
+</tr>
+<tr>
+<td>Hotfix</td>
+<td><code>hotfix/&lt;component&gt;-&lt;desc&gt;</code></td>
+<td><code>hotfix/core-memory-leak</code></td>
+</tr>
+<tr>
+<td>Release</td>
+<td><code>release/&lt;major&gt;.&lt;minor&gt;.&lt;patch&gt;</code></td>
+<td><code>release/1.4.0</code></td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="3-conventional-commits">3. Conventional Commits<a class="headerlink" href="#3-conventional-commits" title="Permanent link">&para;</a></h2>
+<p>Format: <code>&lt;type&gt;(&lt;scope&gt;): &lt;short summary&gt;</code></p>
+<table>
+<thead>
+<tr>
+<th>Type</th>
+<th>Use for …</th>
+<th>Example</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>feat</code></td>
+<td>New feature</td>
+<td><code>feat(controller): add /scenarios endpoint</code></td>
+</tr>
+<tr>
+<td><code>fix</code></td>
+<td>Bug fix</td>
+<td><code>fix(frontend): correct form validation</code></td>
+</tr>
+<tr>
+<td><code>docs</code></td>
+<td>Docs only</td>
+<td><code>docs(core): explain rule engine config</code></td>
+</tr>
+<tr>
+<td><code>refactor</code></td>
+<td>Internal restructuring</td>
+<td><code>refactor(core): extract auth helpers</code></td>
+</tr>
+<tr>
+<td><code>test</code></td>
+<td>Add/modify tests</td>
+<td><code>test(frontend): snapshot for Button</code></td>
+</tr>
+<tr>
+<td><code>chore</code></td>
+<td>Build, tooling, release, cleaning</td>
+<td><code>chore: removing logs</code></td>
+</tr>
+</tbody>
+</table>
+<p><em>References to issues</em>: add <code>Closes #123</code> in the commit body.</p>
+<hr />
+<h2 id="4-endtoend-workflow">4. End‑to‑End Workflow<a class="headerlink" href="#4-endtoend-workflow" title="Permanent link">&para;</a></h2>
+<ol>
+<li><strong>Create an issue</strong> describing scope, acceptance criteria, and dependencies.</li>
+<li><strong>Branch from <code>develop</code></strong> following the naming rules.</li>
+<li><strong>Commit early &amp; often</strong> using Conventional Commits.</li>
+<li><strong>Push &amp; open a PR</strong> to <code>develop</code>.</li>
+<li>Assign at least <strong>one reviewer</strong>.</li>
+<li>CI must pass (lint, tests, build).</li>
+<li><strong>Review &amp; merge</strong> when approved. Delete the remote branch.</li>
+</ol>
+<h3 id="41-releasing">4.1 Releasing<a class="headerlink" href="#41-releasing" title="Permanent link">&para;</a></h3>
+<p>For planned releases, follow this workflow to ensure stability:</p>
+<ul>
+<li><strong>When to release</strong>: Based on sprint cycles or feature readiness</li>
+<li><strong>Key points</strong>:</li>
+<li>Release branches isolate stabilization work</li>
+<li>All changes must be regression tested</li>
+<li>
+<p>Coordinates deployment across components</p>
+</li>
+<li>
+<p>Branch <code>release/x.y.z</code> from <code>develop</code>.</p>
+</li>
+<li>Bump version, update CHANGELOG, run full regression tests.</li>
+<li>Open PR <code>release/x.y.z</code> → <code>main</code>; merge when green.</li>
+<li>Tag <code>vX.Y.Z</code> on <code>main</code> (<code>git tag v1.2.0 &amp;&amp; git push origin v1.2.0</code>).</li>
+<li>Merge <code>main</code> back into <code>develop</code> to keep history linear.</li>
+</ul>
+<h3 id="42-hotfixing">4.2 Hotfixing<a class="headerlink" href="#42-hotfixing" title="Permanent link">&para;</a></h3>
+<p>For critical production issues that need immediate fixes:</p>
+<ul>
+<li><strong>When to use</strong>: Only for urgent production bugs that can't wait for the next release</li>
+<li><strong>Key points</strong>:</li>
+<li>Hotfixes bypass <code>develop</code> and go directly to <code>main</code></li>
+<li>Must be thoroughly tested despite urgency</li>
+<li>Requires careful coordination with the team</li>
+<li>
+<p>Should be small, focused changes targeting only the critical issue</p>
+</li>
+<li>
+<p>Branch <code>hotfix/...</code> from <code>main</code>.</p>
+</li>
+<li>Fix, test, and open PR <strong>to <code>main</code></strong>.</li>
+<li>Tag <code>vX.Y.Z-hotfix</code> (or patch bump) after merge.</li>
+<li><strong>Back‑merge</strong> <code>main</code> into <code>develop</code>.</li>
+</ul>
+<hr />
+<h2 id="5-code-review-checklist">5. Code Review Checklist<a class="headerlink" href="#5-code-review-checklist" title="Permanent link">&para;</a></h2>
+<blockquote>
+<p>Use this quick checklist before approving a PR.</p>
+</blockquote>
+<ul class="task-list">
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> Code builds &amp; CI is green.</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> No obvious security, performance, or accessibility issues.</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> Docs, API spec, and configs updated.</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> Commit history is clean (squash/rebase as needed).</li>
+</ul>
+<hr />
+<h2 id="6-housekeeping-commands">6. House‑Keeping Commands<a class="headerlink" href="#6-housekeeping-commands" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Task</th>
+<th>Command</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Delete local branch</td>
+<td><code>git branch -d &lt;branch&gt;</code></td>
+</tr>
+<tr>
+<td>Delete remote branch</td>
+<td><code>git push origin --delete &lt;branch&gt;</code></td>
+</tr>
+<tr>
+<td>Sync <code>develop</code></td>
+<td><code>git pull --rebase origin develop</code></td>
+</tr>
+<tr>
+<td>Inspect history</td>
+<td><code>git log --oneline --graph --decorate --all</code></td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="7-additional-tips">7. Additional Tips<a class="headerlink" href="#7-additional-tips" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Keep PRs <strong>small</strong> (&lt; 1000 LOC) to speed up review.</li>
+<li>Use <strong>Draft PRs</strong> to gather feedback early.</li>
+</ul>
+<hr />
+<h2 id="8-resources">8. Resources<a class="headerlink" href="#8-resources" title="Permanent link">&para;</a></h2>
+<ul>
+<li><a href="https://www.conventionalcommits.org">Conventional Commits</a></li>
+<li><a href="https://nvie.com/posts/a-successful-git-branching-model/">Git Branching Model</a></li>
+</ul>
 
 
 
@@ -6062,7 +6490,7 @@
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="July 2, 2025 15:09:56 UTC">July 2, 2025</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="July 2, 2025 15:08:37 UTC">July 2, 2025</span>
   </span>
 
     
@@ -6072,8 +6500,6 @@
   </aside>
 
 
-
-  
 
 
 
@@ -6146,12 +6572,12 @@
     
     
       
-      <script id="__config" type="application/json">{"base": "../../../..", "features": ["navigation.tabs", "content.code.annotate"], "search": "../../../../assets/javascripts/workers/search.d50fe291.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+      <script id="__config" type="application/json">{"base": "..", "features": ["navigation.tabs", "content.code.annotate"], "search": "../assets/javascripts/workers/search.d50fe291.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
-      <script src="../../../../assets/javascripts/bundle.56ea9cef.min.js"></script>
+      <script src="../assets/javascripts/bundle.56ea9cef.min.js"></script>
       
-        <script src="../../../../js/toc.js"></script>
+        <script src="../js/toc.js"></script>
       
     
   </body>
