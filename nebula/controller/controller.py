@@ -7,6 +7,7 @@ import json
 import logging
 import os
 import re
+import copy
 from typing import Annotated
 
 import aiohttp
@@ -15,7 +16,7 @@ import uvicorn
 from fastapi import Body, FastAPI, Request, status, HTTPException, Path, File, UploadFile
 from fastapi.concurrency import asynccontextmanager
 
-from nebula.controller.database import scenario_set_all_status_to_finished, scenario_set_status_to_finished
+# from nebula.controller.database import scenario_set_all_status_to_finished, scenario_set_status_to_finished
 from nebula.controller.http_helpers import remote_get, remote_post_form
 from nebula.utils import DockerUtils
 
@@ -105,12 +106,12 @@ def configure_logger(controller_log):
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    databases_dir: str = os.environ.get("NEBULA_DATABASES_DIR")
+    # databases_dir: str = os.environ.get("NEBULA_DATABASES_DIR")
     controller_log: str = os.environ.get("NEBULA_CONTROLLER_LOG")
 
-    from nebula.controller.database import initialize_databases
+    # from nebula.controller.database import initialize_databases
 
-    await initialize_databases(databases_dir)
+    # await initialize_databases(databases_dir)
 
     configure_logger(controller_log)
 
@@ -309,13 +310,18 @@ async def run_scenario(
 
     validate_physical_fields(scenario_data)
 
+    db_scenario = copy.deepcopy(scenario_data)
+
     # Manager for the actual scenario
     scenarioManagement = ScenarioManagement(scenario_data, user)
+
+    logging.info(f"[FER] scenario run_scenario {scenario_data}")
 
     await update_scenario(
         scenario_name=scenarioManagement.scenario_name,
         start_time=scenarioManagement.start_date_scenario,
         end_time="",
+        scenario=db_scenario,
         scenario=scenario_data,
         status="running",
         role=role,
@@ -460,11 +466,11 @@ async def update_scenario(
         dict: A message confirming the update.
     """
     from nebula.controller.database import scenario_update_record
-    from nebula.controller.scenarios import Scenario
+    # from nebula.controller.scenarios import Scenario
 
     try:
-        scenario = Scenario.from_dict(scenario)
-        scenario_update_record(scenario_name, start_time, end_time, scenario, status, role, username)
+        logging.info(f"[FER] scenario controller.py {scenario}")
+        scenario_update_record(scenario_name, start_time, end_time, scenario, status, username)
     except Exception as e:
         logging.exception(f"Error updating scenario {scenario_name}: {e}")
         raise HTTPException(status_code=500, detail="Internal server error")
