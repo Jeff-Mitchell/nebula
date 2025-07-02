@@ -1,154 +1,143 @@
-// Reputation System Module
-const ReputationManager = (function() {
-    function initializeReputationSystem() {
-        setupReputationSwitch();
+// Reputation System Module (Modal-Aware)
+const ReputationManager = (function () {
+    let modal; // Referencia al contenedor modal
+
+    function initializeReputationSystem(modalId = "reputation-modal") {
+        modal = document.getElementById(modalId);
+        if (!modal) {
+            console.warn("Reputation modal container not found.");
+            return;
+        }
         setupWeightingFactor();
         setupWeightValidation();
         setupInitialReputation();
     }
 
-    function setupReputationSwitch() {
-        document.getElementById("reputationSwitch").addEventListener("change", function() {
-            const reputationMetrics = document.getElementById("reputation-metrics");
-            const reputationSettings = document.getElementById("reputation-settings");
-            const weightingSettings = document.getElementById("weighting-settings");
-
-            reputationMetrics.style.display = this.checked ? "block" : "none";
-            reputationSettings.style.display = this.checked ? "block" : "none";
-            weightingSettings.style.display = this.checked ? "block" : "none";
-        });
+    function withinModal(selector) {
+        return modal.querySelector(selector);
     }
 
     function setupWeightingFactor() {
-        document.getElementById("weighting-factor").addEventListener("change", function() {
+        withinModal("#weighting-factor").addEventListener("change", function () {
             const showWeights = this.value === "static";
-            document.querySelectorAll(".weight-input").forEach(input => {
+            modal.querySelectorAll(".weight-input").forEach(input => {
                 input.style.display = showWeights ? "inline-block" : "none";
             });
         });
     }
 
     function setupWeightValidation() {
-        document.querySelectorAll(".weight-input").forEach(input => {
+        modal.querySelectorAll(".weight-input").forEach(input => {
             input.addEventListener("input", validateWeights);
         });
     }
 
     function validateWeights() {
         let totalWeight = 0;
-        document.querySelectorAll(".weight-input").forEach(input => {
-            const checkbox = input.previousElementSibling.previousElementSibling;
-            if (checkbox.checked && input.style.display !== "none" && input.value) {
-                totalWeight += parseFloat(input.value);
+        modal.querySelectorAll(".weight-input").forEach(input => {
+            const checkbox = input.closest(".form-group").querySelector("input[type=checkbox]");
+            if (checkbox?.checked && input.style.display !== "none" && input.value) {
+                totalWeight += parseFloat(input.value) || 0;
             }
         });
-        document.getElementById("weight-warning").style.display = totalWeight > 1 ? "block" : "none";
+        withinModal("#weight-warning").style.display = totalWeight > 1 ? "block" : "none";
     }
 
     function setupInitialReputation() {
-        document.getElementById("initial-reputation").addEventListener("blur", function() {
+        withinModal("#initial-reputation").addEventListener("blur", function () {
             const min = parseFloat(this.min);
             const max = parseFloat(this.max);
             const value = parseFloat(this.value);
-
-            if (value < min) {
-                this.value = min;
-            } else if (value > max) {
-                this.value = max;
-            }
+            if (value < min) this.value = min;
+            else if (value > max) this.value = max;
         });
     }
 
     function getReputationConfig() {
         return {
-            enabled: document.getElementById("reputationSwitch").checked,
-            initialReputation: parseFloat(document.getElementById("initial-reputation").value),
-            weightingFactor: document.getElementById("weighting-factor").value,
+            enabled: withinModal("#reputationSwitch").checked,
+            initialReputation: parseFloat(withinModal("#initial-reputation").value) || 0.2,
+            weightingFactor: withinModal("#weighting-factor").value,
             metrics: {
-                model_similarity: {
-                    enabled: document.getElementById("model-similarity").checked,
-                    weight: parseFloat(document.getElementById("weight-model-similarity").value)
+                modelSimilarity: {
+                    enabled: withinModal("#model-similarity").checked,
+                    weight: parseFloat(withinModal("#weight-model-similarity").value) || 0
                 },
-                num_messages: {
-                    enabled: document.getElementById("num-messages").checked,
-                    weight: parseFloat(document.getElementById("weight-num-messages").value)
+                numMessages: {
+                    enabled: withinModal("#num-messages").checked,
+                    weight: parseFloat(withinModal("#weight-num-messages").value) || 0
                 },
-                model_arrival_latency: {
-                    enabled: document.getElementById("model-arrival-latency").checked,
-                    weight: parseFloat(document.getElementById("weight-model-arrival-latency").value)
+                modelArrivalLatency: {
+                    enabled: withinModal("#model-arrival-latency").checked,
+                    weight: parseFloat(withinModal("#weight-model-arrival-latency").value) || 0
                 },
-                fraction_parameters_changed: {
-                    enabled: document.getElementById("fraction-parameters-changed").checked,
-                    weight: parseFloat(document.getElementById("weight-fraction-parameters-changed").value)
+                fractionParametersChanged: {
+                    enabled: withinModal("#fraction-parameters-changed").checked,
+                    weight: parseFloat(withinModal("#weight-fraction-parameters-changed").value) || 0
                 }
             }
         };
     }
 
     function setReputationConfig(config) {
-        if (!config) return;
+        if (!config || !modal) return;
 
         // Set reputation enabled/disabled
-        document.getElementById("reputationSwitch").checked = config.enabled;
-        document.getElementById("reputation-metrics").style.display = config.enabled ? "block" : "none";
-        document.getElementById("reputation-settings").style.display = config.enabled ? "block" : "none";
-        document.getElementById("weighting-settings").style.display = config.enabled ? "block" : "none";
+        withinModal("#reputationSwitch").checked = config.enabled;
+        withinModal("#reputation-metrics").style.display = config.enabled ? "block" : "none";
+        withinModal("#reputation-settings").style.display = config.enabled ? "block" : "none";
+        withinModal("#weighting-settings").style.display = config.enabled ? "block" : "none";
 
         // Set initial reputation
-        document.getElementById("initial-reputation").value = config.initialReputation || 0.2;
+        withinModal("#initial-reputation").value = config.initialReputation ?? 0.2;
 
         // Set weighting factor
-        document.getElementById("weighting-factor").value = config.weightingFactor || "dynamic";
+        withinModal("#weighting-factor").value = config.weightingFactor ?? "dynamic";
         const showWeights = config.weightingFactor === "static";
-        document.querySelectorAll(".weight-input").forEach(input => {
+        modal.querySelectorAll(".weight-input").forEach(input => {
             input.style.display = showWeights ? "inline-block" : "none";
         });
 
         // Set metrics
-        if (config.metrics) {
-            // Model Similarity
-            document.getElementById("model-similarity").checked = config.metrics.modelSimilarity?.enabled || false;
-            document.getElementById("weight-model-similarity").value = config.metrics.modelSimilarity?.weight || 0;
+        const metrics = config.metrics || {};
+        withinModal("#model-similarity").checked = metrics.modelSimilarity?.enabled || false;
+        withinModal("#weight-model-similarity").value = metrics.modelSimilarity?.weight ?? 0;
 
-            // Number of Messages
-            document.getElementById("num-messages").checked = config.metrics.numMessages?.enabled || false;
-            document.getElementById("weight-num-messages").value = config.metrics.numMessages?.weight || 0;
+        withinModal("#num-messages").checked = metrics.numMessages?.enabled || false;
+        withinModal("#weight-num-messages").value = metrics.numMessages?.weight ?? 0;
 
-            // Model Arrival Latency
-            document.getElementById("model-arrival-latency").checked = config.metrics.modelArrivalLatency?.enabled || false;
-            document.getElementById("weight-model-arrival-latency").value = config.metrics.modelArrivalLatency?.weight || 0;
+        withinModal("#model-arrival-latency").checked = metrics.modelArrivalLatency?.enabled || false;
+        withinModal("#weight-model-arrival-latency").value = metrics.modelArrivalLatency?.weight ?? 0;
 
-            // Fraction Parameters Changed
-            document.getElementById("fraction-parameters-changed").checked = config.metrics.fractionParametersChanged?.enabled || false;
-            document.getElementById("weight-fraction-parameters-changed").value = config.metrics.fractionParametersChanged?.weight || 0;
-        }
+        withinModal("#fraction-parameters-changed").checked = metrics.fractionParametersChanged?.enabled || false;
+        withinModal("#weight-fraction-parameters-changed").value = metrics.fractionParametersChanged?.weight ?? 0;
 
-        // Validate weights
         validateWeights();
     }
 
     function resetReputationConfig() {
-        // Reset to default values
-        document.getElementById("reputationSwitch").checked = false;
-        document.getElementById("reputation-metrics").style.display = "none";
-        document.getElementById("reputation-settings").style.display = "none";
-        document.getElementById("weighting-settings").style.display = "none";
-        document.getElementById("initial-reputation").value = "0.2";
-        document.getElementById("weighting-factor").value = "dynamic";
-        document.getElementById("weight-warning").style.display = "none";
+        if (!modal) return;
+
+        withinModal("#reputationSwitch").checked = false;
+        withinModal("#reputation-metrics").style.display = "none";
+        withinModal("#reputation-settings").style.display = "none";
+        withinModal("#weighting-settings").style.display = "none";
+        withinModal("#initial-reputation").value = "0.2";
+        withinModal("#weighting-factor").value = "dynamic";
+        withinModal("#weight-warning").style.display = "none";
 
         // Reset metrics
-        document.getElementById("model-similarity").checked = false;
-        document.getElementById("weight-model-similarity").value = "0";
-        document.getElementById("num-messages").checked = false;
-        document.getElementById("weight-num-messages").value = "0";
-        document.getElementById("model-arrival-latency").checked = false;
-        document.getElementById("weight-model-arrival-latency").value = "0";
-        document.getElementById("fraction-parameters-changed").checked = false;
-        document.getElementById("weight-fraction-parameters-changed").value = "0";
+        withinModal("#model-similarity").checked = false;
+        withinModal("#weight-model-similarity").value = "0";
+        withinModal("#num-messages").checked = false;
+        withinModal("#weight-num-messages").value = "0";
+        withinModal("#model-arrival-latency").checked = false;
+        withinModal("#weight-model-arrival-latency").value = "0";
+        withinModal("#fraction-parameters-changed").checked = false;
+        withinModal("#weight-fraction-parameters-changed").value = "0";
 
         // Hide weight inputs
-        document.querySelectorAll(".weight-input").forEach(input => {
+        modal.querySelectorAll(".weight-input").forEach(input => {
             input.style.display = "none";
         });
     }
@@ -157,8 +146,26 @@ const ReputationManager = (function() {
         initializeReputationSystem,
         getReputationConfig,
         setReputationConfig,
-        resetReputationConfig
+        resetReputationConfig,
     };
 })();
+
+document.addEventListener("DOMContentLoaded", () => {
+    const switchInput = document.getElementById("reputationSwitch");
+    const configButton = document.getElementById("reputationConfigureBtn");
+
+    if (!switchInput || !configButton) {
+        console.warn("No se encontró switch o botón");
+        return;
+    }
+
+    // Show/hide button according to initial switch state
+    configButton.style.display = switchInput.checked ? "inline-block" : "none";
+
+    // Listener to show/hide configure button when switch changes 
+    switchInput.addEventListener("change", () => {
+        configButton.style.display = switchInput.checked ? "inline-block" : "none";
+    });
+});
 
 export default ReputationManager;

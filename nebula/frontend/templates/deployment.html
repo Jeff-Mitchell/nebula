@@ -625,76 +625,102 @@
                         </div>
                     </div>
                 </div>
-                <!-- Advanced Defense -->
+                <!-- Defense Mechanism -->
                 <div class="form-group row container-shadow tiny grey">
-                    <h5 class="step-number">Defense <i class="fa fa-wrench"></i>
-                    </h5>
+                    <h5 class="step-number">Defense <i class="fa fa-wrench"></i></h5>
                     <h5 class="step-title">Enable/Disable Reputation</h5>
+
+                    <!-- Switch + configure Button -->
                     <div class="form-check form-switch" style="margin-left: 23px;">
                         <input class="form-check-input" type="checkbox" id="reputationSwitch"
-                            style="display: inline; width: 80px; height: 30px;">
-                    </div>
-                    <div id="reputation-settings" style="margin-top: 10px; display:none;">
-                        <h5 class="step-title">Reputation Initialization</h5>
-                        <input class="form-control" type="number" id="initial-reputation" name="initialReputation"
-                            step="0.01" style="display: inline; width: 80%" value="0.2" min="0.1" max="1">
-                        <small id="reputationInitializationHelp" class="form-text text-muted">
-                            <i id="reputationInitializationHelpIcon" class="fa fa-info-circle"
-                                style="cursor: pointer;"></i>
-                        </small>
-                    </div>
-                    <div id="weighting-settings" style="margin-top: 10px; display:none;">
-                        <h5 class="step-title">Weighting Factor</h5>
-                        <select class="form-control" id="weighting-factor" name="weightingFactor"
-                            style="display: inline; width: 80%">
-                            <option value="dynamic" selected>Dynamic</option>
-                            <option value="static">Static</option>
-                        </select>
-                        <small id="weightingFactorHelp" class="form-text text-muted">
-                            <i id="weightingFactorHelpIcon" class="fa fa-info-circle" style="cursor: pointer;"></i>
-                        </small>
-                    </div>
-                    <div id="reputation-metrics" style="display:none;">
-                        <h5 class="step-title">Reputation Metrics</h5>
-                        <p>Model-based metrics</p>
-                        <div class="form-check">
-                            <input class="form-check-input" type="checkbox" id="model-similarity"
-                                name="modelSimilarity">
-                            <label class="form-check-label" for="model-similarity">Model Similarity</label>
-                            <input class="form-control weight-input" type="number" id="weight-model-similarity"
-                                name="weightModelSimilarity" step="0.01" value="0"
-                                placeholder="Weight to model similarity"
-                                style="display: none; width: 30%; margin-top:2px;">
+                        style="display: inline; width: 80px; height: 30px;">
+                        <button type="button" class="btn btn-dark btn-sm"  id="reputationConfigureBtn" style="display: none;" data-bs-toggle="modal" data-bs-target="#reputationModal">
+                            Configure
+                        </button>
+                    </div>      
+                </div>
+
+                <!-- Modal for reputation configuration -->
+                <div class="modal fade" id="reputationModal" tabindex="-1" aria-labelledby="reputationModalLabel" aria-hidden="true">
+                    <div class="modal-dialog modal-lg">
+                        <div class="modal-content">
+
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="reputationModalLabel">Reputation Configuration</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                         </div>
-                        <div class="form-check">
-                            <input class="form-check-input" type="checkbox" id="fraction-parameters-changed"
-                                name="fractionParametersChanged">
-                            <label class="form-check-label" for="fraction-parameters-changed">Fraction Parameters
-                                Changed</label>
-                            <input class="form-control weight-input" type="number"
-                                id="weight-fraction-parameters-changed" name="weightFractionParametersChanged"
-                                step="0.01" value="0" placeholder="Weight to fraction paremeters changed"
-                                style="display: none; width: 30%; margin-top:2px;">
+
+                        <div class="modal-body">
+                            <!-- Rest of things (hidden until configuration button clicked) -->
+                            <div id="reputation-settings" style="margin-top: 10px; display:none;">
+                                <h5 class="step-title">Reputation Initialization</h5>
+                                <input class="form-control" type="number" id="initial-reputation" name="initialReputation" step="0.01"
+                                style="display: inline; width: 80%" value="0.2" min="0.1" max="1">
+                                <small id="reputationInitializationHelp" class="form-text text-muted">
+                                <i id="reputationInitializationHelpIcon" class="fa fa-info-circle" style="cursor: pointer;"></i>
+                                </small>
+                            </div>
+
+                            <div id="weighting-settings" style="margin-top: 10px;">
+                                <h5 class="step-title">Weighting Factor</h5>
+                                <select class="form-control" id="weighting-factor" name="weightingFactor" style="display: inline; width: 80%">
+                                <option value="dynamic" selected>Dynamic</option>
+                                <option value="static">Static</option>
+                                </select>
+                                <small id="weightingFactorHelp" class="form-text text-muted">
+                                <i id="weightingFactorHelpIcon" class="fa fa-info-circle" style="cursor: pointer;"></i>
+                                </small>
+                            </div>
+
+                            <div id="reputation-metrics">
+                                <h5 class="step-title">Reputation Metrics</h5>
+                                <p>Model-based metrics</p>
+
+                                <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="model-similarity" name="modelSimilarity">
+                                <label class="form-check-label" for="model-similarity">Model Similarity</label>
+                                <input class="form-control weight-input" type="number" id="weight-model-similarity"
+                                    name="weightModelSimilarity" step="0.01" value="0" placeholder="Weight to model similarity"
+                                    style="display: none; width: 30%; margin-top:2px;">
+                                </div>
+
+                                <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="fraction-parameters-changed"
+                                    name="fractionParametersChanged">
+                                <label class="form-check-label" for="fraction-parameters-changed">Fraction Parameters Changed</label>
+                                <input class="form-control weight-input" type="number" id="weight-fraction-parameters-changed"
+                                    name="weightFractionParametersChanged" step="0.01" value="0"
+                                    placeholder="Weight to fraction parameters changed" style="display: none; width: 30%; margin-top:2px;">
+                                </div>
+
+                                <p>Communication-based metrics</p>
+
+                                <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="num-messages" name="numMessages">
+                                <label class="form-check-label" for="num-messages">Number of Messages</label>
+                                <input class="form-control weight-input" type="number" id="weight-num-messages" name="weightNumMessages"
+                                    step="0.01" value="0" placeholder="Weight to number of messages"
+                                    style="display: none; width: 30%; margin-top:2px;">
+                                </div>
+
+                                <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="model-arrival-latency" name="modelArrivalLatency">
+                                <label class="form-check-label" for="model-arrival-latency">Model Arrival Latency</label>
+                                <input class="form-control weight-input" type="number" id="weight-model-arrival-latency"
+                                    name="weightModelArrivalLatency" step="0.01" value="0" placeholder="Weight to model arrival latency"
+                                    style="display: none; width: 30%; margin-top:2px;">
+                                </div>
+
+                                <p id="weight-warning" style="color: red; display: none;">Total weight must not exceed 1.</p>
+                            </div>
                         </div>
-                        <p>Communication-based metrics</p>
-                        <div class="form-check">
-                            <input class="form-check-input" type="checkbox" id="num-messages" name="numMessages">
-                            <label class="form-check-label" for="num-messages">Number of Messages</label>
-                            <input class="form-control weight-input" type="number" id="weight-num-messages"
-                                name="weightNumMessages" step="0.01" value="0"
-                                placeholder="Weight to number of messages"
-                                style="display: none; width: 30%; margin-top:2px;">
+
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" id="resetReputation">Reset to Default</button>
+                            <button type="button" class="btn btn-primary" id="saveReputation">Save</button>
                         </div>
-                        <div class="form-check">
-                            <input class="form-check-input" type="checkbox" id="model-arrival-latency"
-                                name="modelArrivalLatency">
-                            <label class="form-check-label" for="model-arrival-latency">Model Arrival Latency</label>
-                            <input class="form-control weight-input" type="number" id="weight-model-arrival-latency"
-                                name="weightModelArrivalLatency" step="0.01" value="0"
-                                placeholder="Weight to model arrival latency"
-                                style="display: none; width: 30%; margin-top:2px;">
+
                         </div>
-                        <p id="weight-warning" style="color: red; display: none;">Total weight must not exceed 1.</p>
                     </div>
                 </div>
                 <!-- Mobility -->
