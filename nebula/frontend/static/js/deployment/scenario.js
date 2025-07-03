@@ -343,6 +343,12 @@ const ScenarioManager = (function() {
         if (window.SaManager) {
             window.SaManager.resetSaConfig();
         }
+        if (window.NetworkManager) {
+            window.NetworkManager.resetNetworkConfig();
+        }
+        if (window.ArrivalsDeparturesManager) {
+            window.ArrivalsDeparturesManager.resetArrivalsDeparturesConfig();
+        }
 
         // Trigger necessary events
         document.getElementById("federationArchitecture").dispatchEvent(new Event('change'));

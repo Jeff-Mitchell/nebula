@@ -9,6 +9,7 @@ import GraphSettings from './graph-settings.js';
 import Utils from './utils.js';
 import TrustworthinessManager from './trustworthiness.js';
 import NetworkManager from './network.js';
+import ArrivalsDeparturesManager from './arrivals-departures.js';
 
 const DeploymentManager = (function() {
     function initialize() {
@@ -31,6 +32,7 @@ const DeploymentManager = (function() {
         MobilityManager.initializeMobility();
         ReputationManager.initializeReputationSystem();
         NetworkManager.initializeNetworkSystem();
+        ArrivalsDeparturesManager.initializeArrivalsDeparturesSystem();
         SaManager.initializeSa();
         TrustworthinessManager.initializeTrustworthinessSystem();
         GraphSettings.initializeDistanceControls();
@@ -42,6 +44,7 @@ const DeploymentManager = (function() {
         window.MobilityManager = MobilityManager;
         window.ReputationManager = ReputationManager;
         window.NetworkManager = NetworkManager;
+        window.ArrivalsDeparturesManager = ArrivalsDeparturesManager;
         window.SaManager = SaManager;
         window.TrustworthinessManager = TrustworthinessManager;
         window.GraphSettings = GraphSettings;

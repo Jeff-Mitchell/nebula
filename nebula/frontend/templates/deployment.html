@@ -627,7 +627,7 @@
                 </div>
                 <!-- Defense Mechanism -->
                 <div class="form-group row container-shadow tiny grey">
-                    <h5 class="step-number">Defense <i class="fa fa-wrench"></i></h5>
+                    <h5 class="step-number">Defense <i class="fa fa-shield"></i></h5>
                     <h5 class="step-title">Enable/Disable Reputation</h5>
 
                     <!-- Switch + configure Button -->
@@ -716,6 +716,7 @@
                         </div>
                     </div>
                 </div>
+
                 <!-- Network -->
                  <div class="form-group row container-shadow tiny grey">
                     <h5 class="step-number">Network <i class="fa fa-rss" aria-hidden="true"></i></h5>
@@ -736,32 +737,89 @@
                     <div class="modal-dialog modal-lg">
                         <div class="modal-content">
 
-                        <div class="modal-header">
-                            <h5 class="modal-title" id="networkModalLabel">Network Configuration</h5>
-                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                        </div>
-
-                        <div class="modal-body">
-                            <!-- Rest of things (hidden until configuration button clicked) -->
-                             <h5 class="step-title">Cellular network generation</h5>
-                            <div class="form-check form-check-inline" id="network-type-container" style="display: inline;">
-                                <select class="form-control" id="network_type" name="network-type"
-                                    style="display: inline; width: 20%">
-                                    <option selected>3G</option>
-                                    <option>4G</option>
-                                    <option>5G</option>
-                                </select>
+                            <div class="modal-header">
+                                <h5 class="modal-title" id="networkModalLabel">Network Configuration</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                             </div>
-                        </div>
 
-                        <div class="modal-footer">
-                            <button type="button" class="btn btn-secondary" id="resetNetwork">Reset to Default</button>
-                            <button type="button" class="btn btn-primary" id="saveNetwork">Save</button>
-                        </div>
+                            <div class="modal-body">
+                                <!-- Rest of things (hidden until configuration button clicked) -->
+                                <h5 class="step-title">Cellular network generation</h5>
+                                <div class="form-check form-check-inline" id="network-type-container" style="display: inline;">
+                                    <select class="form-control" id="network_type" name="network-type"
+                                        style="display: inline; width: 20%">
+                                        <option selected>3G</option>
+                                        <option>4G</option>
+                                        <option>5G</option>
+                                    </select>
+                                    <small id="cellularGenerationHelp" class="form-text text-muted" style="display: inline-block; margin-left: 8px;">
+                                        <i id="cellularGenerationIcon" class="fa fa-info-circle" title="Info about 3G" style="cursor: pointer;"></i>
+                                    </small>
+                                </div>
+                            </div>
+
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" id="resetNetwork">Reset to Default</button>
+                                <button type="button" class="btn btn-primary" id="saveNetwork">Save</button>
+                            </div>
 
                         </div>
                     </div>
                 </div>
+
+                <!-- Arrivals and Departures -->
+                 <div class="form-group row container-shadow tiny grey">
+                    <h5 class="step-number">Arrivals and Departures <i class="fa fa-exchange" aria-hidden="true"></i></h5>
+                    <h5 class="step-title">Enable/Disable Dynamic Behaviour</h5>
+
+                    <!-- Switch + configure Button -->
+                    <div class="form-check form-switch" style="margin-left: 23px;">
+                        <input class="form-check-input" type="checkbox" id="activitySwitch"
+                        style="display: inline; width: 80px; height: 30px; margin-right: 20px">
+                        <button type="button" class="btn btn-dark btn-sm"  id="activityConfigureBtn" style="display: none;" data-bs-toggle="modal" data-bs-target="#activityModal">
+                            Configure
+                        </button>
+                    </div>      
+                </div>
+
+                <!-- Modal for Arrival and Departures configuration -->
+                <div class="modal fade" id="activityModal" tabindex="-1" aria-labelledby="activityModalLabel" aria-hidden="true">
+                    <div class="modal-dialog modal-lg">
+                        <div class="modal-content">
+
+                            <div class="modal-header">
+                                <h5 class="modal-title" id="activityModalLabel">Arrivals and Departures Configuration</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+
+                            <div class="modal-body">
+                                <!-- Rest of things (hidden until configuration button clicked) -->
+                                <h5 class="step-title">Number of additional participants (deployed during federation)</h5>
+                                <div class="form-check form-check-inline">
+                                    <input type="number" class="form-control" id="additionalParticipants"
+                                        placeholder="Number of additional participants" min="0" value="0"
+                                        style="display: inline; width: 80%">
+                                </div>
+                                <h5 class="step-title" id="deploymentRoundTitle" style="display: none;">Deployment round</h5>
+                                <div class="form-check form-switch" id="deploymentRoundDiv" style="display: none; margin-left: 23px; margin-bottom: 20px;">
+                                    <input class="form-check-input" type="checkbox" id="deploymentRoundSwitch" checked style="display: inline; width: 80px; height: 30px; margin-right: 20px;">
+                                    <input type="number" class="form-control" id="deploymentRound"
+                                        placeholder="Deployment round" min="0" value="0"
+                                        style="display: inline; width: 10%">
+                                </div>
+                                <div id="additional-participants-items"></div>
+                            </div>
+                            
+
+                            <div class="modal-footer" style="margin-top: 20px">
+                                <button type="button" class="btn btn-secondary" id="resetActivity">Reset to Default</button>
+                                <button type="button" class="btn btn-primary" id="saveActivity">Save</button>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Mobility -->
                 <div class="form-group row container-shadow tiny grey">
                     <h5 class="step-number">Mobility <i class="fa fa-car"></i>
@@ -873,6 +931,7 @@
                         </div>
                     </div>
                 </div>
+
                 <!-- Situational awareness -->
                 <div class="form-group row container-shadow tiny grey" style="display: block;">
                     <h5 class="step-number">Situtational Awareness <i class="fa fa-binoculars"></i>
