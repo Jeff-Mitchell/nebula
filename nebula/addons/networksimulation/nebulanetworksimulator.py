@@ -9,7 +9,7 @@ from nebula.core.nebulaevents import GPSEvent
 from nebula.core.network.communications import CommunicationsManager
 from nebula.core.utils.locker import Locker
 
-
+#TODO currently not configurable from front-end
 class NebulaNS(NetworkSimulator):
     NETWORK_CONDITIONS = {
         100: {"bandwidth": "5Gbps", "delay": "5ms"},
@@ -19,10 +19,10 @@ class NebulaNS(NetworkSimulator):
     }
     IP_MULTICAST = "239.255.255.250"
 
-    def __init__(self, changing_interval, interface, verbose=False):
-        self._refresh_interval = changing_interval
-        self._node_interface = interface
-        self._verbose = verbose
+    def __init__(self, config: dict):
+        self._refresh_interval = config["changing_interval"]
+        self._node_interface = config["interface"]
+        self._verbose = config["verbose"]
         self._network_conditions = self.NETWORK_CONDITIONS.copy()
         self._network_conditions_lock = Locker("network_conditions_lock", async_lock=True)
         self._current_network_conditions = {}
@@ -163,6 +163,7 @@ class NebulaNS(NetworkSimulator):
             )
         except Exception as e:
             logging.exception(f"❗️  Network simulation error: {e}")
+            logging.error(f"STDERR:\n{e.stderr}")
             return
 
     def _set_network_condition_for_multicast(
@@ -220,6 +221,7 @@ class NebulaNS(NetworkSimulator):
             )
         except Exception as e:
             logging.exception(f"❗️  Network simulation error: {e}")
+            logging.error(f"STDERR:\n{e.stderr}")
             return
 
     async def _calculate_network_conditions(self, distance):

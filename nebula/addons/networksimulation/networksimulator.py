@@ -2,34 +2,34 @@ from abc import ABC, abstractmethod
 
 _NETWORK_PRESETS = {
     "3G": {
-        "bandwidth": "1mbit",
+        "bandwidth": "4Mbps",
         "delay": "120ms",
         "delay_distro": "30ms",
         "delay_distribution": "normal",
-        "loss": 0.5,
-        "duplicate": 0.2,
-        "corrupt": 0.01,
-        "reordering": 0.1,
+        "loss": "0.5%",
+        "duplicate": "0.2%",
+        "corrupt": "0.01%",
+        "reordering": "0.1%",
     },
     "4G": {
-        "bandwidth": "10mbit",
+        "bandwidth": "20Mbit",
         "delay": "60ms",
         "delay_distro": "10ms",
         "delay_distribution": "normal",
-        "loss": 0.1,
-        "duplicate": 0.1,
-        "corrupt": 0.005,
-        "reordering": 0.05,
+        "loss": "0.1%",
+        "duplicate": "0.1%",
+        "corrupt": "0.005%",
+        "reordering": "0.05%",
     },
     "5G": {
-        "bandwidth": "100mbit",
+        "bandwidth": "200Mbit",
         "delay": "20ms",
         "delay_distro": "5ms",
         "delay_distribution": "normal",
-        "loss": 0.05,
-        "duplicate": 0.0,
-        "corrupt": 0.001,
-        "reordering": 0.01,
+        "loss": "0.05%",
+        "duplicate": "0.0%",
+        "corrupt": "0.001%",
+        "reordering": "0.01%",
     },
 }
 
@@ -111,19 +111,19 @@ class NetworkPresetException(Exception):
     pass
 
 
-def factory_network_simulator(net_sim, changing_interval, interface, verbose) -> NetworkSimulator:
+def factory_network_simulator(net_sim, config: dict) -> NetworkSimulator:
     from nebula.addons.networksimulation.nebulanetworksimulator import NebulaNS
     from nebula.addons.networksimulation.cngnetworksimulator import CNGNetworkSimulator
 
     SIMULATION_SERVICES = {
         "nebula": NebulaNS,
-        "Cellular network generation": CNGNetworkSimulator,
+        "Cellular_network_generation": CNGNetworkSimulator,
     }
 
-    net_serv = SIMULATION_SERVICES.get(net_sim, NebulaNS)
+    net_serv = SIMULATION_SERVICES.get(net_sim, None)
 
     if net_serv:
-        return net_serv(changing_interval, interface, verbose)
+        return net_serv(config)
     else:
         raise NetworkSimulatorException(f"Network Simulator {net_sim} not found")
     

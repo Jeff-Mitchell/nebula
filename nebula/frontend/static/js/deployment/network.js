@@ -34,13 +34,15 @@ const NetworkManager = (function () {
 
     function getNetworkConfig() {
         return {
-            network_type: withinModal("network_type").value
+            enabled: document.getElementById("networkSwitch").checked,
+            type: "Cellular_network_generation",
+            generation: withinModal("#network_type").value
         };
     }
 
     function setNetworkConfig(config) {
         if (!config || !modal) return;
-        withinModal("network_type").value = config.network_type
+        withinModal("#network_type").value = config.network_type
     }
 
     function setupModalButtons() {

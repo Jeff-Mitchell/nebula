@@ -81,6 +81,11 @@ const ScenarioManager = (function() {
                 initial_reputation: window.ReputationManager.getReputationConfig().initialReputation || 0.2,
                 weighting_factor: window.ReputationManager.getReputationConfig().weightingFactor || "dynamic"
             },
+            network_args: {
+                enabled: window.NetworkManager.getNetworkConfig().enabled || false,
+                type: window.NetworkManager.getNetworkConfig().type || "nebula",
+                network_type: window.NetworkManager.getNetworkConfig().generation || "3G"
+            },
             mobility: window.MobilityManager.getMobilityConfig().enabled || false,
             network_simulation: window.MobilityManager.getMobilityConfig().network_simulation || false,
             mobility_type: window.MobilityManager.getMobilityConfig().mobilityType || "random",

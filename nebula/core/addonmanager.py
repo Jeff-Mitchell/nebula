@@ -65,9 +65,10 @@ class AddondManager:
             gps = factory_gpsmodule("nebula", self._config, self._engine.addr, update_interval, verbose=False)
             self._addons.append(gps)
 
-        if self._config.participant["network_args"]["simulation"]:
-            refresh_conditions_interval = 5
-            network_simulation = factory_network_simulator("nebula", refresh_conditions_interval, "eth0", verbose=False)
+        if self._config.participant["network_args"]["network_simulation"]["enabled"]:
+            type_of_network = self._config.participant["network_args"]["network_simulation"]["type"]
+            network_config = self._config.participant["network_args"]["network_simulation"]["network_config"]
+            network_simulation = factory_network_simulator(type_of_network, network_config)
             self._addons.append(network_simulation)
 
         for add in self._addons:

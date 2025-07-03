@@ -10,7 +10,7 @@ class CNGNetworkSimulator(NetworkSimulator):
 
     def __init__(self, config: dict):
         self._node_interface = config["interface"]
-        self._verbose = config["verbose"]
+        self._verbose = True#config["verbose"]
         self._preset = config["preset"]
         self._network_conditions = factory_network_preset(self._preset)
         self._running = asyncio.Event()

@@ -108,7 +108,9 @@ class Scenario:
         sar_neighbor_policy,
         sar_training,
         sar_training_policy,
+        network_args,
         physical_ips=None,
+        
     ):
         """
         Initialize a Scenario instance.
@@ -233,7 +235,35 @@ class Scenario:
         self.sar_neighbor_policy = sar_neighbor_policy
         self.sar_training = sar_training
         self.sar_training_policy = sar_training_policy
+        self.network_args = network_args
         self.physical_ips = physical_ips
+    
+    def configure_network_simulation(self) -> dict:
+        network_parameters = {}
+        network_generation =  dict(self.network_args).pop("network_type")
+        enabled = dict(self.network_args).pop("enabled")
+        type = dict(self.network_args).pop("type")
+        addrs = ""
+        
+        for node in self.nodes:
+            ip = self.nodes[node]["ip"]
+            port = self.nodes[node]["port"]
+            addrs = addrs + " " + f"{ip}:{port}"
+        
+        network_configuration = {  
+            "interface": "eth0",
+            "verbose": False,
+            "preset": network_generation,
+            "federation": addrs
+        }
+        
+        network_parameters = {
+            "enabled": enabled,
+            "type": type,
+            "network_config": network_configuration
+        }
+        
+        return network_parameters        
 
     def attack_node_assign(
         self,
@@ -677,6 +707,7 @@ class ScenarioManagement:
                 participant_config["network_args"]["port"] = 8000
             else:
                 participant_config["network_args"]["port"] = int(node_config["port"])
+            participant_config["network_args"]["network_simulation"] = self.scenario.configure_network_simulation()
             participant_config["network_args"]["simulation"] = self.scenario.network_simulation
             participant_config["device_args"]["idx"] = node_config["id"]
             participant_config["device_args"]["start"] = node_config["start"]
