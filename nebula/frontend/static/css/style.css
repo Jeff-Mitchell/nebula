@@ -385,6 +385,24 @@ section {
     text-align: center;
 }
 
+
+#main-content {
+  opacity: 0;
+  transform: translateX(100px);
+  transition: opacity 0.8s ease-out, transform 0.8s ease-out;
+}
+
+#main-content.visible {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+#intro-video-container.fade-out {
+  opacity: 0;
+  transition: opacity 0.8s ease-out;
+}
+
+
 .container {
     max-width: 80%;
     width: 100%;
