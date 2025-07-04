@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <title>Intro Video</title>
+        <style>
+            body, html {
+            margin: 0; height: 100%; overflow: hidden;
+            background: black;
+            display: flex; justify-content: center; align-items: center;
+            }
+            video {
+            width: 100%; height: 100%; object-fit: cover;
+            }
+        </style>
+    </head>
+    <body>
+        <video id="intro-video" autoplay muted playsinline>
+            <source src="{{ url_for('static', path='videos/intro.mp4') }}" type="video/mp4">
+            Tu navegador no soporta video HTML5.
+        </video>
+
+        <div class="image-container" id="image-container">
+            <img id="captured-frame" src="" alt="Last Frame" />
+        </div>
+
+        <canvas id="canvas-frame" style="display: none"></canvas>
+
+        <script>
+            const video = document.getElementById('intro-video');
+            const canvas = document.getElementById('video-canvas');
+            const ctx = canvas.getContext('2d');
+            const imageContainer = document.getElementById('image-container');
+            const capturedImg = document.getElementById('captured-frame');
+
+            video.addEventListener('ended', () => {
+            // Ajustar canvas al tamaño del video
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+
+            // Capturar último frame del video
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+            // Obtener imagen base64 y asignarla
+            const dataURL = canvas.toDataURL();
+            capturedImg.src = dataURL;
+
+            // Mostrar imagen, ocultar video
+            video.style.display = 'none';
+            imageContainer.style.display = 'block';
+            });
+        </script>
+    </body>
+</html>
