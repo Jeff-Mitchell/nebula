@@ -26,6 +26,7 @@ const ArrivalsDeparturesManager = (function () {
 
         setupModalButtons();
         setupAdditionalParticipants();
+        setupDeparturesParticipants();
     }
 
     function withinModal(selector) {
@@ -56,9 +57,7 @@ const ArrivalsDeparturesManager = (function () {
 
     function setArrivalsDeparturesConfig(config) {
         if (!config || !modal) return;
-        //TODO json configuration schema
-        // Access federation nodes? or in controller?
-
+   
         // Set additional participants
         if (config.additionalParticipants) {
             if (!Array.isArray(config.additionalParticipants)) {
@@ -107,12 +106,49 @@ const ArrivalsDeparturesManager = (function () {
         return participantItem;
     }
 
+    function createDepartureItem(index) {
+        const participantItem = document.createElement("div");
+        participantItem.style.marginLeft = "20px";
+        participantItem.classList.add("departure-participant-item");
+
+        const heading = document.createElement("h5");
+        heading.textContent = `Round of departure - Rounds duration (participant ${index + 1})`;
+        heading.classList.add("step-title")
+
+        const input = document.createElement("input");
+        input.type = "number";
+        input.classList.add("form-control");
+        input.id = `roundDepartureParticipant${index}`;
+        input.placeholder = "round";
+        input.min = "1";
+        input.value = "";
+        input.style.display = "inline";
+        input.style.width = "20%";
+
+        const input2 = document.createElement("input");
+        input2.type = "number";
+        input2.classList.add("form-control");
+        input2.id = `durationDepartureParticipant${index}`;
+        input2.placeholder = "infinite";
+        input2.min = "1";
+        input2.value = "";
+        input2.style.display = "inline";
+        input2.style.width = "20%";
+        input2.style.marginLeft = "40px"
+
+        participantItem.appendChild(heading);
+        participantItem.appendChild(input);
+        participantItem.appendChild(input2);
+
+        return participantItem;
+    }
+
     function setupAdditionalParticipants() {
         withinModal("#additionalParticipants").addEventListener("change", function() {
             if(this.value > 0) {
                 withinModal("#deploymentRoundTitle").style.display = "block";
                 withinModal("#deploymentRoundDiv").style.display = "block";
-
+                
                 if (withinModal("#deploymentRoundSwitch").checked == false)
                 {
                     const container = withinModal("#additional-participants-items");
@@ -127,14 +163,13 @@ const ArrivalsDeparturesManager = (function () {
                 }
             } else {
                 withinModal("#deploymentRoundTitle").style.display = "none";
-                withinModal("#deploymentRoundDiv").style.display = "none";
+                withinModal("#deploymentRoundDiv").style.display = "none";       
             }
         });
 
         withinModal("#deploymentRoundSwitch").addEventListener("change", function() {
             if(this.checked) {
-                withinModal("#deploymentRound").style.display = "inline";
-                $(".additional-participant-item").remove();
+                $(".departure-participant-item").remove();
             } else {
                 withinModal("#deploymentRound").style.display = "none";
 
@@ -146,6 +181,31 @@ const ArrivalsDeparturesManager = (function () {
                 for (let i = 0; i < additionalParticipants.value; i++) {
                     const participantItem = createParticipantItem(i);
                     container.appendChild(participantItem);
+                }
+            }
+        });
+    }
+
+    function setupDeparturesParticipants(){
+        withinModal("#departuresDiv").style.display = "block";
+        withinModal("#departuresSwitch").addEventListener("change", function() {
+            if(!this.checked) {
+                console.log("Removing departure configuration")
+                withinModal("#departures-participants-items").innerHTML = "";
+            } else {
+                let additionalParticipants = withinModal("#additionalParticipants").value;
+                const topologyData = window.TopologyManager.getData()
+                let initialParticipants = topologyData.nodes.length
+
+                let numberAdditionalParticipants = parseInt(additionalParticipants, 10);
+                let numberInitiallParticipants = parseInt(initialParticipants, 10);
+
+                const container = withinModal("#departures-participants-items");
+                container.innerHTML = "";
+
+                for (let i = 0; i < numberInitiallParticipants + numberAdditionalParticipants; i++) {
+                    const departureItem = createDepartureItem(i);
+                    container.appendChild(departureItem);
                 }
             }
         });
@@ -179,7 +239,9 @@ const ArrivalsDeparturesManager = (function () {
 
         document.getElementById("activitySwitch").checked = rep_switch;
         withinModal("#additionalParticipants").value = "0";
+        withinModal("#departuresSwitch").checked = false;
         withinModal("#additional-participants-items").innerHTML = "";
+        withinModal("#departures-participants-items").innerHTML = "";
         withinModal("#deploymentRoundTitle").style.display = "none";
         withinModal("#deploymentRoundDiv").style.display = "none";
 
