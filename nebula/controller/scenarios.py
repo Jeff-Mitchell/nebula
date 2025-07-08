@@ -109,6 +109,7 @@ class Scenario:
         sar_training,
         sar_training_policy,
         network_args,
+        arrivals_departures_args,
         physical_ips=None,
         
     ):
@@ -236,8 +237,27 @@ class Scenario:
         self.sar_training = sar_training
         self.sar_training_policy = sar_training_policy
         self.network_args = network_args
+        self.arrivals_departures_args = arrivals_departures_args
         self.physical_ips = physical_ips
     
+    def configure_arrivals_departures(self, index) -> dict:
+        logging.info(f"[Alex]Node index {index}")
+        if not self.arrivals_departures_args["enabled"]:
+            logging.info(f"[Alex] entering")
+            return {"enabled": False}
+        
+        config = {"enabled": True}
+        departures: list = self.arrivals_departures_args["departures"]
+        index_departure_config: dict = departures[index]
+        if index_departure_config["round_start"] != "":
+            config["round_start"] = index_departure_config["round_start"]
+            config["duration"] = index_departure_config["duration"] if index_departure_config["duration"] != "" else None
+        else:
+            config = {"enabled": False}
+
+        logging.info(f"[Alex]Node {index} {config}")
+        return config
+
     def configure_network_simulation(self) -> dict:
         network_parameters = {}
         network_generation =  dict(self.network_args).pop("network_type")
@@ -687,7 +707,7 @@ class ScenarioManagement:
             self.scenario.nodes = self.scenario.mobility_assign(self.scenario.nodes, 0)
 
         # Save node settings
-        for node in self.scenario.nodes:
+        for index, node in enumerate(self.scenario.nodes):
             node_config = self.scenario.nodes[node]
             participant_file = os.path.join(self.config_dir, f"participant_{node_config['id']}.json")
             os.makedirs(os.path.dirname(participant_file), exist_ok=True)
@@ -708,6 +728,9 @@ class ScenarioManagement:
             else:
                 participant_config["network_args"]["port"] = int(node_config["port"])
             participant_config["network_args"]["network_simulation"] = self.scenario.configure_network_simulation()
+
+            participant_config["departure"] = self.scenario.configure_arrivals_departures(index)
+
             participant_config["network_args"]["simulation"] = self.scenario.network_simulation
             participant_config["device_args"]["idx"] = node_config["id"]
             participant_config["device_args"]["start"] = node_config["start"]
@@ -856,6 +879,7 @@ class ScenarioManagement:
         logging.info("Closing NEBULA nodes... Please wait")
         ScenarioManagement.stop_participants()
 
+    #TODO get additional_participants from arrivals-departures
     async def load_configurations_and_start_nodes(
         self, additional_participants=None, schema_additional_participants=None
     ):

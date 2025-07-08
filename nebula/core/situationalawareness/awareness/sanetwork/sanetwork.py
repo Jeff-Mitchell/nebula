@@ -46,8 +46,8 @@ class ScheduledIsolation():
         config, 
         on_isolation_trigger: Callable[[TopologyState], Awaitable[None]] = None
     ):
-        self._isolation_round_start = 5#None                      # config["scheduled_isolation"]["round_start"]
-        self._isolation_round_period = 2#None                     # config["scheduled_isolation"]["round_period"]
+        self._isolation_round_start = 5#None                      # config["departure"]["round_start"]
+        self._isolation_round_period = 2#None                     # config["departure"]["duration"]
         self._isolation_round_end = self._isolation_round_start + self._isolation_round_period if self._isolation_round_period else None
         self._on_isolation_trigger = on_isolation_trigger
         self._isolation = False
@@ -116,6 +116,7 @@ class SANetwork(SAMComponent):
         last_octet = int(ip_part.split(".")[-1])
         self._scheduled_isolation = None
         
+        #TODO verify scheduled isolation is defined getting the key from config dict
         if last_octet == 5:
             self._scheduled_isolation = (
             ScheduledIsolation(config, self.set_topology_state)

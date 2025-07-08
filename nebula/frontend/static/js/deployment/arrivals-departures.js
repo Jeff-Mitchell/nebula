@@ -1,6 +1,7 @@
 // Reputation System Module (Modal-Aware)
 const ArrivalsDeparturesManager = (function () {
-    let modal; 
+    let modal;
+    let departures_count = 0; 
 
     function initializeArrivalsDeparturesSystem(modalId = "activityModal") {
         modal = document.getElementById(modalId);
@@ -34,12 +35,21 @@ const ArrivalsDeparturesManager = (function () {
     }
 
     function getArrivalsDeparturesConfig() {
-        //TODO
-        // Obtain additionals participants and round of deployment
-        // Set scheduled isolation for participants selected
-        const config = {};
+        const _enabled = document.getElementById("activitySwitch").checked;
+        if (! _enabled){
+            const config = {
+                enabled: false
+            };
+            return config;
+        }
 
+        const config = {
+            enabled: _enabled,
+            additionalParticipants: [],
+            departures: []
+        };
         const additionalParticipantsCount = parseInt(withinModal("#additionalParticipants").value);
+        
         for (let i = 0; i < additionalParticipantsCount; i++) {
             if(document.getElementById("deploymentRoundSwitch").checked) {
                 config.additionalParticipants.push({
@@ -50,6 +60,36 @@ const ArrivalsDeparturesManager = (function () {
                     time_start: parseInt(withinModal(`#roundsAdditionalParticipant${i}`).value)
                 });
             }
+        }
+
+        let round_departure = 0;
+        let departure_duration = 0;
+        const topologyData = window.TopologyManager.getData()
+        let initialParticipants = topologyData.nodes.length 
+        let numberInitiallParticipants = parseInt(initialParticipants, 10);
+
+        let departures_count = additionalParticipantsCount + numberInitiallParticipants
+
+        for (let i = 0; i < departures_count; i++) {
+            if (!withinModal("#departuresSwitch").checked)
+                break;
+
+            if(withinModal(`#roundDepartureParticipant${i}`).value != ""){
+                round_departure = parseInt(withinModal(`#roundDepartureParticipant${i}`).value);
+            } else {
+                round_departure = withinModal(`#roundDepartureParticipant${i}`).value
+            }
+
+            if(withinModal(`#durationDepartureParticipant${i}`).value != ""){
+                departure_duration = parseInt(withinModal(`#durationDepartureParticipant${i}`).value);
+            } else {
+                departure_duration = withinModal(`#durationDepartureParticipant${i}`).value;
+            }
+
+            config.departures.push({
+                round_start: round_departure,
+                duration: departure_duration
+            });
         }
 
         return config;
@@ -87,7 +127,7 @@ const ArrivalsDeparturesManager = (function () {
         participantItem.classList.add("additional-participant-item");
 
         const heading = document.createElement("h5");
-        heading.textContent = `Round of deployment (participant ${index + 1})`;
+        heading.textContent = `Round of deployment (Additional participant ${index + 1})`;
         heading.classList.add("step-title")
 
         const input = document.createElement("input");
@@ -169,7 +209,9 @@ const ArrivalsDeparturesManager = (function () {
 
         withinModal("#deploymentRoundSwitch").addEventListener("change", function() {
             if(this.checked) {
-                $(".departure-participant-item").remove();
+                console.log("Removing additional participants")
+                withinModal("#deploymentRound").style.display = "block";
+                $(".additional-participant-item").remove();
             } else {
                 withinModal("#deploymentRound").style.display = "none";
 
@@ -199,6 +241,8 @@ const ArrivalsDeparturesManager = (function () {
 
                 let numberAdditionalParticipants = parseInt(additionalParticipants, 10);
                 let numberInitiallParticipants = parseInt(initialParticipants, 10);
+
+                departures_count = numberAdditionalParticipants + numberInitiallParticipants
 
                 const container = withinModal("#departures-participants-items");
                 container.innerHTML = "";
