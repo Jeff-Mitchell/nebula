@@ -123,6 +123,8 @@ const HelpContent = (function() {
             <li>MLP: Multi-layer perceptron</li>
             <li>CNN: Convolutional neural network</li>
             <li>RNN: Recurrent neural network</li>
+            <li>ProserProtoCNN: CNN with prototype learning for MNIST</li>
+            <li>ProserProtoResNet18: ResNet18 with prototype learning for CIFAR10</li>
         </ul>
     </div>`;
 

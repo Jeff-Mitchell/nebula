@@ -27,19 +27,7 @@ from nebula.core.datasets.emnist.emnist import EMNISTPartitionHandler
 from nebula.core.datasets.fashionmnist.fashionmnist import FashionMNISTPartitionHandler
 from nebula.core.datasets.mnist.mnist import MNISTPartitionHandler
 from nebula.core.datasets.nebuladataset import NebulaPartition
-from nebula.core.models.cifar10.cnn import CIFAR10ModelCNN
-from nebula.core.models.cifar10.cnnV2 import CIFAR10ModelCNN_V2
-from nebula.core.models.cifar10.cnnV3 import CIFAR10ModelCNN_V3
-from nebula.core.models.cifar10.fastermobilenet import FasterMobileNet
-from nebula.core.models.cifar10.resnet import CIFAR10ModelResNet
-from nebula.core.models.cifar10.simplemobilenet import SimpleMobileNetV1
-from nebula.core.models.cifar100.cnn import CIFAR100ModelCNN
-from nebula.core.models.emnist.cnn import EMNISTModelCNN
-from nebula.core.models.emnist.mlp import EMNISTModelMLP
-from nebula.core.models.fashionmnist.cnn import FashionMNISTModelCNN
-from nebula.core.models.fashionmnist.mlp import FashionMNISTModelMLP
-from nebula.core.models.mnist.cnn import MNISTModelCNN
-from nebula.core.models.mnist.mlp import MNISTModelMLP
+from nebula.core.models import MODELS
 from nebula.core.engine import Engine
 from nebula.core.training.lightning import Lightning
 from nebula.core.training.siamese import Siamese
@@ -97,54 +85,38 @@ async def main(config: Config):
     if dataset_name == "MNIST":
         batch_size = 32
         handler = MNISTPartitionHandler
-        if model_name == "MLP":
-            model = MNISTModelMLP()
-        elif model_name == "CNN":
-            model = MNISTModelCNN()
+        if dataset_name in MODELS and model_name in MODELS[dataset_name]:
+            model = MODELS[dataset_name][model_name]()
         else:
-            raise ValueError(f"Model {model} not supported for dataset {dataset_name}")
+            raise ValueError(f"Model {model_name} not supported for dataset {dataset_name}")
     elif dataset_name == "FashionMNIST":
         batch_size = 32
         handler = FashionMNISTPartitionHandler
-        if model_name == "MLP":
-            model = FashionMNISTModelMLP()
-        elif model_name == "CNN":
-            model = FashionMNISTModelCNN()
+        if dataset_name.lower() in MODELS and model_name in MODELS[dataset_name.lower()]:
+            model = MODELS[dataset_name.lower()][model_name]()
         else:
-            raise ValueError(f"Model {model} not supported for dataset {dataset_name}")
+            raise ValueError(f"Model {model_name} not supported for dataset {dataset_name}")
     elif dataset_name == "EMNIST":
         batch_size = 32
         handler = EMNISTPartitionHandler
-        if model_name == "MLP":
-            model = EMNISTModelMLP()
-        elif model_name == "CNN":
-            model = EMNISTModelCNN()
+        if dataset_name.lower() in MODELS and model_name in MODELS[dataset_name.lower()]:
+            model = MODELS[dataset_name.lower()][model_name]()
         else:
-            raise ValueError(f"Model {model} not supported for dataset {dataset_name}")
+            raise ValueError(f"Model {model_name} not supported for dataset {dataset_name}")
     elif dataset_name == "CIFAR10":
         batch_size = 32
         handler = CIFAR10PartitionHandler
-        if model_name == "ResNet9":
-            model = CIFAR10ModelResNet(classifier="resnet9")
-        elif model_name == "fastermobilenet":
-            model = FasterMobileNet()
-        elif model_name == "simplemobilenet":
-            model = SimpleMobileNetV1()
-        elif model_name == "CNN":
-            model = CIFAR10ModelCNN()
-        elif model_name == "CNNv2":
-            model = CIFAR10ModelCNN_V2()
-        elif model_name == "CNNv3":
-            model = CIFAR10ModelCNN_V3()
+        if dataset_name.lower() in MODELS and model_name in MODELS[dataset_name.lower()]:
+            model = MODELS[dataset_name.lower()][model_name]()
         else:
-            raise ValueError(f"Model {model} not supported for dataset {dataset_name}")
+            raise ValueError(f"Model {model_name} not supported for dataset {dataset_name}")
     elif dataset_name == "CIFAR100":
         batch_size = 128
         handler = CIFAR100PartitionHandler
-        if model_name == "CNN":
-            model = CIFAR100ModelCNN()
+        if dataset_name.lower() in MODELS and model_name in MODELS[dataset_name.lower()]:
+            model = MODELS[dataset_name.lower()][model_name]()
         else:
-            raise ValueError(f"Model {model} not supported for dataset {dataset_name}")
+            raise ValueError(f"Model {model_name} not supported for dataset {dataset_name}")
     else:
         raise ValueError(f"Dataset {dataset_name} not supported")
 

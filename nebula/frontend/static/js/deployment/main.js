@@ -246,9 +246,9 @@ const DeploymentManager = (function() {
             case 'mnist':
             case 'fashionmnist':
             case 'emnist':
-                return ['MLP', 'CNN'];
+                return ['MLP', 'CNN', 'ProserProtoCNN'];
             case 'cifar10':
-                return ['CNN', 'ResNet9', 'fastermobilenet', 'simplemobilenet', 'CNNv2', 'CNNv3'];
+                return ['CNN', 'ResNet9', 'fastermobilenet', 'simplemobilenet', 'CNNv2', 'CNNv3', 'ProserProtoResNet18'];
             case 'cifar100':
                 return ['CNN'];
             default:
