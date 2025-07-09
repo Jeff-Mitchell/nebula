@@ -57,16 +57,29 @@ const SaManager = (function() {
     }
 
     function getSaConfig() {
-        return {
-            with_sa: document.getElementById("situationalAwarenessSwitch").checked,
-            strict_topology: document.getElementById("strictTopologySwitch").checked,
-            sad_candidate_selector: document.getElementById("candidate-selector-select").value,
-            sad_model_handler: document.getElementById("model-handler-select").value,
-            sar_arbitration_policy: document.getElementById("arbitration-policy-select").value,
-            sar_neighbor_policy: document.getElementById("neighbor-policy-select").value,
-            sar_training: document.getElementById("situationalAwarenessTraining").checked,
-            sar_training_policy: document.getElementById("training-policy-select").value,
-        };
+        if (document.getElementById("situationalAwarenessSwitch").checked){
+            return {
+                with_sa: document.getElementById("situationalAwarenessSwitch").checked,
+                strict_topology: document.getElementById("strictTopologySwitch").checked,
+                sad_candidate_selector: document.getElementById("candidate-selector-select").value,
+                sad_model_handler: document.getElementById("model-handler-select").value,
+                sar_arbitration_policy: document.getElementById("arbitration-policy-select").value,
+                sar_neighbor_policy: document.getElementById("neighbor-policy-select").value,
+                sar_training: document.getElementById("situationalAwarenessTraining").checked,
+                sar_training_policy: document.getElementById("training-policy-select").value,
+            };
+        } else {
+            return {
+                with_sa: false,
+                strict_topology: false,
+                sad_candidate_selector: "std",
+                sad_model_handler: "",
+                sar_arbitration_policy: "sap",
+                sar_neighbor_policy: "",
+                sar_training: "",
+                sar_training_policy: "",
+            };
+        }  
     }
 
     function setSaConfig(config) {

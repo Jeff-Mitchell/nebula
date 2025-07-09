@@ -81,8 +81,8 @@ class NebulaServerProtocol(asyncio.DatagramProtocol):
         if beacon_addr == self.addr:
             return
 
-        latitude = float(beacon_data.get("LATITUDE", 0.0))
-        longitude = float(beacon_data.get("LONGITUDE", 0.0))
+        latitude = float(beacon_data.get("LATITUDE", 0.0)) if beacon_data.get("LATITUDE", 0.0) else None
+        longitude = float(beacon_data.get("LONGITUDE", 0.0)) if beacon_data.get("LONGITUDE", 0.0) else None
         await self.nebula_service.notify_beacon_received(beacon_addr, (latitude, longitude))
 
     def _is_nebula_message(self, msg):
@@ -186,8 +186,8 @@ class NebulaBeacon:
         self.nebula_service: NebulaConnectionService = nebula_service
         self.addr = addr
         self.interval = interval  # Send interval in seconds
-        self._latitude = None
-        self._longitude = None
+        self._latitude = ""
+        self._longitude = ""
         self._running = asyncio.Event()
 
     async def start(self):

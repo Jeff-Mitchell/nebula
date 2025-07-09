@@ -1,7 +1,8 @@
 // Reputation System Module (Modal-Aware)
 const ArrivalsDeparturesManager = (function () {
     let modal;
-    let departures_count = 0; 
+    let departures_count = 0;
+    let additionals = 0; 
 
     function initializeArrivalsDeparturesSystem(modalId = "activityModal") {
         modal = document.getElementById(modalId);
@@ -43,8 +44,6 @@ const ArrivalsDeparturesManager = (function () {
             return config;
         }
 
-
-
         let config = {
             enabled: true,
             additionalParticipants: [],
@@ -77,8 +76,7 @@ const ArrivalsDeparturesManager = (function () {
                 config["enabled"] = false;
                 break;
             }
-                
-
+            
             if(withinModal(`#roundDepartureParticipant${i}`).value != ""){
                 round_departure = parseInt(withinModal(`#roundDepartureParticipant${i}`).value);
             } else {

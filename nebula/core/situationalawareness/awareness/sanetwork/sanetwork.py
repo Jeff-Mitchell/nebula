@@ -46,8 +46,8 @@ class ScheduledIsolation():
         config, 
         on_isolation_trigger: Callable[[TopologyState], Awaitable[None]] = None
     ):
-        self._isolation_round_start = 5#None                      # config["departure"]["round_start"]
-        self._isolation_round_period = 2#None                     # config["departure"]["duration"]
+        self._isolation_round_start = config["scheduled_isolation"]["round_start"]
+        self._isolation_round_period = config["scheduled_isolation"]["duration"]
         self._isolation_round_end = self._isolation_round_start + self._isolation_round_period if self._isolation_round_period else None
         self._on_isolation_trigger = on_isolation_trigger
         self._isolation = False
@@ -66,7 +66,7 @@ class ScheduledIsolation():
         
     async def _check_isolation(self, rse: RoundStartEvent):
         current_round, *_ = await rse.get_event_data()
-        if current_round >= self._isolation_round_start and not self._isolation:
+        if current_round >= self._isolation_round_start and (self._isolation_round_end and current_round < self._isolation_round_end) and not self._isolation:
             logging.info("Isolation condition is ACTIVE")
             await self._on_isolation_trigger(TopologyState.ISOLATED)
         elif self._isolation_round_end and current_round > self._isolation_round_end:
@@ -112,22 +112,9 @@ class SANetwork(SAMComponent):
         self._cm = CommunicationsManager.get_instance()
         self._sa_network_agent = SANetworkAgent(self)
         
-        ip_part = self._addr.split(":")[0]
-        last_octet = int(ip_part.split(".")[-1])
-        self._scheduled_isolation = None
-        
-        #TODO verify scheduled isolation is defined getting the key from config dict
-        if last_octet == 5:
-            self._scheduled_isolation = (
-            ScheduledIsolation(config, self.set_topology_state)
-        )
-        
-        if  config["departure"]
-        # self._scheduled_isolation = (
-        #     ScheduledIsolation(config, self.set_topology_state)
-        #     if config.get("scheduled_isolation", False)
-        #     else None
-        # )
+        self._scheduled_isolation = None   
+        if config["scheduled_isolation"]["enabled"]:
+            self._scheduled_isolation = ScheduledIsolation(config, self.set_topology_state)
 
         # Track verification tasks for proper cleanup during shutdown
         self._verification_tasks = set()

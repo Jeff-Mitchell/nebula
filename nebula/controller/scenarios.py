@@ -582,11 +582,13 @@ class Scenario:
         return self.with_sa or self.arrivals_departures_args["enabled"] or self.additional_participants or self.mobility
 
     def configure_situational_awareness(self, index) -> dict:
-        scheduled_isolation = self.configure_arrivals_departures()
+        scheduled_isolation = self.configure_arrivals_departures(index)
+        topology_management = self.sar_neighbor_policy if (self.sar_neighbor_policy != "") else self.topology
+        
         situational_awareness_config = {
             "strict_topology": self.strict_topology,
             "sa_discovery": {
-                "candidate_selector": self.sad_candidate_selector,
+                "candidate_selector": topology_management,
                 "model_handler": self.sad_model_handler,
                 "verbose": True,
             },
@@ -598,7 +600,7 @@ class Scenario:
                     "sa_training": self.sar_training
                 },
                 "sa_network": {
-                    "neighbor_policy": self.sar_neighbor_policy,
+                    "neighbor_policy": topology_management,
                     "scheduled_isolation" : scheduled_isolation,
                     "verbose": True
                 },
