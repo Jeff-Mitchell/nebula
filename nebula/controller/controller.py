@@ -324,7 +324,7 @@ async def run_scenario(
 
     # Run the actual scenario
     try:
-        if scenarioManagement.scenario.mobility:
+        if scenarioManagement.additional_nodes_on_scenario():
             additional_participants = scenario_data["additional_participants"]
             schema_additional_participants = scenario_data["schema_additional_participants"]
             await scenarioManagement.load_configurations_and_start_nodes(

@@ -242,6 +242,8 @@ class Scenario:
     
     def configure_arrivals_departures(self, index) -> dict:
         logging.info(f"[Alex]Node index {index}")
+        aux = self.arrivals_departures_args["enabled"]
+        logging.info(f"enabled: {aux}")
         if not self.arrivals_departures_args["enabled"]:
             logging.info(f"[Alex] entering")
             return {"enabled": False}
@@ -576,6 +578,38 @@ class Scenario:
             nodes[node]["mobility"] = node_mob
         return nodes
 
+    def situational_awareness_needed(self):
+        return self.with_sa or self.arrivals_departures_args["enabled"] or self.additional_participants or self.mobility
+
+    def configure_situational_awareness(self, index) -> dict:
+        scheduled_isolation = self.configure_arrivals_departures()
+        situational_awareness_config = {
+            "strict_topology": self.strict_topology,
+            "sa_discovery": {
+                "candidate_selector": self.sad_candidate_selector,
+                "model_handler": self.sad_model_handler,
+                "verbose": True,
+            },
+            "sa_reasoner": {
+                "arbitration_policy": self.sar_arbitration_policy,
+                "verbose": True,
+                "sar_components": {
+                    "sa_network": True, 
+                    "sa_training": self.sar_training
+                },
+                "sa_network": {
+                    "neighbor_policy": self.sar_neighbor_policy,
+                    "scheduled_isolation" : scheduled_isolation,
+                    "verbose": True
+                },
+                "sa_training": {
+                    "training_policy": self.sar_training_policy, 
+                    "verbose": True
+                },
+            },
+        }
+        return situational_awareness_config
+
     @classmethod
     def from_dict(cls, data):
         """
@@ -766,22 +800,10 @@ class ScenarioManagement:
             participant_config["mobility_args"]["round_frequency"] = self.scenario.round_frequency
             participant_config["reporter_args"]["report_status_data_queue"] = self.scenario.report_status_data_queue
             participant_config["mobility_args"]["topology_type"] = self.scenario.topology
-            if self.scenario.with_sa:
-                participant_config["situational_awareness"] = {
-                    "strict_topology": self.scenario.strict_topology,
-                    "sa_discovery": {
-                        "candidate_selector": self.scenario.sad_candidate_selector,
-                        "model_handler": self.scenario.sad_model_handler,
-                        "verbose": True,
-                    },
-                    "sa_reasoner": {
-                        "arbitration_policy": self.scenario.sar_arbitration_policy,
-                        "verbose": True,
-                        "sar_components": {"sa_network": True, "sa_training": self.scenario.sar_training},
-                        "sa_network": {"neighbor_policy": self.scenario.sar_neighbor_policy, "verbose": True},
-                        "sa_training": {"training_policy": self.scenario.sar_training_policy, "verbose": True},
-                    },
-                }
+
+            if self.scenario.situational_awareness_needed():
+                participant_config["situational_awareness"] = self.scenario.configure_situational_awareness(index)
+
             participant_config["trustworthiness"] = self.scenario.with_trustworthiness
             if self.scenario.with_trustworthiness:
                 participant_config["trust_args"] = {
@@ -814,6 +836,9 @@ class ScenarioManagement:
 
             with open(participant_file, "w") as f:
                 json.dump(participant_config, f, sort_keys=False, indent=2)
+
+    def additional_nodes_on_scenario(self):
+        return len(self.scenario.additional_participants)
 
     @staticmethod
     def stop_participants(scenario_name=None):
@@ -925,9 +950,8 @@ class ScenarioManagement:
         # Update participants configuration
         is_start_node = False
         config_participants = []
-        # ap = len(additional_participants) if additional_participants else 0
         additional_nodes = len(additional_participants) if additional_participants else 0
-        logging.info(f"######## nodes: {self.n_nodes} + additionals: {additional_nodes} ######")
+        logging.info(f"Initial nodes: {self.n_nodes} -- Additionals nodes: {additional_nodes}")
 
         # Sort participant files by index to ensure correct order
         participant_files.sort(key=lambda x: int(x.split("_")[-1].split(".")[0]))

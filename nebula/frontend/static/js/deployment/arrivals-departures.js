@@ -35,16 +35,18 @@ const ArrivalsDeparturesManager = (function () {
     }
 
     function getArrivalsDeparturesConfig() {
-        const _enabled = document.getElementById("activitySwitch").checked;
-        if (! _enabled){
+        const section_enabled = document.getElementById("activitySwitch").checked;
+        if (! section_enabled){
             const config = {
                 enabled: false
             };
             return config;
         }
 
-        const config = {
-            enabled: _enabled,
+
+
+        let config = {
+            enabled: true,
             additionalParticipants: [],
             departures: []
         };
@@ -71,8 +73,11 @@ const ArrivalsDeparturesManager = (function () {
         let departures_count = additionalParticipantsCount + numberInitiallParticipants
 
         for (let i = 0; i < departures_count; i++) {
-            if (!withinModal("#departuresSwitch").checked)
+            if (!withinModal("#departuresSwitch").checked){
+                config["enabled"] = false;
                 break;
+            }
+                
 
             if(withinModal(`#roundDepartureParticipant${i}`).value != ""){
                 round_departure = parseInt(withinModal(`#roundDepartureParticipant${i}`).value);
@@ -288,8 +293,6 @@ const ArrivalsDeparturesManager = (function () {
         withinModal("#departures-participants-items").innerHTML = "";
         withinModal("#deploymentRoundTitle").style.display = "none";
         withinModal("#deploymentRoundDiv").style.display = "none";
-
-        //TODO same for departures
         
         if (!rep_switch){
             const switchInput = document.getElementById("activitySwitch");

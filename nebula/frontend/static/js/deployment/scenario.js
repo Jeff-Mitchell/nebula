@@ -82,7 +82,7 @@ const ScenarioManager = (function() {
                 initial_reputation: window.ReputationManager.getReputationConfig().initialReputation || 0.2,
                 weighting_factor: window.ReputationManager.getReputationConfig().weightingFactor || "dynamic"
             },
-            
+
             network_args: {
                 enabled: window.NetworkManager.getNetworkConfig().enabled || false,
                 type: window.NetworkManager.getNetworkConfig().type || "nebula",
@@ -137,7 +137,9 @@ const ScenarioManager = (function() {
             federation_complexity: document.getElementById("sustainability-notion-3").value,
             network_subnet: "172.20.0.0/16",
             network_gateway: "172.20.0.1",
-            additional_participants: window.MobilityManager.getMobilityConfig().additionalParticipants || [],
+            //additional_participants: window.MobilityManager.getMobilityConfig().additionalParticipants || [],
+            //TODO create additionals correctly
+            additional_participants: window.ArrivalsDeparturesManager.getArrivalsDeparturesConfig().additionalParticipants || [],
             schema_additional_participants: document.getElementById("schemaAdditionalParticipantsSelect").value || "random",
             accelerator: "cpu",
             gpu_id: [],

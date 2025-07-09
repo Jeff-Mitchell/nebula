@@ -122,6 +122,7 @@ class SANetwork(SAMComponent):
             ScheduledIsolation(config, self.set_topology_state)
         )
         
+        if  config["departure"]
         # self._scheduled_isolation = (
         #     ScheduledIsolation(config, self.set_topology_state)
         #     if config.get("scheduled_isolation", False)
@@ -173,6 +174,7 @@ class SANetwork(SAMComponent):
         4. Subscribe to node discovery and neighbor update events.
         5. Register this agent with the situational awareness network agent.
         """
+
         if self._scheduled_isolation:
             logging.info("Preparing scheduled isolation...")
             await self._scheduled_isolation.init()
