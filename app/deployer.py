@@ -1044,9 +1044,13 @@ class Deployer:
         host_sql_path = os.path.join(self.root_path, "nebula/database/init-configs.sql")
         container_sql_path = "/docker-entrypoint-initdb.d/init-configs.sql"
 
+        db_data_path = os.path.join(self.databases_dir, "postgres-data")
+        os.makedirs(db_data_path, exist_ok=True)
+
         host_config = client.api.create_host_config(
             binds=[
                 f"{host_sql_path}:{container_sql_path}",
+                f"{db_data_path}:/var/lib/postgresql/data",
             ],
             extra_hosts={"host.docker.internal": "host-gateway"},
             port_bindings={5432: host_port},
