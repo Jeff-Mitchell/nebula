@@ -68,16 +68,28 @@ class NebulaPartitionHandler(Dataset, ABC):
             )
             self.length = 0
             return
-        # Keep the file open during the life of the object
         self.file = h5py.File(self.file_path, "r")
         prefix = "test" if self.prefix == "local_test" else self.prefix
-        self.data = self.file[f"{prefix}_data"]
-        self.targets = self.file[f"{prefix}_targets"]
-        self.num_classes = self.data.attrs.get("num_classes", 0)
-        self.length = len(self.data)
-        logging_training.info(
-            f"[NebulaPartitionHandler] [{self.prefix}] Loaded {self.length} samples from {self.file_path} and {self.num_classes} classes."
-        )
+        data_ds = self.file[f"{prefix}_data"]
+        targets_ds = self.file[f"{prefix}_targets"]
+
+        typ = data_ds.attrs.get("__type__", None)
+        if typ in ("pickle", "pickle_bytes"):
+            logging_training.info(f"[NebulaPartitionHandler] Loading pickled data for {self.prefix} (dataset will be fully loaded into memory)")
+            self.data = pickle.loads(data_ds[()].tobytes() if typ == "pickle" else data_ds[()])
+            self.targets = pickle.loads(targets_ds[()].tobytes() if typ == "pickle" else targets_ds[()])
+            self.length = len(self.data)
+            self.num_classes = data_ds.attrs.get("num_classes", 0)
+            logging_training.info(f"[NebulaPartitionHandler] [{self.prefix}] Loaded {self.length} samples from {self.file_path} (IN MEMORY, PICKLE)")
+            self.close()  # Ya no necesitamos el archivo abierto
+            self.file = None
+        else:
+            logging_training.info(f"[NebulaPartitionHandler] Using HDF5 array for {self.prefix} (data will be accessed ON DEMAND from disk)")
+            self.data = data_ds
+            self.targets = targets_ds
+            self.length = len(self.data)
+            self.num_classes = self.data.attrs.get("num_classes", 0)
+            logging_training.info(f"[NebulaPartitionHandler] [{self.prefix}] Ready to access {self.length} samples from {self.file_path} (ON DEMAND, HDF5)")
 
     def close(self):
         if self.file is not None:
@@ -92,8 +104,14 @@ class NebulaPartitionHandler(Dataset, ABC):
         return self.length
 
     def __getitem__(self, idx):
-        data = self.data[idx]
-        target = self.targets[idx] if self.targets is not None else None
+        if isinstance(self.data, np.ndarray) or isinstance(self.data, list):
+            logging_training.debug(f"[NebulaPartitionHandler] __getitem__ (IN MEMORY): idx={idx}")
+            data = self.data[idx]
+            target = self.targets[idx] if self.targets is not None else None
+        else:
+            logging_training.debug(f"[NebulaPartitionHandler] __getitem__ (ON DEMAND): idx={idx}")
+            data = self.data[idx]
+            target = self.targets[idx] if self.targets is not None else None
         return data, target
 
     def set_data(self, data, targets, data_opt=None, targets_opt=None):
