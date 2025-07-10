@@ -66,15 +66,15 @@ class NebulaPartitionHandler(Dataset, ABC):
             logging_training.info(
                 f"[NebulaPartitionHandler] No data loaded for {self.prefix} partition. Empty dataset."
             )
+            self.length = 0
             return
-        with h5py.File(self.file_path, "r") as f:
-            prefix = (
-                "test" if self.prefix == "local_test" else self.prefix
-            )  # Local test uses the test prefix (same data but different split)
-            self.data = self.load_partition(f, f"{prefix}_data")
-            self.targets = np.array(f[f"{prefix}_targets"])
-            self.num_classes = f[f"{prefix}_data"].attrs.get("num_classes", 0)
-            self.length = len(self.data)
+        # Keep the file open during the life of the object
+        self.file = h5py.File(self.file_path, "r")
+        prefix = "test" if self.prefix == "local_test" else self.prefix
+        self.data = self.file[f"{prefix}_data"]
+        self.targets = self.file[f"{prefix}_targets"]
+        self.num_classes = self.data.attrs.get("num_classes", 0)
+        self.length = len(self.data)
         logging_training.info(
             f"[NebulaPartitionHandler] [{self.prefix}] Loaded {self.length} samples from {self.file_path} and {self.num_classes} classes."
         )
@@ -93,8 +93,7 @@ class NebulaPartitionHandler(Dataset, ABC):
 
     def __getitem__(self, idx):
         data = self.data[idx]
-        # Persist the modified targets (if any) during the training process
-        target = self.targets[idx] if hasattr(self, "targets") and self.targets is not None else None
+        target = self.targets[idx] if self.targets is not None else None
         return data, target
 
     def set_data(self, data, targets, data_opt=None, targets_opt=None):
