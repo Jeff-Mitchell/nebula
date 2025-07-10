@@ -17,7 +17,7 @@ from watchdog.observers import Observer
 from nebula.addons.env import check_environment
 from nebula.controller.controller import TermEscapeCodeFormatter
 from nebula.controller.scenarios import ScenarioManagement
-from nebula.utils import DockerUtils, SocketUtils
+from nebula.utils import DockerUtils, FileUtils, SocketUtils
 
 
 class NebulaEventHandler(PatternMatchingEventHandler):
@@ -289,17 +289,17 @@ class NebulaEventHandler(PatternMatchingEventHandler):
     def kill_script_processes(self, pids_file):
         """
         Forcefully terminates processes listed in a given PID file, including their child processes.
-    
+
         Args:
             pids_file (str): Path to the file containing PIDs, one per line.
-    
+
         Behavior:
             - Reads the PIDs from the file.
             - For each PID, checks if the process exists.
             - If it exists, kills all child processes recursively before killing the main process.
             - Handles and logs exceptions such as missing processes or invalid PID entries.
             - Logs warnings and errors appropriately.
-    
+
         Typical use case:
             Used to clean up running processes related to a scenario or script that has been deleted or stopped.
         """
@@ -344,7 +344,7 @@ def run_observer():
     """
     Starts a watchdog observer to monitor the configuration directory for changes.
 
-    This function is typically used to execute additional scripts or trigger events 
+    This function is typically used to execute additional scripts or trigger events
     during the execution of a federated learning session by monitoring file system changes.
 
     Main functionalities:
@@ -357,7 +357,7 @@ def run_observer():
         - Trigger specific actions during a federation lifecycle.
 
     Note:
-        The observer runs in a blocking mode and will keep the process alive 
+        The observer runs in a blocking mode and will keep the process alive
         until manually stopped or interrupted.
     """
     # Watchdog for running additional scripts in the host machine (i.e. during the execution of a federation)
@@ -373,8 +373,8 @@ class Deployer:
     """
     Handles the configuration and initialization of deployment parameters for the NEBULA system.
 
-    This class reads and stores various deployment-related settings such as port assignments, 
-    environment paths, logging configuration, and system mode (production, development, or simulation).
+    This class reads and stores various deployment-related settings such as port assignments,
+    environment paths, logging configuration, and system mode (production or development).
 
     Main functionalities:
         - Parses and validates input arguments for deployment.
@@ -384,7 +384,7 @@ class Deployer:
 
     Typical use cases:
         - Used to deploy the NEBULA system components with the correct configuration.
-        - Enables deployment in different environments (e.g., local simulation, production, development).
+        - Enables deployment in different environments (e.g., production, development).
 
     Attributes:
         - controller_port (int): Port for the main controller service.
@@ -395,9 +395,7 @@ class Deployer:
         - statistics_port (int): Port for the statistics service.
         - production (bool): Flag indicating if the system is in production mode.
         - dev (bool): Flag indicating if the system is in development mode.
-        - advanced_analytics (bool): Enables advanced analytics modules.
         - databases_dir (str): Path to the database directory.
-        - simulation (str): Simulation scenario path.
         - config_dir (str): Path to the configuration directory.
         - log_dir (str): Path to the logs directory.
         - env_path (str): Path to the Python environment.
@@ -409,18 +407,145 @@ class Deployer:
     Note:
         This class does not launch any services directly; it only prepares and stores configuration.
     """
+
+    DEPLOYER_PID_FILE = os.path.join(os.path.dirname(__file__), "deployer.pid")
+    METADATA_FILE = os.path.join(os.path.dirname(__file__), "deployer.metadata")
+
+    @staticmethod
+    def _read_metadata():
+        try:
+            with open(Deployer.METADATA_FILE, "r") as f:
+                data = json.load(f)
+                # Backward compatibility: if it's a list, treat as containers only
+                if isinstance(data, list):
+                    return {"containers": data, "networks": []}
+                return data
+        except (FileNotFoundError, json.JSONDecodeError):
+            return {"containers": [], "networks": []}
+
+    @staticmethod
+    def _write_metadata(metadata):
+        with open(Deployer.METADATA_FILE, "w") as f:
+            json.dump(metadata, f, indent=2)
+
+    @staticmethod
+    def _add_container_to_metadata(container_name):
+        metadata = Deployer._read_metadata()
+        if container_name not in metadata["containers"]:
+            metadata["containers"].append(container_name)
+            Deployer._write_metadata(metadata)
+
+    @staticmethod
+    def _add_network_to_metadata(network_name):
+        metadata = Deployer._read_metadata()
+        if network_name not in metadata["networks"]:
+            metadata["networks"].append(network_name)
+            Deployer._write_metadata(metadata)
+
+    @staticmethod
+    def _remove_all_containers_from_metadata():
+        metadata = Deployer._read_metadata()
+        containers = metadata["containers"]
+        if containers:
+            try:
+                import docker
+
+                client = docker.from_env()
+                for name in containers:
+                    try:
+                        container = client.containers.get(name)
+                        container.remove(force=True)
+                        logging.info(f"Container {name} removed via metadata.")
+                    except Exception as e:
+                        logging.warning(f"Could not remove container {name}: {e}")
+            except Exception as e:
+                logging.warning(f"Docker error during metadata removal: {e}")
+        metadata["containers"] = []
+        Deployer._write_metadata(metadata)
+
+    @staticmethod
+    def _remove_all_networks_from_metadata():
+        metadata = Deployer._read_metadata()
+        networks = metadata["networks"]
+        if networks:
+            try:
+                import docker
+
+                client = docker.from_env()
+                for name in networks:
+                    try:
+                        network = client.networks.get(name)
+                        network.remove()
+                        logging.info(f"Network {name} removed via metadata.")
+                    except Exception as e:
+                        logging.warning(f"Could not remove network {name}: {e}")
+            except Exception as e:
+                logging.warning(f"Docker error during network metadata removal: {e}")
+        metadata["networks"] = []
+        Deployer._write_metadata(metadata)
+
     def __init__(self, args):
-        self.controller_port = int(args.controllerport) if hasattr(args, "controllerport") else 5050
-        self.waf_port = int(args.wafport) if hasattr(args, "wafport") else 6000
-        self.frontend_port = int(args.webport) if hasattr(args, "webport") else 6060
-        self.grafana_port = int(args.grafanaport) if hasattr(args, "grafanaport") else 6040
-        self.loki_port = int(args.lokiport) if hasattr(args, "lokiport") else 6010
-        self.statistics_port = int(args.statsport) if hasattr(args, "statsport") else 8080
-        self.production = args.production if hasattr(args, "production") else False
-        self.dev = args.developement if hasattr(args, "developement") else False
-        self.advanced_analytics = args.advanced_analytics if hasattr(args, "advanced_analytics") else False
+        """
+        Initializes the Deployer with robust handling of environment and prefix logic using tags only.
+        - Only sets NEBULA_ENV_TAG, NEBULA_PREFIX_TAG, and NEBULA_USER_TAG in the .env file.
+        - All logic and naming use tag helpers and tag variables.
+        - Defaults for prefix and production are consistent with main.py.
+        """
+        # Prevent running NEBULA twice by checking metadata file
+        if os.path.exists(self.METADATA_FILE):
+            try:
+                with open(self.METADATA_FILE) as f:
+                    data = json.load(f)
+                    if (isinstance(data, dict) and (data.get("containers") or data.get("networks"))) or (
+                        isinstance(data, list) and data
+                    ):
+                        warning_msg = (
+                            "\n\033[91mERROR: NEBULA appears to be already running or was not cleanly shut down. "
+                            "Please stop the existing instance or remove the metadata file before starting a new one.\033[0m\n"
+                            "You can use 'docker ps -a --filter name={deployment_prefix}' to see the containers."
+                        )
+                        logging.exception(warning_msg)
+                        sys.exit(1)
+            except Exception:
+                warning_msg = (
+                    "\n\033[91mERROR: NEBULA metadata file is corrupt or unreadable. "
+                    "Please remove or fix the file before starting a new instance.\033[0m\n"
+                )
+                logging.exception(warning_msg)
+                sys.exit(1)
+
+        # --- Tag logic: CLI args > environment > fallback ---
+        arg_production = getattr(args, "production", False)
+        arg_prefix = getattr(args, "prefix", "dev")
+        arg_user = os.environ.get("USER", "unknown")
+
+        env_tag = os.environ.get("NEBULA_ENV_TAG")
+        prefix_tag = os.environ.get("NEBULA_PREFIX_TAG")
+        user_tag = os.environ.get("NEBULA_USER_TAG", arg_user)
+
+        self.env_tag = ("prod" if arg_production else "dev") if env_tag is None else env_tag
+        self.prefix_tag = arg_prefix if arg_prefix else (prefix_tag if prefix_tag else "dev")
+        self.user_tag = user_tag
+
+        FileUtils.update_env_file(getattr(args, "env", ".env"), "NEBULA_ENV_TAG", self.env_tag)
+        FileUtils.update_env_file(getattr(args, "env", ".env"), "NEBULA_PREFIX_TAG", self.prefix_tag)
+        FileUtils.update_env_file(getattr(args, "env", ".env"), "NEBULA_USER_TAG", self.user_tag)
+
+        self.production = self.env_tag == "prod"
+        self.prefix = self.prefix_tag
+
+        deployment_prefix = f"{self.env_tag}_{self.prefix_tag}_{self.user_tag}_"
+        if DockerUtils.check_docker_by_prefix(deployment_prefix):
+            warning_msg = (
+                f"\n\033[91mERROR: Found existing Docker containers with prefix '{deployment_prefix}'. "
+                f"NEBULA cannot be deployed with the same prefix. "
+                f"Please stop/remove existing containers before starting a new deployment.\033[0m\n"
+                f"You can use 'docker ps -a --filter name={deployment_prefix}' to see the containers."
+            )
+            logging.exception(warning_msg)
+            sys.exit(1)
+
         self.databases_dir = args.databases if hasattr(args, "databases") else "/nebula/app/databases"
-        self.simulation = args.simulation
         self.config_dir = args.config
         self.log_dir = args.logs
         self.env_path = args.env
@@ -430,15 +555,61 @@ class Deployer:
             else os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
         )
         self.host_platform = "windows" if sys.platform == "win32" else "unix"
-        self.controller_host = f"{os.environ['USER']}_nebula-controller"
         self.gpu_available = False
+
+        self.controller_host = self.get_container_name("nebula-controller")
+        self.controller_port = int(args.controllerport) if hasattr(args, "controllerport") else 5050
+        self.waf_port = int(args.wafport) if hasattr(args, "wafport") else 6000
+        self.frontend_port = int(args.webport) if hasattr(args, "webport") else 6060
+        self.grafana_port = int(args.grafanaport) if hasattr(args, "grafanaport") else 6040
+        self.loki_port = int(args.lokiport) if hasattr(args, "lokiport") else 6010
+        self.statistics_port = int(args.statsport) if hasattr(args, "statsport") else 8080
+
         self.configure_logger()
+
+    def get_container_name(self, role_tag: str) -> str:
+        """
+        Generate a standardized container name using tags.
+        Args:
+            role_tag (str): The component role (e.g., 'nebula-controller').
+        Returns:
+            str: The composed container name.
+        """
+        return f"{self.env_tag}_{self.prefix_tag}_{self.user_tag}_{role_tag}"
+
+    def get_network_name(self, suffix: str) -> str:
+        """
+        Generate a standardized network name using tags.
+        Args:
+            suffix (str): Suffix for the network (default: 'net-base').
+        Returns:
+            str: The composed network name.
+        """
+        return f"{self.env_tag}_{self.prefix_tag}_{self.user_tag}_{suffix}"
+
+    @property
+    def deployment_prefix(self):
+        """
+        Returns the deployment prefix for the current deployment.
+
+        This property is used to prefix the names of the containers and networks
+        in the deployment.
+
+        Returns:
+            str: The deployment prefix, either "production" or "dev".
+
+        Typical use cases:
+            - Prefixing container and network names in the deployment.
+            - Ensuring consistent naming conventions across different environments.
+
+        """
+        return self.prefix
 
     def configure_logger(self):
         """
         Configures the logging system for the deployment controller.
 
-        This method sets up both console and file logging with a consistent format and appropriate log levels. 
+        This method sets up both console and file logging with a consistent format and appropriate log levels.
         It also ensures that Uvicorn loggers are properly configured to avoid duplicate log outputs.
 
         Main functionalities:
@@ -452,7 +623,7 @@ class Deployer:
             - Ensures clean and consistent logging output during deployment.
 
         Note:
-            This method does not set up file logging directly, but prepares the base configuration 
+            This method does not set up file logging directly, but prepares the base configuration
             and Uvicorn logger behavior for further logging use.
         """
         log_console_format = "[%(asctime)s] [%(name)s] [%(levelname)s] %(message)s"
@@ -475,7 +646,7 @@ class Deployer:
         """
         Ensures that the specified directory exists and is writable.
 
-        This method attempts to create the directory if it does not exist and verifies 
+        This method attempts to create the directory if it does not exist and verifies
         write access by writing and deleting a temporary metadata file.
 
         Args:
@@ -514,15 +685,17 @@ class Deployer:
 
         except Exception as e:
             logging.exception(f"Failed to create/access directory {directory_path}: {str(e)}")
-            logging.exception("Please check directory permissions or choose a different location using --database option")
+            logging.exception(
+                "Please check directory permissions or choose a different location using --database option"
+            )
             raise SystemExit(1) from e
 
     def start(self):
         """
         Starts the NEBULA deployment process and all associated services.
 
-        This method initializes the NEBULA platform by setting up the environment, 
-        checking port availability, starting key services (controller, frontend, WAF), 
+        This method initializes the NEBULA platform by setting up the environment,
+        checking port availability, starting key services (controller, frontend, WAF),
         and launching a filesystem observer to react to configuration changes.
 
         Main functionalities:
@@ -535,14 +708,14 @@ class Deployer:
             - Handles system signals for clean shutdown.
 
         Typical use cases:
-            - Used to launch NEBULA in production, development, or simulation environments.
+            - Used to launch NEBULA in production or development environments.
             - Central entry point for managing NEBULA components during deployment.
 
         Note:
-            The method blocks indefinitely until manually interrupted, 
+            The method blocks indefinitely until manually interrupted,
             and ensures graceful shutdown upon receiving SIGINT or SIGTERM.
         """
-        banner = """
+        banner = f"""
                     ███╗   ██╗███████╗██████╗ ██╗   ██╗██╗      █████╗
                     ████╗  ██║██╔════╝██╔══██╗██║   ██║██║     ██╔══██╗
                     ██╔██╗ ██║█████╗  ██████╔╝██║   ██║██║     ███████║
@@ -558,6 +731,8 @@ class Deployer:
                        • Fernando Torres Vega
 
                       https://nebula-dfl.com / https://nebula-dfl.eu
+
+                      [{"Production" if self.production else "Development"} mode] [{self.deployment_prefix} prefix]
                 """
         print("\x1b[0;36m" + banner + "\x1b[0m")
 
@@ -589,7 +764,8 @@ class Deployer:
         logging.info(f"NEBULA Databases created in {self.databases_dir}")
         self.run_frontend()
         logging.info(f"NEBULA Frontend is running at http://localhost:{self.frontend_port}")
-        if self.production:
+        if self.production and self.prefix == "production":
+            logging.info("Deploying NEBULA WAF in production mode")
             self.run_waf()
             logging.info("NEBULA WAF is running")
 
@@ -616,8 +792,8 @@ class Deployer:
         """
         Handles system termination signals to ensure a clean shutdown.
 
-        This method is triggered when the application receives SIGTERM or SIGINT signals 
-        (e.g., via Ctrl+C or `kill`). It logs the event, performs cleanup actions, and 
+        This method is triggered when the application receives SIGTERM or SIGINT signals
+        (e.g., via Ctrl+C or `kill`). It logs the event, performs cleanup actions, and
         terminates the process gracefully.
 
         Args:
@@ -639,19 +815,19 @@ class Deployer:
 
     def run_frontend(self):
         """
-        Runs the Nebula controller within a Docker container, ensuring the required Docker environment is available.
+        Runs the NEBULA controller within a Docker container, ensuring the required Docker environment is available.
 
         This method:
             - Checks if Docker is running by verifying the Docker socket presence (platform-dependent).
-            - Creates a dedicated Docker network for the Nebula system.
+            - Creates a dedicated Docker network for the NEBULA system.
             - Configures environment variables, volume mounts, ports, and network settings for the container.
-            - Creates and starts the Nebula controller Docker container with the specified configuration.
+            - Creates and starts the NEBULA controller Docker container with the specified configuration.
 
         Raises:
             Exception: If Docker is not running or Docker Compose is not installed.
 
         Typical use cases:
-            - Launching the Nebula controller as part of the federated learning infrastructure.
+            - Launching the NEBULA controller as part of the federated learning infrastructure.
             - Ensuring proper Docker networking and environment setup for container execution.
 
         Note:
@@ -668,17 +844,19 @@ class Deployer:
                     "/var/run/docker.sock not found, please check if Docker is running and Docker Compose is installed."
                 )
 
-        network_name = f"{os.environ['USER']}_nebula-net-base"
+        network_name = self.get_network_name("net-base")
 
         # Create the Docker network
         base = DockerUtils.create_docker_network(network_name)
+        Deployer._add_network_to_metadata(network_name)
 
         client = docker.from_env()
 
         environment = {
-            "NEBULA_CONTROLLER_NAME": os.environ["USER"],
             "NEBULA_PRODUCTION": self.production,
-            "NEBULA_ADVANCED_ANALYTICS": self.advanced_analytics,
+            "NEBULA_ENV_TAG": self.env_tag,
+            "NEBULA_PREFIX_TAG": self.prefix_tag,
+            "NEBULA_USER_TAG": self.user_tag,
             "NEBULA_FRONTEND_LOG": "/nebula/app/logs/frontend.log",
             "NEBULA_LOGS_DIR": "/nebula/app/logs/",
             "NEBULA_CONFIG_DIR": "/nebula/app/config/",
@@ -709,9 +887,19 @@ class Deployer:
             f"{network_name}": client.api.create_endpoint_config(ipv4_address=f"{base}.100")
         })
 
+        frontend_container_name = self.get_container_name("nebula-frontend")
+
+        try:
+            existing = client.containers.get(frontend_container_name)
+            logging.warning(
+                f"Container {frontend_container_name} already exists. Deployment may fail or cause conflicts."
+            )
+        except docker.errors.NotFound:
+            pass  # No conflict, safe to proceed
+
         container_id = client.api.create_container(
             image="nebula-frontend",
-            name=f"{os.environ['USER']}_nebula-frontend",
+            name=frontend_container_name,
             detach=True,
             environment=environment,
             volumes=volumes,
@@ -721,20 +909,8 @@ class Deployer:
         )
 
         client.api.start(container_id)
-
-    @staticmethod
-    def stop_frontend():
-        """
-        Stops and removes all NEBULA frontend Docker containers associated with the current user.
-
-        Responsibilities:
-            - Detects running Docker containers with names starting with '<user>_nebula-frontend'.
-            - Gracefully stops and removes these frontend containers.
-
-        Typical use cases:
-            - Cleaning up frontend containers during shutdown or redeployment processes.
-        """
-        DockerUtils.remove_containers_by_prefix(f"{os.environ['USER']}_nebula-frontend")
+        # Add to metadata
+        Deployer._add_container_to_metadata(frontend_container_name)
 
     def run_controller(self):
         if sys.platform == "win32":
@@ -748,8 +924,8 @@ class Deployer:
                     "/var/run/docker.sock not found, please check if Docker is running and Docker Compose is installed."
                 )
 
-        network_name = f"{os.environ['USER']}_nebula-net-base"
-        
+        network_name = self.get_network_name("net-base")
+
         try:
             subprocess.check_call(["nvidia-smi"])
             self.gpu_available = True
@@ -758,14 +934,16 @@ class Deployer:
 
         # Create the Docker network
         base = DockerUtils.create_docker_network(network_name)
+        Deployer._add_network_to_metadata(network_name)
 
         client = docker.from_env()
 
         environment = {
             "USER": os.environ["USER"],
-            "NEBULA_PRODUCTION": self.production,
+            "NEBULA_ENV_TAG": self.env_tag,
+            "NEBULA_PREFIX_TAG": self.prefix_tag,
+            "NEBULA_USER_TAG": self.user_tag,
             "NEBULA_ROOT_HOST": self.root_path,
-            "NEBULA_ADVANCED_ANALYTICS": self.advanced_analytics,
             "NEBULA_DATABASES_DIR": "/nebula/app/databases",
             "NEBULA_CONTROLLER_LOG": "/nebula/app/logs/controller.log",
             "NEBULA_CONFIG_DIR": "/nebula/app/config/",
@@ -785,24 +963,38 @@ class Deployer:
             binds=[
                 f"{self.root_path}:/nebula",
                 "/var/run/docker.sock:/var/run/docker.sock",
-                f"{self.databases_dir}:/nebula/app/databases"
+                f"{self.databases_dir}:/nebula/app/databases",
             ],
             extra_hosts={"host.docker.internal": "host-gateway"},
             port_bindings={self.controller_port: self.controller_port},
-            device_requests=[{
-                "Driver": "nvidia",
-                "Count": -1,
-                "Capabilities": [["gpu"]],
-            }] if self.gpu_available else None,
+            device_requests=[
+                {
+                    "Driver": "nvidia",
+                    "Count": -1,
+                    "Capabilities": [["gpu"]],
+                }
+            ]
+            if self.gpu_available
+            else None,
         )
 
         networking_config = client.api.create_networking_config({
             f"{network_name}": client.api.create_endpoint_config(ipv4_address=f"{base}.150")
         })
 
+        controller_container_name = self.get_container_name("nebula-controller")
+
+        try:
+            existing = client.containers.get(controller_container_name)
+            logging.warning(
+                f"Container {controller_container_name} already exists. Deployment may fail or cause conflicts."
+            )
+        except docker.errors.NotFound:
+            pass  # No conflict, safe to proceed
+
         container_id = client.api.create_container(
             image="nebula-controller",
-            name=f"{os.environ['USER']}_nebula-controller",
+            name=controller_container_name,
             detach=True,
             environment=environment,
             volumes=volumes,
@@ -812,21 +1004,8 @@ class Deployer:
         )
 
         client.api.start(container_id)
-
-    @staticmethod
-    def stop_controller():
-        """
-        Stops all running Docker containers with names starting with '<user>_nebula-controller'.
-
-        Responsibilities:
-            - Initiates shutdown of all participant nodes related to the scenario.
-            - Gracefully stops and removes controller containers to ensure clean shutdown.
-
-        Typical use cases:
-            - Used when stopping or restarting the Nebula controller service.
-        """
-        ScenarioManagement.stop_participants()
-        DockerUtils.remove_containers_by_prefix(f"{os.environ['USER']}_nebula-controller")
+        # Add to metadata
+        Deployer._add_container_to_metadata(controller_container_name)
 
     def run_waf(self):
         """
@@ -841,11 +1020,12 @@ class Deployer:
             - Assigns static IP addresses to all containers within the created Docker network for consistent communication.
 
         Typical use cases:
-            - Deploying an integrated WAF solution alongside monitoring and logging components in the Nebula system.
+            - Deploying an integrated WAF solution alongside monitoring and logging components in the NEBULA system.
             - Ensuring comprehensive security monitoring and log management through containerized services.
         """
-        network_name = f"{os.environ['USER']}_nebula-net-base"
+        network_name = self.get_network_name("net-base")
         base = DockerUtils.create_docker_network(network_name)
+        Deployer._add_network_to_metadata(network_name)
 
         client = docker.from_env()
 
@@ -863,9 +1043,17 @@ class Deployer:
             f"{network_name}": client.api.create_endpoint_config(ipv4_address=f"{base}.200")
         })
 
+        waf_container_name = self.get_container_name("nebula-waf")
+
+        try:
+            existing = client.containers.get(waf_container_name)
+            logging.warning(f"Container {waf_container_name} already exists. Deployment may fail or cause conflicts.")
+        except docker.errors.NotFound:
+            pass  # No conflict, safe to proceed
+
         container_id_waf = client.api.create_container(
             image="nebula-waf",
-            name=f"{os.environ['USER']}_nebula-waf",
+            name=waf_container_name,
             detach=True,
             volumes=volumes_waf,
             host_config=host_config_waf,
@@ -874,6 +1062,7 @@ class Deployer:
         )
 
         client.api.start(container_id_waf)
+        Deployer._add_container_to_metadata(waf_container_name)
 
         environment = {
             "GF_SECURITY_ADMIN_PASSWORD": "admin",
@@ -897,9 +1086,19 @@ class Deployer:
             f"{network_name}": client.api.create_endpoint_config(ipv4_address=f"{base}.201")
         })
 
+        waf_grafana_container_name = self.get_container_name("nebula-waf-grafana")
+
+        try:
+            existing = client.containers.get(waf_grafana_container_name)
+            logging.warning(
+                f"Container {waf_grafana_container_name} already exists. Deployment may fail or cause conflicts."
+            )
+        except docker.errors.NotFound:
+            pass  # No conflict, safe to proceed
+
         container_id = client.api.create_container(
             image="nebula-waf-grafana",
-            name=f"{os.environ['USER']}_nebula-waf-grafana",
+            name=waf_grafana_container_name,
             detach=True,
             environment=environment,
             host_config=host_config,
@@ -908,6 +1107,7 @@ class Deployer:
         )
 
         client.api.start(container_id)
+        Deployer._add_container_to_metadata(waf_grafana_container_name)
 
         command = ["-config.file=/mnt/config/loki-config.yml"]
 
@@ -921,9 +1121,19 @@ class Deployer:
             f"{network_name}": client.api.create_endpoint_config(ipv4_address=f"{base}.202")
         })
 
+        waf_loki_container_name = self.get_container_name("nebula-waf-loki")
+
+        try:
+            existing = client.containers.get(waf_loki_container_name)
+            logging.warning(
+                f"Container {waf_loki_container_name} already exists. Deployment may fail or cause conflicts."
+            )
+        except docker.errors.NotFound:
+            pass  # No conflict, safe to proceed
+
         container_id_loki = client.api.create_container(
             image="nebula-waf-loki",
-            name=f"{os.environ['USER']}_nebula-waf-loki",
+            name=waf_loki_container_name,
             detach=True,
             command=command,
             host_config=host_config_loki,
@@ -932,6 +1142,7 @@ class Deployer:
         )
 
         client.api.start(container_id_loki)
+        Deployer._add_container_to_metadata(waf_loki_container_name)
 
         volumes_promtail = ["/var/log/nginx"]
 
@@ -945,9 +1156,19 @@ class Deployer:
             f"{network_name}": client.api.create_endpoint_config(ipv4_address=f"{base}.203")
         })
 
+        waf_promtail_container_name = self.get_container_name("nebula-waf-promtail")
+
+        try:
+            existing = client.containers.get(waf_promtail_container_name)
+            logging.warning(
+                f"Container {waf_promtail_container_name} already exists. Deployment may fail or cause conflicts."
+            )
+        except docker.errors.NotFound:
+            pass  # No conflict, safe to proceed
+
         container_id_promtail = client.api.create_container(
             image="nebula-waf-promtail",
-            name=f"{os.environ['USER']}_nebula-waf-promtail",
+            name=waf_promtail_container_name,
             detach=True,
             volumes=volumes_promtail,
             host_config=host_config_promtail,
@@ -955,48 +1176,79 @@ class Deployer:
         )
 
         client.api.start(container_id_promtail)
+        Deployer._add_container_to_metadata(waf_promtail_container_name)
 
     @staticmethod
-    def stop_waf():
-        """
-        Stops all running Docker containers with names starting with '<user>_nebula-waf'.
-
-        Responsibilities:
-            - Gracefully shuts down and removes all WAF-related containers for the current user.
-
-        Typical use cases:
-            - Cleaning up WAF containers during shutdown or redeployment of the Nebula system.
-        """
-        DockerUtils.remove_containers_by_prefix(f"{os.environ['USER']}_nebula-waf")
+    def stop_deployer():
+        if os.path.exists(Deployer.DEPLOYER_PID_FILE):
+            try:
+                with open(Deployer.DEPLOYER_PID_FILE) as f:
+                    pid = int(f.read())
+                os.remove(Deployer.DEPLOYER_PID_FILE)
+                # Check if process still exists before trying to kill it
+                if psutil.pid_exists(pid):
+                    os.kill(pid, signal.SIGKILL)
+                    logging.info(f"Deployer process {pid} terminated")
+                else:
+                    logging.info(f"Deployer process {pid} already terminated")
+            except (ValueError, OSError) as e:
+                logging.warning(f"Error stopping deployer process: {e}")
+            except Exception as e:
+                logging.warning(f"Unexpected error stopping deployer process: {e}")
 
     @staticmethod
     def stop_all():
         """
-        Stops all running Nebula-related Docker containers and networks, then terminates the deployer process.
+        Stops all running NEBULA-related Docker containers and networks, then terminates the deployer process.
 
         Responsibilities:
             - Stops frontend, controller, and WAF containers for the current user.
-            - Removes all Docker containers and networks with names starting with the user's prefix.
+            - Removes all Docker containers tracked in the metadata file.
             - Reads and kills the deployer process using its PID file.
             - Exits the system cleanly, handling any exceptions during shutdown.
 
         Typical use cases:
-            - Full shutdown and cleanup of all Nebula components and resources on the host system.
+            - Full shutdown and cleanup of all NEBULA components and resources on the host system.
         """
         print("Closing NEBULA (exiting from components)... Please wait")
+        errors = []
+
         try:
-            Deployer.stop_frontend()
-            Deployer.stop_controller()
-            Deployer.stop_waf()
-            DockerUtils.remove_containers_by_prefix(f"{os.environ['USER']}_")
-            DockerUtils.remove_docker_networks_by_prefix(f"{os.environ['USER']}_")
-            deployer_pid_file = os.path.join(os.path.dirname(__file__), "deployer.pid")
-            with open(deployer_pid_file) as f:
-                pid = int(f.read())
-            os.remove(deployer_pid_file)
-            os.kill(pid, signal.SIGKILL)
-            sys.exit(0)
+            # Remove all scenario containers
+            ScenarioManagement.cleanup_scenario_containers()
         except Exception as e:
-            print(f"Nebula is closed with errors {e}")
-        finally:
-            sys.exit(0)
+            errors.append(f"Scenario cleanup error: {e}")
+            logging.warning(f"Error during scenario cleanup: {e}")
+
+        try:
+            Deployer._remove_all_containers_from_metadata()
+        except Exception as e:
+            errors.append(f"Container cleanup error: {e}")
+            logging.warning(f"Error during container cleanup: {e}")
+
+        try:
+            Deployer._remove_all_networks_from_metadata()
+        except Exception as e:
+            errors.append(f"Network cleanup error: {e}")
+            logging.warning(f"Error during network cleanup: {e}")
+
+        try:
+            # Remove the metadata file after cleanup
+            if os.path.exists(Deployer.METADATA_FILE):
+                os.remove(Deployer.METADATA_FILE)
+        except Exception as e:
+            errors.append(f"Metadata file removal error: {e}")
+            logging.warning(f"Error removing metadata file: {e}")
+
+        try:
+            Deployer.stop_deployer()
+        except Exception as e:
+            errors.append(f"Deployer stop error: {e}")
+            logging.warning(f"Error stopping deployer: {e}")
+
+        if errors:
+            print(f"NEBULA is closed with errors: {'; '.join(errors)}")
+        else:
+            print("NEBULA closed successfully")
+
+        sys.exit(0)

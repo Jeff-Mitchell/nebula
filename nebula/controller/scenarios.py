@@ -199,30 +199,30 @@ class Scenario:
         self.mobile_participants_percent = mobile_participants_percent
         self.additional_participants = additional_participants
         self.with_trustworthiness = with_trustworthiness
-        self.robustness_pillar = robustness_pillar,
-        self.resilience_to_attacks = resilience_to_attacks,
-        self.algorithm_robustness = algorithm_robustness,
-        self.client_reliability = client_reliability,
-        self.privacy_pillar = privacy_pillar,
-        self.technique = technique,
-        self.uncertainty = uncertainty,
-        self.indistinguishability = indistinguishability,
-        self.fairness_pillar = fairness_pillar,
-        self.selection_fairness = selection_fairness,
-        self.performance_fairness = performance_fairness,
-        self.class_distribution = class_distribution,
-        self.explainability_pillar = explainability_pillar,
-        self.interpretability = interpretability,
-        self.post_hoc_methods = post_hoc_methods,
-        self.accountability_pillar = accountability_pillar,
-        self.factsheet_completeness = factsheet_completeness,
-        self.architectural_soundness_pillar = architectural_soundness_pillar,
-        self.client_management = client_management,
-        self.optimization = optimization,
-        self.sustainability_pillar = sustainability_pillar,
-        self.energy_source = energy_source,
-        self.hardware_efficiency = hardware_efficiency,
-        self.federation_complexity = federation_complexity,
+        self.robustness_pillar = (robustness_pillar,)
+        self.resilience_to_attacks = (resilience_to_attacks,)
+        self.algorithm_robustness = (algorithm_robustness,)
+        self.client_reliability = (client_reliability,)
+        self.privacy_pillar = (privacy_pillar,)
+        self.technique = (technique,)
+        self.uncertainty = (uncertainty,)
+        self.indistinguishability = (indistinguishability,)
+        self.fairness_pillar = (fairness_pillar,)
+        self.selection_fairness = (selection_fairness,)
+        self.performance_fairness = (performance_fairness,)
+        self.class_distribution = (class_distribution,)
+        self.explainability_pillar = (explainability_pillar,)
+        self.interpretability = (interpretability,)
+        self.post_hoc_methods = (post_hoc_methods,)
+        self.accountability_pillar = (accountability_pillar,)
+        self.factsheet_completeness = (factsheet_completeness,)
+        self.architectural_soundness_pillar = (architectural_soundness_pillar,)
+        self.client_management = (client_management,)
+        self.optimization = (optimization,)
+        self.sustainability_pillar = (sustainability_pillar,)
+        self.energy_source = (energy_source,)
+        self.hardware_efficiency = (hardware_efficiency,)
+        self.federation_complexity = (federation_complexity,)
         self.schema_additional_participants = schema_additional_participants
         self.random_topology_probability = random_topology_probability
         self.with_sa = with_sa
@@ -579,11 +579,15 @@ class ScenarioManagement:
         self.scenario_name = f"nebula_{self.scenario.federation}_{datetime.now().strftime('%Y_%m_%d_%H_%M_%S')}"
         self.root_path = os.environ.get("NEBULA_ROOT_HOST")
         self.host_platform = os.environ.get("NEBULA_HOST_PLATFORM")
-        self.config_dir = os.path.join(os.environ.get("NEBULA_CONFIG_DIR"), self.scenario_name)
-        self.log_dir = os.environ.get("NEBULA_LOGS_DIR")
-        self.cert_dir = os.environ.get("NEBULA_CERTS_DIR")
-        self.advanced_analytics = os.environ.get("NEBULA_ADVANCED_ANALYTICS", "False") == "True"
+        self.config_dir = os.path.join(os.environ.get("NEBULA_CONFIG_DIR", "config"), self.scenario_name)
+        self.log_dir = os.environ.get("NEBULA_LOGS_DIR", "logs")
+        self.cert_dir = os.environ.get("NEBULA_CERTS_DIR", "certs")
         self.config = Config(entity="scenarioManagement")
+
+        # Tag-based naming for scenario resources
+        self.env_tag = os.environ.get("NEBULA_ENV_TAG", "dev")
+        self.prefix_tag = os.environ.get("NEBULA_PREFIX_TAG", "dev")
+        self.user_tag = os.environ.get("NEBULA_USER_TAG", os.environ.get("USER", "unknown"))
 
         # If physical set the neighbours correctly
         if self.scenario.deployment == "physical" and self.scenario.physical_ips:
@@ -761,6 +765,26 @@ class ScenarioManagement:
             with open(participant_file, "w") as f:
                 json.dump(participant_config, f, sort_keys=False, indent=2)
 
+    def get_network_name(self, suffix: str) -> str:
+        """
+        Generate a standardized network name using tags.
+        Args:
+            suffix (str): Suffix for the network (default: 'net-base').
+        Returns:
+            str: The composed network name.
+        """
+        return f"{self.env_tag}_{self.prefix_tag}_{self.user_tag}_{suffix}"
+
+    def get_participant_container_name(self, idx: int) -> str:
+        """
+        Generate a standardized container name for a participant using tags.
+        Args:
+            idx (int): The participant index.
+        Returns:
+            str: The composed container name.
+        """
+        return f"{self.env_tag}_{self.prefix_tag}_{self.user_tag}_{self.scenario_name}_participant{idx}"
+
     @staticmethod
     def stop_participants(scenario_name=None):
         """
@@ -870,7 +894,6 @@ class ScenarioManagement:
         # Update participants configuration
         is_start_node = False
         config_participants = []
-        # ap = len(additional_participants) if additional_participants else 0
         additional_nodes = len(additional_participants) if additional_participants else 0
         logging.info(f"######## nodes: {self.n_nodes} + additionals: {additional_nodes} ######")
 
@@ -902,7 +925,7 @@ class ScenarioManagement:
                 participant_config["mobility_args"]["latitude"] = self.scenario.latitude
                 participant_config["mobility_args"]["longitude"] = self.scenario.longitude
             # If not, use the given coordinates in the frontend
-            participant_config["tracking_args"]["local_tracking"] = "advanced" if self.advanced_analytics else "basic"
+            participant_config["tracking_args"]["local_tracking"] = "default"
             participant_config["tracking_args"]["log_dir"] = self.log_dir
             participant_config["tracking_args"]["config_dir"] = self.config_dir
 
@@ -953,7 +976,6 @@ class ScenarioManagement:
 
                 logging.info(f"Configuration | additional nodes |  participant: {self.n_nodes + i + 1}")
                 last_ip = participant_config["network_args"]["ip"]
-                logging.info(f"Valores de la ultima ip: ({last_ip})")
                 participant_config["scenario_args"]["n_nodes"] = self.n_nodes + additional_nodes  # self.n_nodes + i + 1
                 participant_config["device_args"]["idx"] = last_participant_index + i
                 participant_config["network_args"]["neighbors"] = ""
@@ -1178,7 +1200,8 @@ class ScenarioManagement:
         logging.info("Starting nodes using Docker Compose...")
         logging.info(f"env path: {self.env_path}")
 
-        network_name = f"{os.environ.get('NEBULA_CONTROLLER_NAME')}_{str(self.user).lower()}-nebula-net-scenario"
+        network_name = self.get_network_name(f"{self.scenario_name}-net-scenario")
+        base_network_name = self.get_network_name("net-base")
 
         # Create the Docker network
         base = DockerUtils.create_docker_network(network_name)
@@ -1188,9 +1211,10 @@ class ScenarioManagement:
         self.config.participants.sort(key=lambda x: x["device_args"]["idx"])
         i = 2
         container_ids = []
+        container_names = []  # Track names for metadata
         for idx, node in enumerate(self.config.participants):
             image = "nebula-core"
-            name = f"{os.environ.get('NEBULA_CONTROLLER_NAME')}_{self.user}-participant{node['device_args']['idx']}"
+            name = self.get_participant_container_name(node["device_args"]["idx"])
 
             if node["device_args"]["accelerator"] == "gpu":
                 environment = {
@@ -1223,10 +1247,10 @@ class ScenarioManagement:
             ]
 
             networking_config = client.api.create_networking_config({
-                f"{network_name}": client.api.create_endpoint_config(
+                network_name: client.api.create_endpoint_config(
                     ipv4_address=f"{base}.{i}",
                 ),
-                f"{os.environ.get('NEBULA_CONTROLLER_NAME')}_nebula-net-base": client.api.create_endpoint_config(),
+                base_network_name: client.api.create_endpoint_config(),
             })
 
             node["tracking_args"]["log_dir"] = "/nebula/app/logs"
@@ -1237,6 +1261,12 @@ class ScenarioManagement:
             node["security_args"]["keyfile"] = f"/nebula/app/certs/participant_{node['device_args']['idx']}_key.pem"
             node["security_args"]["cafile"] = "/nebula/app/certs/ca_cert.pem"
             node = json.loads(json.dumps(node).replace("192.168.50.", f"{base}."))  # TODO change this
+
+            try:
+                existing = client.containers.get(name)
+                logging.warning(f"Container {name} already exists. Deployment may fail or cause conflicts.")
+            except docker.errors.NotFound:
+                pass  # No conflict, safe to proceed
 
             # Write the config file in config directory
             with open(f"{self.config_dir}/participant_{node['device_args']['idx']}.json", "w") as f:
@@ -1259,9 +1289,15 @@ class ScenarioManagement:
             try:
                 client.api.start(container_id)
                 container_ids.append(container_id)
+                container_names.append(name)
             except Exception as e:
                 logging.exception(f"Starting participant {name} error: {e}")
             i += 1
+
+        # Write scenario-level metadata for cleanup
+        scenario_metadata = {"containers": container_names, "network": network_name}
+        with open(os.path.join(self.config_dir, "scenario.metadata"), "w") as f:
+            json.dump(scenario_metadata, f, indent=2)
 
     def start_nodes_process(self):
         """
@@ -1529,3 +1565,94 @@ class ScenarioManagement:
                 return False
 
             time.sleep(5)
+
+    @staticmethod
+    def cleanup_scenario_containers():
+        """
+        Remove all participant containers and the scenario network.
+        Reads ALL scenario.metadata and removes all listed containers and the network, then deletes the metadata file.
+        Also forcibly stops and removes any containers still attached to the network before removing it.
+        """
+        import json
+        import logging
+        import os
+
+        import docker
+
+        # Try multiple possible config directory locations. This depends on where the user called the function from.
+        possible_config_dirs = [
+            os.environ.get("NEBULA_CONFIG_DIR"),
+            "/nebula/app/config",
+            "./app/config",
+            os.path.join(os.getcwd(), "app", "config"),
+            os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "app", "config"),
+        ]
+
+        config_dir = None
+        for dir_path in possible_config_dirs:
+            if dir_path and os.path.exists(dir_path):
+                config_dir = dir_path
+                break
+
+        if not config_dir:
+            logging.warning("No valid config directory found, skipping cleanup")
+            return
+
+        scenario_dirs = []
+        logging.info(f"Config directory: {config_dir}")
+        if os.path.exists(config_dir):
+            for item in os.listdir(config_dir):
+                scenario_path = os.path.join(config_dir, item)
+                if os.path.isdir(scenario_path):
+                    metadata_file = os.path.join(scenario_path, "scenario.metadata")
+                    if os.path.exists(metadata_file):
+                        scenario_dirs.append(scenario_path)
+
+        logging.info(f"Removing scenario containers for {scenario_dirs}")
+        if not scenario_dirs:
+            logging.info("No active scenarios found to clean up")
+            return
+
+        client = docker.from_env()
+
+        for scenario_dir in scenario_dirs:
+            metadata_path = os.path.join(scenario_dir, "scenario.metadata")
+            if not os.path.exists(metadata_path):
+                logging.info(f"Skipping {scenario_dir} - no scenario.metadata found")
+                continue
+
+            with open(metadata_path) as f:
+                meta = json.load(f)
+
+            # Remove containers listed in metadata
+            for name in meta.get("containers", []):
+                try:
+                    container = client.containers.get(name)
+                    container.remove(force=True)
+                    logging.info(f"Removed scenario container {name}")
+                except Exception as e:
+                    logging.warning(f"Could not remove scenario container {name}: {e}")
+
+            # Remove network, but first forcibly remove any containers still attached
+            network_name = meta.get("network")
+            if network_name:
+                try:
+                    network = client.networks.get(network_name)
+                    attached_containers = network.attrs.get("Containers") or {}
+                    for container_id in attached_containers:
+                        try:
+                            c = client.containers.get(container_id)
+                            c.remove(force=True)
+                            logging.info(f"Force-removed container {c.name} attached to {network_name}")
+                        except Exception as e:
+                            logging.warning(f"Could not force-remove container {container_id}: {e}")
+                    network.remove()
+                    logging.info(f"Removed scenario network {network_name}")
+                except Exception as e:
+                    logging.warning(f"Could not remove scenario network {network_name}: {e}")
+
+            # Remove metadata file
+            try:
+                os.remove(metadata_path)
+            except Exception as e:
+                logging.warning(f"Could not remove scenario.metadata: {e}")
