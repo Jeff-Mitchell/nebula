@@ -16,8 +16,12 @@ import uvicorn
 from fastapi import Body, FastAPI, Request, status, HTTPException, Path, File, UploadFile
 from fastapi.concurrency import asynccontextmanager
 
-# from nebula.controller.database import scenario_set_all_status_to_finished, scenario_set_status_to_finished
-from nebula.controller.database import scenario_set_all_status_to_finished, scenario_set_status_to_finished
+from nebula.controller.database import (
+    init_db_pool,
+    close_db_pool,
+    scenario_set_all_status_to_finished,
+    scenario_set_status_to_finished,
+)
 from nebula.controller.http_helpers import remote_get, remote_post_form
 from nebula.utils import DockerUtils
 
@@ -107,16 +111,23 @@ def configure_logger(controller_log):
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # databases_dir: str = os.environ.get("NEBULA_DATABASES_DIR")
+    """
+    Application lifespan context manager.
+    - Initializes the database connection pool on startup.
+    - Configures logging.
+    - Cleans up resources like the database pool on shutdown.
+    """
+    # Code to run on startup
     controller_log: str = os.environ.get("NEBULA_CONTROLLER_LOG")
-
-    # from nebula.controller.database import initialize_databases
-
-    # await initialize_databases(databases_dir)
-
     configure_logger(controller_log)
 
+    # Initialize the database connection pool
+    await init_db_pool()
+
     yield
+
+    # Code to run on shutdown
+    await close_db_pool()
 
 
 # Initialize FastAPI app outside the Controller class
