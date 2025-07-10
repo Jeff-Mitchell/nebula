@@ -601,7 +601,7 @@ class Deployer:
                 )
                 logging.exception(warning_msg)
                 sys.exit(1)
-                
+
         self.configure_logger()
         self.credentialmanager = CredentialManager()
         self.credentialmanager.check_all_credentials()
@@ -945,7 +945,6 @@ class Deployer:
         client = docker.from_env()
 
         environment = {
-            "NEBULA_CONTROLLER_NAME": os.environ["USER"],
             "SECRET_KEY": os.environ.get("SECRET_KEY"),
             "NEBULA_PRODUCTION": self.production,
             "NEBULA_ENV_TAG": self.env_tag,
@@ -1021,167 +1020,105 @@ class Deployer:
                     "/var/run/docker.sock not found, please check if Docker is running and Docker Compose is installed."
                 )
 
-        network_name = f"{os.environ['USER']}_nebula-net-base"
-
-        ###############
-        # POSTGRES DB #
-        ###############
-
-        host_port = 54312
-
-        # Create the Docker network
+        network_name = self.get_network_name("net-base")
         base = DockerUtils.create_docker_network(network_name)
+        Deployer._add_network_to_metadata(network_name)
 
         client = docker.from_env()
 
-        environment = {
+        # --- PostgreSQL ---
+        pg_container_name = self.get_container_name("nebula-database")
+        pg_environment = {
             "POSTGRES_USER": "nebula",
             "POSTGRES_PASSWORD": os.environ.get("POSTGRES_PASSWORD"),
             "POSTGRES_DB": "nebula",
-            "NEBULA_DATABASES_PORT": self.controller_host,
         }
-
         host_sql_path = os.path.join(self.root_path, "nebula/database/init-configs.sql")
-        container_sql_path = "/docker-entrypoint-initdb.d/init-configs.sql"
-
         db_data_path = os.path.join(self.databases_dir, "postgres-data")
         os.makedirs(db_data_path, exist_ok=True)
 
-        host_config = client.api.create_host_config(
+        pg_host_config = client.api.create_host_config(
             binds=[
-                f"{host_sql_path}:{container_sql_path}",
+                f"{host_sql_path}:/docker-entrypoint-initdb.d/init-configs.sql",
                 f"{db_data_path}:/var/lib/postgresql/data",
             ],
-            extra_hosts={"host.docker.internal": "host-gateway"},
-            port_bindings={5432: host_port},
+            port_bindings={5432: 5432},
+        )
+        pg_networking_config = client.api.create_networking_config(
+            {f"{network_name}": client.api.create_endpoint_config(ipv4_address=f"{base}.125")}
         )
 
-        networking_config = client.api.create_networking_config({
-            f"{network_name}": client.api.create_endpoint_config(ipv4_address=f"{base}.125")
-        })
-
-        container_id = client.api.create_container(
+        pg_container = client.api.create_container(
             image="nebula-database",
-            name=f"{os.environ['USER']}_nebula-database",
+            name=pg_container_name,
             detach=True,
-            environment=environment,
-            host_config=host_config,
-            networking_config=networking_config,
+            environment=pg_environment,
+            host_config=pg_host_config,
+            networking_config=pg_networking_config,
+        )
+        client.api.start(pg_container)
+        Deployer._add_container_to_metadata(pg_container_name)
+
+        # --- PGWeb ---
+        pgweb_container_name = self.get_container_name("nebula-pgweb")
+        pgweb_host_config = client.api.create_host_config(port_bindings={8081: 8085})
+        pgweb_networking_config = client.api.create_networking_config(
+            {f"{network_name}": client.api.create_endpoint_config(ipv4_address=f"{base}.135")}
         )
 
-        client.api.start(container_id)
-
-        ################
-        # POSTGRES WEB #
-        ################
-
-        pgweb_host_port = 8085
-        pgweb_container_port = 8081
-
-        pgweb_host_config = client.api.create_host_config(
-            port_bindings={pgweb_container_port: pgweb_host_port},
-            device_requests=[{
-                "Driver": "nvidia",
-                "Count": -1,
-                "Capabilities": [["gpu"]],
-            }] if self.gpu_available else None,
-        )
-
-        pgweb_networking_config = client.api.create_networking_config({
-            f"{network_name}": client.api.create_endpoint_config(ipv4_address=f"{base}.135")
-        })
-
-        pgweb_container_name = f"{os.environ.get('USER')}_nebula-pgweb"
-
-        pgweb_container_id = client.api.create_container(
+        pgweb_container = client.api.create_container(
             image="nebula-pgweb",
             name=pgweb_container_name,
             detach=True,
             host_config=pgweb_host_config,
             networking_config=pgweb_networking_config,
         )
+        client.api.start(pgweb_container)
+        Deployer._add_container_to_metadata(pgweb_container_name)
 
-        client.api.start(pgweb_container_id)
-
-        #########
-        # REDIS #
-        #########
-
-        # network_name = "redis-network"
-        # base = DockerUtils.create_docker_network(network_name)
-
-        # --- REDIS ---
-
-        host_port_redis = 6379  # You can change this if you want a different external port
-
-        host_config_redis = client.api.create_host_config(
-            binds=[
-                f"redis:/var/lib/redis",
-            ],
-            extra_hosts={"host.docker.internal": "host-gateway"},
-            port_bindings={6379: host_port_redis},
+        # --- Redis ---
+        redis_container_name = self.get_container_name("redis")
+        redis_host_config = client.api.create_host_config(
+            binds=[f"{self.get_container_name('redis_data')}:/var/lib/redis"],
+            port_bindings={6379: 6379},
         )
-
-        redis_networking_config = client.api.create_networking_config({
-            f"{network_name}": client.api.create_endpoint_config(ipv4_address=f"{base}.126")
-        })
+        redis_networking_config = client.api.create_networking_config(
+            {f"{network_name}": client.api.create_endpoint_config(ipv4_address=f"{base}.126")}
+        )
 
         redis_container = client.api.create_container(
             image="nebula-redis",
-            name=f"{os.environ['USER']}_redis",
+            name=redis_container_name,
             detach=True,
             command="redis-server",
-            host_config=host_config_redis,
+            host_config=redis_host_config,
             networking_config=redis_networking_config,
         )
-
         client.api.start(redis_container)
+        Deployer._add_container_to_metadata(redis_container_name)
 
-        # --- REDIS COMMANDER ---
-
-        host_port_commander = 8081
-
-        environment_commander = {
-            "REDIS_HOSTS": f"{os.environ['USER']}_redis",
+        # --- Redis Commander ---
+        commander_container_name = self.get_container_name("redis_commander")
+        commander_environment = {
+            "REDIS_HOSTS": f"local:{redis_container_name}:6379",
             "HTTP_USER": "root",
             "HTTP_PASSWORD": os.environ.get("HTTP_PASSWORD"),
         }
-
-        host_config_commander = client.api.create_host_config(
-            extra_hosts={"host.docker.internal": "host-gateway"},
-            port_bindings={8081: host_port_commander},
+        commander_host_config = client.api.create_host_config(port_bindings={8081: 8081})
+        commander_networking_config = client.api.create_networking_config(
+            {f"{network_name}": client.api.create_endpoint_config(ipv4_address=f"{base}.127")}
         )
-
-        commander_networking_config = client.api.create_networking_config({
-            f"{network_name}": client.api.create_endpoint_config(ipv4_address=f"{base}.127")
-        })
 
         commander_container = client.api.create_container(
             image="nebula-rediscommander",
-            name=f"{os.environ['USER']}_redis_commander",
+            name=commander_container_name,
             detach=True,
-            environment=environment_commander,
-            host_config=host_config_commander,
+            environment=commander_environment,
+            host_config=commander_host_config,
             networking_config=commander_networking_config,
         )
-
         client.api.start(commander_container)
-
-    def stop_database(self):
-        """
-        Stops and removes all NEBULA database Docker containers associated with the current user.
-
-        Responsibilities:
-            - Detects running Docker containers with names starting with '<user>_nebula-database'.
-            - Gracefully stops and removes these database containers.
-
-        Typical use cases:
-            - Cleaning up database containers during shutdown or redeployment processes.
-        """
-        DockerUtils.remove_containers_by_prefix(f"{os.environ['USER']}_nebula-database")
-        DockerUtils.remove_containers_by_prefix(f"{os.environ['USER']}_nebula-pgweb")
-        DockerUtils.remove_containers_by_prefix(f"{os.environ['USER']}_nebula-redis")
-        DockerUtils.remove_containers_by_prefix(f"{os.environ['USER']}_nebula-rediscommander")
+        Deployer._add_container_to_metadata(commander_container_name)
 
     def run_controller(self):
         if sys.platform == "win32":
@@ -1224,11 +1161,11 @@ class Deployer:
             "NEBULA_CONTROLLER_PORT": self.controller_port,
             "NEBULA_CONTROLLER_HOST": self.controller_host,
             "NEBULA_FRONTEND_PORT": self.frontend_port,
-            "DB_HOST": f"{os.environ['USER']}_nebula-database",
+            "DB_HOST": self.get_container_name("nebula-database"),
             "DB_PORT": 5432,
             "DB_USER": "nebula",
             "DB_PASSWORD": "nebula",
-            "REDIS_HOST": f"{os.environ['USER']}_redis",
+            "REDIS_HOST": self.get_container_name("redis"),
             "REDIS_PORT": 6379,
         }
 

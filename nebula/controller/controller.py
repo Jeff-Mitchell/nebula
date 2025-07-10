@@ -73,9 +73,6 @@ class TermEscapeCodeFormatter(logging.Formatter):
         return super().format(record)
 
 
-os.environ["NEBULA_CONTROLLER_NAME"] = os.environ.get("USER")
-
-
 def configure_logger(controller_log):
     """
     Configures the logging system for the controller.
@@ -383,6 +380,7 @@ async def stop_scenario(
         This function does not currently trigger statistics generation.
     """
     from nebula.controller.scenarios import ScenarioManagement
+    from nebula.controller.database import get_user_info, REDIS_POOL
 
     ScenarioManagement.cleanup_scenario_containers()
     try:
@@ -390,6 +388,13 @@ async def stop_scenario(
             await scenario_set_all_status_to_finished()
         else:
             await scenario_set_status_to_finished(scenario_name)
+
+    # Invalidate caches
+        if username:
+            user = await get_user_info(username)
+            if user:
+                await REDIS_POOL.delete(f"scenarios:{user['user']}:{user['role']}")
+        await REDIS_POOL.delete(f"scenario:{scenario_name}")
     except Exception as e:
         logging.exception(f"Error setting scenario {scenario_name} to finished: {e}")
         raise HTTPException(status_code=500, detail="Internal server error")
@@ -408,16 +413,18 @@ async def remove_scenario(
     Returns:
         dict: A message indicating successful removal.
     """
-    from nebula.controller.database import remove_scenario_by_name, get_user_by_scenario_name, REDIS_POOL
+    from nebula.controller.database import remove_scenario_by_name, get_user_by_scenario_name, get_user_info, REDIS_POOL
     from nebula.controller.scenarios import ScenarioManagement
 
     try:
-        user = await get_user_by_scenario_name(scenario_name)
+        username = await get_user_by_scenario_name(scenario_name)
         await remove_scenario_by_name(scenario_name)
         ScenarioManagement.remove_files_by_scenario(scenario_name)
         # Invalidate caches
-        if user:
-            await REDIS_POOL.delete(f"scenarios:{user['user']}:{user['role']}")
+        if username:
+            user = await get_user_info(username)
+            if user:
+                await REDIS_POOL.delete(f"scenarios:{user['user']}:{user['role']}")
         await REDIS_POOL.delete(f"scenario:{scenario_name}")
 
     except Exception as e:
@@ -682,7 +689,7 @@ async def update_nodes(
         raise HTTPException(status_code=500, detail="Internal server error")
 
     url = (
-        f"http://{os.environ['NEBULA_CONTROLLER_NAME']}_nebula-frontend/platform/dashboard/{scenario_name}/node/update"
+        f"http://{os.environ['NEBULA_CONTROLLER_HOST']}_nebula-frontend/platform/dashboard/{scenario_name}/node/update"
     )
 
     config["timestamp"] = str(timestamp)
@@ -717,7 +724,7 @@ async def node_done(
 
     Returns the response from the frontend or raises an HTTPException if it fails.
     """
-    url = f"http://{os.environ['NEBULA_CONTROLLER_NAME']}_nebula-frontend/platform/dashboard/{scenario_name}/node/done"
+    url = f"http://{os.environ['NEBULA_CONTROLLER_HOST']}_nebula-frontend/platform/dashboard/{scenario_name}/node/done"
 
     data = await request.json()
 
