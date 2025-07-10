@@ -1142,7 +1142,7 @@ class Deployer:
         host_port_commander = 8081
 
         environment_commander = {
-            "REDIS_HOSTS": "local:redis:6379",
+            "REDIS_HOSTS": f"{os.environ['USER']}_redis",
             "HTTP_USER": "root",
             "HTTP_PASSWORD": os.environ.get("HTTP_PASSWORD"),
         }
@@ -1228,6 +1228,8 @@ class Deployer:
             "DB_PORT": 5432,
             "DB_USER": "nebula",
             "DB_PASSWORD": "nebula",
+            "REDIS_HOST": f"{os.environ['USER']}_redis",
+            "REDIS_PORT": 6379,
         }
 
         volumes = ["/nebula", "/var/run/docker.sock"]

@@ -19,6 +19,7 @@ from fastapi.concurrency import asynccontextmanager
 from nebula.controller.database import (
     init_db_pool,
     close_db_pool,
+    init_redis_pool,
     scenario_set_all_status_to_finished,
     scenario_set_status_to_finished,
 )
@@ -123,6 +124,7 @@ async def lifespan(app: FastAPI):
 
     # Initialize the database connection pool
     await init_db_pool()
+    await init_redis_pool()
 
     yield
 
@@ -406,12 +408,18 @@ async def remove_scenario(
     Returns:
         dict: A message indicating successful removal.
     """
-    from nebula.controller.database import remove_scenario_by_name
+    from nebula.controller.database import remove_scenario_by_name, get_user_by_scenario_name, REDIS_POOL
     from nebula.controller.scenarios import ScenarioManagement
 
     try:
+        user = await get_user_by_scenario_name(scenario_name)
         await remove_scenario_by_name(scenario_name)
         ScenarioManagement.remove_files_by_scenario(scenario_name)
+        # Invalidate caches
+        if user:
+            await REDIS_POOL.delete(f"scenarios:{user['user']}:{user['role']}")
+        await REDIS_POOL.delete(f"scenario:{scenario_name}")
+
     except Exception as e:
         logging.exception(f"Error removing scenario {scenario_name}: {e}")
         raise HTTPException(status_code=500, detail="Internal server error")
@@ -434,10 +442,17 @@ async def get_scenarios(
     Returns:
         dict: A list of scenarios and the currently running scenario.
     """
-    from nebula.controller.database import get_all_scenarios_and_check_completed, get_running_scenario
+    from nebula.controller.database import get_all_scenarios_and_check_completed, get_running_scenario, REDIS_POOL
 
     try:
-        scenarios = await get_all_scenarios_and_check_completed(username=user, role=role)
+        # Try to get from cache first
+        cached_scenarios = await REDIS_POOL.get(f"scenarios:{user}:{role}")
+        if cached_scenarios:
+            scenarios = json.loads(cached_scenarios)
+        else:
+            scenarios = await get_all_scenarios_and_check_completed(username=user, role=role)
+            await REDIS_POOL.set(f"scenarios:{user}:{role}", json.dumps(scenarios), ex=3600) # Cache for 1 hour
+
         if role == "admin":
             scenario_running = await get_running_scenario()
         else:
@@ -474,11 +489,14 @@ async def update_scenario(
     Returns:
         dict: A message confirming the update.
     """
-    from nebula.controller.database import scenario_update_record
+    from nebula.controller.database import scenario_update_record, REDIS_POOL
     # from nebula.controller.scenarios import Scenario
 
     try:
         await scenario_update_record(scenario_name, start_time, end_time, scenario, status, username)
+        # Invalidate caches
+        await REDIS_POOL.delete(f"scenarios:{username}:{role}")
+        await REDIS_POOL.delete(f"scenario:{scenario_name}")
     except Exception as e:
         logging.exception(f"Error updating scenario {scenario_name}: {e}")
         raise HTTPException(status_code=500, detail="Internal server error")
@@ -576,10 +594,16 @@ async def get_scenario_by_name(
     Returns:
         dict: The scenario data.
     """
-    from nebula.controller.database import get_scenario_by_name
+    from nebula.controller.database import get_scenario_by_name, REDIS_POOL
 
     try:
-        scenario = await get_scenario_by_name(scenario_name)
+        cached_scenario = await REDIS_POOL.get(f"scenario:{scenario_name}")
+        if cached_scenario:
+            scenario = json.loads(cached_scenario)
+        else:
+            scenario = await get_scenario_by_name(scenario_name)
+            if scenario:
+                await REDIS_POOL.set(f"scenario:{scenario_name}", json.dumps(scenario), ex=3600) # Cache for 1 hour
     except Exception as e:
         logging.exception(f"Error obtaining scenario {scenario_name}: {e}")
         raise HTTPException(status_code=500, detail="Internal server error")
