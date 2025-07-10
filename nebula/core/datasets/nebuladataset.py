@@ -73,23 +73,39 @@ class NebulaPartitionHandler(Dataset, ABC):
         data_ds = self.file[f"{prefix}_data"]
         targets_ds = self.file[f"{prefix}_targets"]
 
-        typ = data_ds.attrs.get("__type__", None)
-        if typ in ("pickle", "pickle_bytes"):
+        typ_data = data_ds.attrs.get("__type__", None)
+        typ_targets = targets_ds.attrs.get("__type__", None)
+
+        # Cargar data
+        if typ_data in ("pickle", "pickle_bytes"):
             logging_training.info(f"[NebulaPartitionHandler] Loading pickled data for {self.prefix} (dataset will be fully loaded into memory)")
-            self.data = pickle.loads(data_ds[()].tobytes() if typ == "pickle" else data_ds[()])
-            self.targets = pickle.loads(targets_ds[()].tobytes() if typ == "pickle" else targets_ds[()])
+            self.data = pickle.loads(data_ds[()].tobytes() if typ_data == "pickle" else data_ds[()])
+        else:
+            logging_training.info(f"[NebulaPartitionHandler] Using HDF5 array for {self.prefix} data (ON DEMAND)")
+            self.data = data_ds
+
+        # Cargar targets
+        if typ_targets in ("pickle", "pickle_bytes"):
+            logging_training.info(f"[NebulaPartitionHandler] Loading pickled targets for {self.prefix} (targets will be fully loaded into memory)")
+            self.targets = pickle.loads(targets_ds[()].tobytes() if typ_targets == "pickle" else targets_ds[()])
+        else:
+            logging_training.info(f"[NebulaPartitionHandler] Using HDF5 array for {self.prefix} targets (ON DEMAND)")
+            self.targets = targets_ds
+
+        # Determinar longitud
+        if isinstance(self.data, (np.ndarray, list)):
             self.length = len(self.data)
-            self.num_classes = data_ds.attrs.get("num_classes", 0)
-            logging_training.info(f"[NebulaPartitionHandler] [{self.prefix}] Loaded {self.length} samples from {self.file_path} (IN MEMORY, PICKLE)")
-            self.close()  # Ya no necesitamos el archivo abierto
+        else:
+            self.length = len(self.data)
+        self.num_classes = data_ds.attrs.get("num_classes", 0)
+
+        # Si ambos son pickle, puedes cerrar el archivo
+        if (typ_data in ("pickle", "pickle_bytes")) and (typ_targets in ("pickle", "pickle_bytes")):
+            logging_training.info(f"[NebulaPartitionHandler] Cerrando archivo HDF5 tras cargar ambos en memoria (data y targets pickled)")
+            self.close()
             self.file = None
         else:
-            logging_training.info(f"[NebulaPartitionHandler] Using HDF5 array for {self.prefix} (data will be accessed ON DEMAND from disk)")
-            self.data = data_ds
-            self.targets = targets_ds
-            self.length = len(self.data)
-            self.num_classes = self.data.attrs.get("num_classes", 0)
-            logging_training.info(f"[NebulaPartitionHandler] [{self.prefix}] Ready to access {self.length} samples from {self.file_path} (ON DEMAND, HDF5)")
+            logging_training.info(f"[NebulaPartitionHandler] Archivo HDF5 permanecerá abierto para acceso ON DEMAND")
 
     def close(self):
         if self.file is not None:
