@@ -84,7 +84,9 @@
   },
   "training_args": {
     "trainer": "lightning",
-    "epochs": 3
+    "epochs": 3,
+    "communication_mode": "epoch",
+    "batches_per_communication": 1
   },
   "aggregator_args": {
     "algorithm": "FedAvg",

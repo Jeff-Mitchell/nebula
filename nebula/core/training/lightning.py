@@ -138,6 +138,42 @@ class Lightning:
         self.create_logger()
         enable_deterministic(seed=self.config.participant["scenario_args"]["random_seed"])
 
+        # Configuración del modo de comunicación
+        self.communication_mode = "epoch"
+        self.batches_per_communication = 1
+
+        self.experiment_name = "default"
+        self.idx = 0
+        self.log_dir = "logs"
+
+        if config is not None:
+            config_dict = config.participant if hasattr(config, 'participant') else {}
+            if config_dict:
+                self.experiment_name = config_dict.get("scenario_args", {}).get("name", "default")
+                self.idx = config_dict.get("device_args", {}).get("idx", 0)
+                log_dir = config_dict.get("tracking_args", {}).get("log_dir", "logs")
+                self.log_dir = os.path.join(log_dir, self.experiment_name)
+
+                # Configuración del modo de comunicación desde config
+                training_args = config_dict.get("training_args", {})
+                self.communication_mode = training_args.get("communication_mode", "epoch")
+                self.batches_per_communication = training_args.get("batches_per_communication", 1)
+
+                # Configurar semilla aleatoria
+                seed = config_dict.get("scenario_args", {}).get("random_seed")
+                if seed is not None:
+                    enable_deterministic(seed=seed)
+
+        self._logger = None
+        self.create_logger()
+
+        # Configurar el modelo con el modo de comunicación
+        if hasattr(self.model, 'set_communication_config'):
+            self.model.set_communication_config(
+                mode=self.communication_mode,
+                batches_per_communication=self.batches_per_communication
+            )
+
     @property
     def logger(self):
         return self._logger
@@ -184,28 +220,52 @@ class Lightning:
             else:
                 gpu_index = self.config.participant["device_args"]["gpu_id"]
             logging_training.info(f"Creating trainer with accelerator GPU ({gpu_index})")
-            self._trainer = Trainer(
-                callbacks=[ModelSummary(max_depth=1), NebulaProgressBar()],
-                max_epochs=self.epochs,
-                accelerator="gpu",
-                devices=gpu_index,
-                logger=self._logger,
-                enable_checkpointing=False,
-                enable_model_summary=False,
-                # deterministic=True
-            )
+            if self.communication_mode == "epoch":
+                self._trainer = Trainer(
+                    callbacks=[ModelSummary(max_depth=1), NebulaProgressBar()],
+                    max_epochs=self.epochs,
+                    accelerator="gpu",
+                    devices=gpu_index,
+                    logger=self._logger,
+                    enable_checkpointing=False,
+                    enable_model_summary=False,
+                    # deterministic=True
+                )
+            elif self.communication_mode == "batch":
+                self._trainer = Trainer(
+                    callbacks=[ModelSummary(max_depth=1), NebulaProgressBar()],
+                    max_steps=self.batches_per_communication,
+                    accelerator="gpu",
+                    devices=gpu_index,
+                    logger=self._logger,
+                    enable_checkpointing=False,
+                    enable_model_summary=False,
+                    # deterministic=True
+                )
         else:
             logging_training.info("Creating trainer with accelerator CPU")
-            self._trainer = Trainer(
-                callbacks=[ModelSummary(max_depth=1), NebulaProgressBar()],
-                max_epochs=self.epochs,
-                accelerator="cpu",
-                devices="auto",
-                logger=self._logger,
-                enable_checkpointing=False,
-                enable_model_summary=False,
-                # deterministic=True
-            )
+            if self.communication_mode == "epoch":
+                self._trainer = Trainer(
+                    callbacks=[ModelSummary(max_depth=1), NebulaProgressBar()],
+                    max_epochs=self.epochs,
+                    accelerator="cpu",
+                    devices="auto",
+                    logger=self._logger,
+                    enable_checkpointing=False,
+                    enable_model_summary=False,
+                    # deterministic=True
+                )
+            elif self.communication_mode == "batch":
+                self._trainer = Trainer(
+                    callbacks=[ModelSummary(max_depth=1), NebulaProgressBar()],
+                    max_steps=self.batches_per_communication,
+                    accelerator="cpu",
+                    devices="auto",
+                    logger=self._logger,
+                    enable_checkpointing=False,
+                    enable_model_summary=False,
+                    # deterministic=True
+                )
         logging_training.info(f"Trainer strategy: {self._trainer.strategy}")
 
     def validate_neighbour_model(self, neighbour_model_param):

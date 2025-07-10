@@ -108,6 +108,8 @@ class Scenario:
         sar_neighbor_policy,
         sar_training,
         sar_training_policy,
+        communication_mode="epoch",
+        batches_per_communication=1,
         physical_ips=None,
     ):
         """
@@ -160,6 +162,8 @@ class Scenario:
             sar_neighbor_policy (str): Neighbor policy for SAR.
             sar_training (bool): Wheter SAR training is enabled.
             sar_training_policy (str): Training policy for SAR.
+            communication_mode (str): Mode of communication ("epoch" or "batch"). Defaults to "epoch".
+            batches_per_communication (int): Number of batches per communication when in batch mode. Defaults to 1.
             physical_ips (list, optional): List of physical IPs for nodes. Defaults to None.
         """
         self.scenario_title = scenario_title
@@ -198,32 +202,32 @@ class Scenario:
         self.round_frequency = round_frequency
         self.mobile_participants_percent = mobile_participants_percent
         self.additional_participants = additional_participants
-        self.with_trustworthiness = with_trustworthiness
-        self.robustness_pillar = robustness_pillar,
-        self.resilience_to_attacks = resilience_to_attacks,
-        self.algorithm_robustness = algorithm_robustness,
-        self.client_reliability = client_reliability,
-        self.privacy_pillar = privacy_pillar,
-        self.technique = technique,
-        self.uncertainty = uncertainty,
-        self.indistinguishability = indistinguishability,
-        self.fairness_pillar = fairness_pillar,
-        self.selection_fairness = selection_fairness,
-        self.performance_fairness = performance_fairness,
-        self.class_distribution = class_distribution,
-        self.explainability_pillar = explainability_pillar,
-        self.interpretability = interpretability,
-        self.post_hoc_methods = post_hoc_methods,
-        self.accountability_pillar = accountability_pillar,
-        self.factsheet_completeness = factsheet_completeness,
-        self.architectural_soundness_pillar = architectural_soundness_pillar,
-        self.client_management = client_management,
-        self.optimization = optimization,
-        self.sustainability_pillar = sustainability_pillar,
-        self.energy_source = energy_source,
-        self.hardware_efficiency = hardware_efficiency,
-        self.federation_complexity = federation_complexity,
         self.schema_additional_participants = schema_additional_participants
+        self.with_trustworthiness = with_trustworthiness
+        self.robustness_pillar = robustness_pillar
+        self.resilience_to_attacks = resilience_to_attacks
+        self.algorithm_robustness = algorithm_robustness
+        self.client_reliability = client_reliability
+        self.privacy_pillar = privacy_pillar
+        self.technique = technique
+        self.uncertainty = uncertainty
+        self.indistinguishability = indistinguishability
+        self.fairness_pillar = fairness_pillar
+        self.selection_fairness = selection_fairness
+        self.performance_fairness = performance_fairness
+        self.class_distribution = class_distribution
+        self.explainability_pillar = explainability_pillar
+        self.interpretability = interpretability
+        self.post_hoc_methods = post_hoc_methods
+        self.accountability_pillar = accountability_pillar
+        self.factsheet_completeness = factsheet_completeness
+        self.architectural_soundness_pillar = architectural_soundness_pillar
+        self.client_management = client_management
+        self.optimization = optimization
+        self.sustainability_pillar = sustainability_pillar
+        self.energy_source = energy_source
+        self.hardware_efficiency = hardware_efficiency
+        self.federation_complexity = federation_complexity
         self.random_topology_probability = random_topology_probability
         self.with_sa = with_sa
         self.strict_topology = strict_topology
@@ -233,6 +237,8 @@ class Scenario:
         self.sar_neighbor_policy = sar_neighbor_policy
         self.sar_training = sar_training
         self.sar_training_policy = sar_training_policy
+        self.communication_mode = communication_mode
+        self.batches_per_communication = batches_per_communication
         self.physical_ips = physical_ips
 
     def attack_node_assign(
@@ -689,7 +695,6 @@ class ScenarioManagement:
             participant_config["data_args"]["partition_selection"] = self.scenario.partition_selection
             participant_config["data_args"]["partition_parameter"] = self.scenario.partition_parameter
             participant_config["model_args"]["model"] = self.scenario.model
-            participant_config["training_args"]["epochs"] = int(self.scenario.epochs)
             participant_config["device_args"]["accelerator"] = self.scenario.accelerator
             participant_config["device_args"]["gpu_id"] = self.scenario.gpu_id
             participant_config["device_args"]["logging"] = self.scenario.logginglevel
@@ -893,6 +898,13 @@ class ScenarioManagement:
                     + str(self.scenario_name)
                 ).encode()
             ).hexdigest()
+
+            # Add training configuration
+            participant_config["training_args"]["communication_mode"] = self.scenario.communication_mode
+            participant_config["training_args"]["batches_per_communication"] = self.scenario.batches_per_communication
+            participant_config["training_args"]["epochs"] = int(self.scenario.epochs)
+            participant_config["training_args"]["trainer"] = "lightning"  # Ensure this is set explicitly
+
             if participant_config["mobility_args"]["random_geo"]:
                 (
                     participant_config["mobility_args"]["latitude"],

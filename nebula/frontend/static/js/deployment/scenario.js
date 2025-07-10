@@ -54,6 +54,9 @@ const ScenarioManager = (function() {
         // Get attack configuration
         const attackConfig = window.AttackManager.getAttackConfig();
 
+        // Get training configuration
+        const trainingConfig = window.TrainingManager.getTrainingConfig();
+
         return {
             scenario_title: document.getElementById("scenario-title").value,
             scenario_description: document.getElementById("scenario-description").value,
@@ -73,14 +76,11 @@ const ScenarioManager = (function() {
             agg_algorithm: document.getElementById("aggregationSelect").value,
             logginglevel: document.getElementById("loggingLevel").value === "true",
             report_status_data_queue: document.getElementById("reportingSwitch").checked,
-            epochs: parseInt(document.getElementById("epochs").value),
+            epochs: trainingConfig.epochs,
+            communication_mode: trainingConfig.communication_mode,
+            batches_per_communication: trainingConfig.batches_per_communication,
             attack_params: attackConfig,
-            reputation: {
-                enabled: window.ReputationManager.getReputationConfig().enabled || false,
-                metrics: window.ReputationManager.getReputationConfig().metrics || {},
-                initial_reputation: window.ReputationManager.getReputationConfig().initialReputation || 0.2,
-                weighting_factor: window.ReputationManager.getReputationConfig().weightingFactor || "dynamic"
-            },
+            reputation: window.ReputationManager.getReputationConfig(),
             mobility: window.MobilityManager.getMobilityConfig().enabled || false,
             network_simulation: window.MobilityManager.getMobilityConfig().network_simulation || false,
             mobility_type: window.MobilityManager.getMobilityConfig().mobilityType || "random",
@@ -135,7 +135,7 @@ const ScenarioManager = (function() {
         };
     }
 
-    function loadScenarioData(scenario) {
+    function loadScenario(scenario) {
         if (!scenario) return;
 
         // Load basic fields
@@ -247,6 +247,14 @@ const ScenarioManager = (function() {
         document.getElementById("federationArchitecture").dispatchEvent(new Event('change'));
         document.getElementById("datasetSelect").dispatchEvent(new Event('change'));
         document.getElementById("iidSelect").dispatchEvent(new Event('change'));
+
+        // Load training configuration
+        const trainingConfig = {
+            epochs: scenario.epochs,
+            communication_mode: scenario.communication_mode || "epoch",
+            batches_per_communication: scenario.batches_per_communication || 1
+        };
+        window.TrainingManager.setTrainingConfig(trainingConfig);
     }
 
     function saveScenario() {
@@ -266,7 +274,7 @@ const ScenarioManager = (function() {
         }
 
         if (scenariosList.length > 0) {
-            loadScenarioData(scenariosList[actual_scenario]);
+            loadScenario(scenariosList[actual_scenario]);
         } else {
             clearFields();
         }
@@ -353,16 +361,16 @@ const ScenarioManager = (function() {
     function setPhysicalIPs(ipList = []) {
         physical_ips = [...ipList];
     }
- 
+
     function setActualScenario(index) {
         actual_scenario = index;
         if (scenariosList[index]) {
             // Clear the current graph
             window.TopologyManager.clearGraph();
-            
+
             // Load new scenario data
-            loadScenarioData(scenariosList[index]);
-            
+            loadScenario(scenariosList[index]);
+
             // If physical deployment, set physical IPs
             if (scenariosList[index].deployment === 'physical' && scenariosList[index].physical_ips) {
                 window.TopologyManager.setPhysicalIPs(scenariosList[index].physical_ips);
@@ -375,7 +383,7 @@ const ScenarioManager = (function() {
         deleteScenario,
         replaceScenario,
         collectScenarioData,
-        loadScenarioData,
+        loadScenario,
         clearFields,
         updateScenariosPosition,
         initializeScenarios,
@@ -386,7 +394,7 @@ const ScenarioManager = (function() {
             scenariosList = list;
             if (list.length > 0) {
                 actual_scenario = 0;
-                loadScenarioData(list[0]);
+                loadScenario(list[0]);
             }
         },
         setPhysicalIPs
