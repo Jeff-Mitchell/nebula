@@ -693,7 +693,7 @@ async def update_nodes(
         raise HTTPException(status_code=500, detail="Internal server error")
 
     url = (
-        f"http://{os.environ['NEBULA_CONTROLLER_HOST']}_nebula-frontend/platform/dashboard/{scenario_name}/node/update"
+        f"http://{os.environ['NEBULA_ENV_TAG']}_{os.environ['NEBULA_PREFIX_TAG']}_{os.environ['NEBULA_USER_TAG']}_nebula-frontend/platform/dashboard/{scenario_name}/node/update"
     )
 
     config["timestamp"] = str(timestamp)
@@ -728,7 +728,7 @@ async def node_done(
 
     Returns the response from the frontend or raises an HTTPException if it fails.
     """
-    url = f"http://{os.environ['NEBULA_CONTROLLER_HOST']}_nebula-frontend/platform/dashboard/{scenario_name}/node/done"
+    url = f"http://{os.environ['NEBULA_ENV_TAG']}_{os.environ['NEBULA_PREFIX_TAG']}_{os.environ['NEBULA_USER_TAG']}_nebula-frontend/platform/dashboard/{scenario_name}/node/done"
 
     data = await request.json()
 
