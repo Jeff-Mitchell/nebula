@@ -121,11 +121,9 @@ class NebulaPartitionHandler(Dataset, ABC):
 
     def __getitem__(self, idx):
         if isinstance(self.data, np.ndarray) or isinstance(self.data, list):
-            logging_training.debug(f"[NebulaPartitionHandler] __getitem__ (IN MEMORY): idx={idx}")
             data = self.data[idx]
             target = self.targets[idx] if self.targets is not None else None
         else:
-            logging_training.debug(f"[NebulaPartitionHandler] __getitem__ (ON DEMAND): idx={idx}")
             data = self.data[idx]
             target = self.targets[idx] if self.targets is not None else None
         return data, target

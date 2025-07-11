@@ -771,6 +771,10 @@ class Engine:
             )
             # await self.aggregator.reset()
             self.trainer.on_round_end()
+            try:
+                await self.reporter.send_partial_metrics(round_number=self.round)
+            except Exception as e:
+                logging.exception(f"Error sending partial metrics for round {self.round}: {e}")
             self.round += 1
             self.config.participant["federation_args"]["round"] = (
                 self.round

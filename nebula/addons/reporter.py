@@ -269,6 +269,58 @@ class Reporter:
             logging.exception("Could not contact controller for final metrics")
             return False
 
+    async def send_partial_metrics(self, round_number=None) -> bool:
+        """
+        Sends the metrics of the current round to the controller, overwriting the previous ones.
+        If round_number is not specified, uses the current round of the trainer.
+        """
+        latest_dir = await asyncio.to_thread(self.__get_latest_metrics_dir)
+        if latest_dir is None:
+            logging.warning("No metrics directory found in %s", self._LOGS_DIR)
+            return False
+
+        # If there are subfolders by participant, search the one for this node
+        participant_id = self.config.participant["device_args"]["idx"]
+        participant_dir = latest_dir / f"participant_{participant_id}"
+        metrics_dir = participant_dir if participant_dir.is_dir() else latest_dir
+
+        # If there are subfolders by round, search the one for the current round
+        if round_number is None:
+            round_number = self.trainer.get_round() if hasattr(self.trainer, 'get_round') else None
+        round_dir = metrics_dir / f"round_{round_number}" if round_number is not None else metrics_dir
+        dir_to_send = round_dir if round_dir.is_dir() else metrics_dir
+
+        tar_bytes = await asyncio.to_thread(self.__make_tar_gz, dir_to_send)
+        b64_data  = base64.b64encode(tar_bytes).decode()
+
+        payload = {
+            "idx"  : self.config.participant["device_args"]["idx"],
+            "ip"   : self.config.participant["network_args"]["ip"],
+            "archive": True,
+            "data" : b64_data,
+        }
+
+        url = (f"http://{self.config.participant['scenario_args']['controller']}"
+               f"/nodes/{self.config.participant['scenario_args']['name']}/metrics")
+        headers = {
+            "Content-Type": "application/json",
+            "User-Agent"  : f"NEBULA Participant {self.config.participant['device_args']['idx']}",
+        }
+
+        logging.info(f"Sending partial metrics for round {round_number} as tar.gz ({len(tar_bytes)//1024} KiB)…")
+        try:
+            async with aiohttp.ClientSession() as session:
+                async with session.post(url, data=json.dumps(payload), headers=headers) as resp:
+                    if resp.status != 200:
+                        logging.error("Controller responded %s – partial metrics discarded", resp.status)
+                        logging.debug(await resp.text())
+                        return False
+                    logging.info("Partial metrics sent OK")
+                    return True
+        except aiohttp.ClientError:
+            logging.exception("Could not contact controller for partial metrics")
+            return False
+
     # Directory utilities 
     @classmethod
     def __get_latest_metrics_dir(cls):
