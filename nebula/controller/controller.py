@@ -393,8 +393,9 @@ async def stop_scenario(
         if username:
             user = await get_user_info(username)
             if user:
-                await REDIS_POOL.delete(f"scenarios:{user['user']}:{user['role']}")
-        await REDIS_POOL.delete(f"scenario:{scenario_name}")
+                # await REDIS_POOL.delete(f"scenarios:{user['user']}:{user['role']}")
+                pass
+        # await REDIS_POOL.delete(f"scenario:{scenario_name}")
     except Exception as e:
         logging.exception(f"Error setting scenario {scenario_name} to finished: {e}")
         raise HTTPException(status_code=500, detail="Internal server error")
@@ -424,8 +425,9 @@ async def remove_scenario(
         if username:
             user = await get_user_info(username)
             if user:
-                await REDIS_POOL.delete(f"scenarios:{user['user']}:{user['role']}")
-        await REDIS_POOL.delete(f"scenario:{scenario_name}")
+                # await REDIS_POOL.delete(f"scenarios:{user['user']}:{user['role']}")
+                pass
+        # await REDIS_POOL.delete(f"scenario:{scenario_name}")
 
     except Exception as e:
         logging.exception(f"Error removing scenario {scenario_name}: {e}")
@@ -453,12 +455,13 @@ async def get_scenarios(
 
     try:
         # Try to get from cache first
-        cached_scenarios = await REDIS_POOL.get(f"scenarios:{user}:{role}")
-        if cached_scenarios:
-            scenarios = json.loads(cached_scenarios)
-        else:
-            scenarios = await get_all_scenarios_and_check_completed(username=user, role=role)
-            await REDIS_POOL.set(f"scenarios:{user}:{role}", json.dumps(scenarios), ex=3600) # Cache for 1 hour
+        # cached_scenarios = await REDIS_POOL.get(f"scenarios:{user}:{role}")
+        # if cached_scenarios:
+        #     scenarios = json.loads(cached_scenarios)
+        # else:
+        #     scenarios = await get_all_scenarios_and_check_completed(username=user, role=role)
+        #     await REDIS_POOL.set(f"scenarios:{user}:{role}", json.dumps(scenarios), ex=3600) # Cache for 1 hour
+        scenarios = await get_all_scenarios_and_check_completed(username=user, role=role)
 
         if role == "admin":
             scenario_running = await get_running_scenario()
@@ -502,8 +505,8 @@ async def update_scenario(
     try:
         await scenario_update_record(scenario_name, start_time, end_time, scenario, status, username)
         # Invalidate caches
-        await REDIS_POOL.delete(f"scenarios:{username}:{role}")
-        await REDIS_POOL.delete(f"scenario:{scenario_name}")
+        # await REDIS_POOL.delete(f"scenarios:{username}:{role}")
+        # await REDIS_POOL.delete(f"scenario:{scenario_name}")
     except Exception as e:
         logging.exception(f"Error updating scenario {scenario_name}: {e}")
         raise HTTPException(status_code=500, detail="Internal server error")
@@ -604,13 +607,14 @@ async def get_scenario_by_name(
     from nebula.controller.database import get_scenario_by_name, REDIS_POOL
 
     try:
-        cached_scenario = await REDIS_POOL.get(f"scenario:{scenario_name}")
-        if cached_scenario:
-            scenario = json.loads(cached_scenario)
-        else:
-            scenario = await get_scenario_by_name(scenario_name)
-            if scenario:
-                await REDIS_POOL.set(f"scenario:{scenario_name}", json.dumps(scenario), ex=3600) # Cache for 1 hour
+        # cached_scenario = await REDIS_POOL.get(f"scenario:{scenario_name}")
+        # if cached_scenario:
+        #     scenario = json.loads(cached_scenario)
+        # else:
+        #     scenario = await get_scenario_by_name(scenario_name)
+        #     if scenario:
+        #         await REDIS_POOL.set(f"scenario:{scenario_name}", json.dumps(scenario), ex=3600) # Cache for 1 hour
+        scenario = await get_scenario_by_name(scenario_name)
     except Exception as e:
         logging.exception(f"Error obtaining scenario {scenario_name}: {e}")
         raise HTTPException(status_code=500, detail="Internal server error")
