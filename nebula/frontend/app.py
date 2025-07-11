@@ -2153,7 +2153,8 @@ async def assign_available_gpu(scenario_data, role):
             running_gpus = []
             # Obtain associated gpus of the running scenarios
             for scenario in running_scenarios:
-                scenario_gpus = json.loads(scenario["gpu_id"])
+                config = json.loads(scenario["config"])
+                scenario_gpus = config.get("gpu_id", [])
                 # Obtain the list of gpus in use without duplicates
                 for gpu in scenario_gpus:
                     if gpu not in running_gpus:
