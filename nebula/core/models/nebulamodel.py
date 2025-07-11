@@ -200,6 +200,10 @@ class NebulaModel(pl.LightningModule, ABC):
         self._current_loss = -1
         self._optimizer = None
 
+        self.communication_mode = None  # Se establecerá desde el trainer
+        self.current_batch_count = 0
+        self.batches_per_communication = 1  # Valor por defecto
+
     def set_communication_manager(self, communication_manager):
         self.communication_manager = communication_manager
 
@@ -251,15 +255,29 @@ class NebulaModel(pl.LightningModule, ABC):
         }
 
     def training_step(self, batch, batch_idx):
-        """
-        Training step for the model.
-        Args:
-            batch:
-            batch_id:
+        """Training step."""
+        loss = self.step(batch, batch_idx=batch_idx, phase="Train")
+        self.loss = loss
 
-        Returns:
+        # Si estamos en modo batch, verificar si es momento de comunicar
+        if hasattr(self, 'communication_mode') and self.communication_mode == 'batch':
+            self.current_batch_count += 1
+            if self.current_batch_count >= self.batches_per_communication:
+                self.current_batch_count = 0
+
+        return loss
+
+    def set_communication_config(self, mode='epoch', batches_per_communication=1):
         """
-        return self.step(batch, batch_idx=batch_idx, phase="Train")
+        Configura el modo de comunicación del modelo.
+
+        Args:
+            mode (str): 'epoch' o 'batch'
+            batches_per_communication (int): Número de batches entre comunicaciones
+        """
+        self.communication_mode = mode
+        self.batches_per_communication = batches_per_communication
+        self.current_batch_count = 0
 
     def on_train_start(self):
         logging_training.info(f"{'=' * 10} [Training] Started {'=' * 10}")
@@ -306,7 +324,7 @@ class NebulaModel(pl.LightningModule, ABC):
         loss = self.criterion(y_pred, y)
         y_pred_classes = torch.argmax(y_pred, dim=1)
         accuracy = torch.mean((y_pred_classes == y).float())
-        
+
         if dataloader_idx == 0:
             self.log(f"val_loss", loss, on_epoch=True, prog_bar=False)
             self.log(f"val_accuracy", accuracy, on_epoch=True, prog_bar=False)
