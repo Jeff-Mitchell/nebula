@@ -54,10 +54,17 @@ const ScenarioManager = (function() {
         // Get attack configuration
         const attackConfig = window.AttackManager.getAttackConfig();
 
+        const deploymentType = document.querySelector('input[name="deploymentRadioOptions"]:checked').value;
+        let use_quantization = false;
+        if (deploymentType === 'physical') {
+            const quantSwitch = document.getElementById('quantizationSwitch');
+            use_quantization = quantSwitch && quantSwitch.checked;
+        }
+
         return {
             scenario_title: document.getElementById("scenario-title").value,
             scenario_description: document.getElementById("scenario-description").value,
-            deployment: document.querySelector('input[name="deploymentRadioOptions"]:checked').value,
+            deployment: deploymentType,
             federation: document.getElementById("federationArchitecture").value,
             rounds: parseInt(document.getElementById("rounds").value),
             topology: topologyType,
@@ -131,7 +138,10 @@ const ScenarioManager = (function() {
             schema_additional_participants: document.getElementById("schemaAdditionalParticipantsSelect").value || "random",
             accelerator: "cpu",
             gpu_id: [],
-            physical_ips: physical_ips
+            physical_ips: physical_ips,
+            training_args: {
+                use_quantization: deploymentType === 'physical' ? use_quantization : undefined
+            }
         };
     }
 

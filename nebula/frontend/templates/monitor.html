@@ -58,8 +58,10 @@
                                 <i class="fa fa-stop-circle me-2"></i>Stop scenario
                             </a>
                             {% endif %}
-                            <a href="{{ url_for('nebula_dashboard_statistics', scenario_name=scenario.name) }}"
-                                class="btn btn-dark w-100 mb-2">
+                            <a id="real_time_metrics_btn" href="{{ url_for('nebula_dashboard_statistics', scenario_name=scenario.name) }}"
+                                class="btn btn-dark w-100 mb-2" 
+                                data-scenario-name="{{ scenario.name }}"
+                                data-scenario-deployment="{{ scenario.deployment if scenario.deployment else 'unknown' }}">
                                 <i class="fa fa-bar-chart me-2"></i>Real-time metrics
                             </a>
                             <div class="row g-2">
@@ -303,6 +305,79 @@
 
 <!-- Load monitor.js -->
 <script type="module" src="{{ url_for('static', path='js/monitor/monitor.js') }}"></script>
+
+<!-- Physical metrics download handler -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const metricsBtn = document.getElementById('real_time_metrics_btn');
+    
+    if (metricsBtn) {
+        metricsBtn.addEventListener('click', async function(e) {
+            const scenarioName = this.getAttribute('data-scenario-name');
+            const deployment = this.getAttribute('data-scenario-deployment');
+            
+            // Si es un escenario físico, usar la nueva lógica
+            if (deployment === 'physical') {
+                e.preventDefault();
+                
+                // Cambiar el botón a estado de loading
+                const originalText = this.innerHTML;
+                this.innerHTML = '<i class="fa fa-spinner fa-spin me-2"></i>Downloading metrics...';
+                this.disabled = true;
+                
+                try {
+                    // Hacer la petición de descarga de métricas
+                    const response = await fetch(`/platform/api/physical/metrics/download-scenario/${scenarioName}`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        }
+                    });
+                    
+                    const result = await response.json();
+                    
+                    if (response.ok) {
+                        // Mostrar mensaje de éxito
+                        if (typeof showAlert === 'function') {
+                            showAlert('success', `Metrics downloaded successfully! ${result.successful_downloads} files processed.`);
+                        }
+                        
+                        // Redirigir a la visualización de métricas después de un breve delay
+                        setTimeout(() => {
+                            window.location.href = `/platform/dashboard/${scenarioName}/statistics/`;
+                        }, 1500);
+                    } else {
+                        // Mostrar error
+                        if (typeof showAlert === 'function') {
+                            showAlert('error', `Error downloading metrics: ${result.error || 'Unknown error'}`);
+                        } else {
+                            alert(`Error downloading metrics: ${result.error || 'Unknown error'}`);
+                        }
+                        
+                        // Restaurar el botón
+                        this.innerHTML = originalText;
+                        this.disabled = false;
+                    }
+                } catch (error) {
+                    console.error('Error downloading metrics:', error);
+                    
+                    // Mostrar error
+                    if (typeof showAlert === 'function') {
+                        showAlert('error', 'Failed to download metrics. Please try again.');
+                    } else {
+                        alert('Failed to download metrics. Please try again.');
+                    }
+                    
+                    // Restaurar el botón
+                    this.innerHTML = originalText;
+                    this.disabled = false;
+                }
+            }
+            // Si no es físico, el comportamiento normal (enlace directo) se mantiene
+        });
+    }
+});
+</script>
 
 {% endif %}
 {% endblock %}

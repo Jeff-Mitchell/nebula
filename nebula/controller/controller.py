@@ -12,6 +12,7 @@ from typing import Annotated
 import aiohttp
 import psutil
 import uvicorn
+import shutil
 import inspect
 from fastapi import Body, FastAPI, Request, status, HTTPException, Path, File, UploadFile
 from fastapi.concurrency import asynccontextmanager
@@ -20,6 +21,10 @@ from nebula.controller.database import scenario_set_all_status_to_finished, scen
 from nebula.controller.http_helpers import remote_get, remote_post_form
 from nebula.utils import DockerUtils
 from nebula.controller.scenarios import Scenario
+
+# --- Metrics listing and download endpoints ---
+import pathlib
+from fastapi.responses import FileResponse
 
 
 # Setup controller logger
@@ -572,6 +577,32 @@ async def get_running_scenario(get_all: bool = False):
         raise HTTPException(status_code=500, detail="Internal server error")
 
 
+@app.get("/scenarios/list")
+async def list_scenarios():
+    """
+    Devuelve todos los escenarios con su nombre y estado (al menos 'running').
+    """
+    import logging
+    from nebula.controller.database import get_all_scenarios
+    try:
+        # Para el polling, no importa el usuario ni el rol, así que devolvemos todos
+        scenarios = get_all_scenarios(username=None, role="admin")
+        # Convertir a lista de dicts simples
+        scenarios_list = []
+        for s in scenarios:
+            # s puede ser sqlite3.Row, convertir a dict
+            d = dict(s)
+            scenarios_list.append({
+                "name": d.get("name"),
+                "status": d.get("status")
+            })
+        logging.info(f"[SCENARIOS-LIST] Devolviendo {len(scenarios_list)} escenarios")
+        return {"scenarios": scenarios_list}
+    except Exception as e:
+        logging.exception(f"[SCENARIOS-LIST] Error: {e}")
+        return {"scenarios": []}
+
+
 @app.get("/scenarios/check/{role}/{scenario_name}")
 async def check_scenario(
     role: Annotated[str, Path(regex="^[a-zA-Z0-9_-]+$", min_length=1, max_length=50, description="Valid role")],
@@ -1032,7 +1063,93 @@ async def get_physical_node_state(ip: str):
         # Network errors, timeouts, DNS failures, …
         return {"running": False, "error": str(exc)}
  
- 
+@app.post("/nodes/{scenario_name}/metrics")
+async def save_node_metrics(
+    scenario_name: Annotated[
+        str, Path(regex="^[a-zA-Z0-9_-]+$", min_length=1, max_length=50)
+    ],
+    request: Request,
+):
+    """
+    Receives metrics from a node and saves them to disk.
+
+    • New format (preferred):
+        {
+            "idx": <int>,
+            "ip":  "<ip>",
+            "archive": true,
+            "data": "<base64-tar.gz>"
+        }
+        →  ./metrics/<ip>_<timestamp>.tar.gz      (not extracted)
+
+    • Old format (optionally compressed JSON):
+        {
+            "idx": <int>,
+            "ip": "<ip>",
+            "metrics": …,
+            "compressed": <bool>
+        }
+        →  ./metrics/<ip>_<timestamp>.json
+    """
+    import base64, gzip, io, json, pathlib, re, datetime, logging
+
+    try:
+        payload = await request.json()
+        ip  = payload.get("ip")
+        idx = payload.get("idx")
+
+        if not ip:
+            raise ValueError("payload must include 'ip'")
+
+        # ────────────────  Destination folder  ────────────────
+        metrics_root = pathlib.Path(__file__).parent / "metrics"
+        metrics_root.mkdir(exist_ok=True)
+
+        safe_ip = re.sub(r"[^0-9a-zA-Z._-]", "_", ip)        # ":" → "_"
+        ts      = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
+
+        # ────────────────  NEW FORMAT → tar.gz  ────────────────
+        if payload.get("archive"):
+            b64_data = payload.get("data")
+            if not b64_data:
+                raise ValueError("'data' field missing for archive payload")
+
+            outfile = metrics_root / f"{safe_ip}_{ts}.tar.gz"
+            outfile.write_bytes(base64.b64decode(b64_data))
+
+            # --- Guardar mapeo filename → idx, ip ---
+            mapfile = metrics_root / f"{scenario_name}_metrics_map.json"
+            if mapfile.exists():
+                with open(mapfile, "r") as f:
+                    metrics_map = json.load(f)
+            else:
+                metrics_map = {}
+            metrics_map[outfile.name] = {"idx": idx, "ip": ip}
+            with open(mapfile, "w") as f:
+                json.dump(metrics_map, f)
+
+            logging.info("📦 Node %s (%s) tarball metrics saved to %s", idx, ip, outfile)
+            return {"stored": True, "file": str(outfile), "archive": True}
+
+        # ────────────────  OLD FORMAT → json  ────────────────
+        raw = payload["metrics"]
+        if payload.get("compressed"):
+            with gzip.GzipFile(fileobj=io.BytesIO(base64.b64decode(raw)), mode="rb") as gz:
+                metrics_json = gz.read().decode()
+        else:
+            metrics_json = raw if isinstance(raw, str) else json.dumps(raw)
+
+        outfile = metrics_root / f"{safe_ip}_{ts}.json"
+        outfile.write_text(metrics_json, encoding="utf-8")
+
+        logging.info("📥 Node %s (%s) metrics saved to %s", idx, ip, outfile)
+        return {"stored": True, "file": str(outfile), "archive": False}
+
+    except Exception as e:
+        logging.exception("Error while processing metrics: %s", e)
+        raise HTTPException(status_code=400, detail=str(e))
+     
+
 # ──────────────────────────────────────────────────────────────
 # Physical · aggregate state for an entire scenario
 # ──────────────────────────────────────────────────────────────
@@ -1173,6 +1290,42 @@ async def verify_user_controller(user: str = Body(...), password: str = Body(...
     except Exception as e:
         logging.exception(f"Error verifying user: {e}")
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Error verifying user: {e}")
+
+
+# --- Metrics listing and download endpoints ---
+@app.get("/metrics/list/{scenario_name}")
+async def list_metrics_files(scenario_name: str):
+    """
+    Lists all .tar.gz metrics files (ignores scenario_name for now).
+    """
+    metrics_root = pathlib.Path(__file__).parent / "metrics"
+    if not metrics_root.exists():
+        return {"files": []}
+    files = [f.name for f in metrics_root.glob("*.tar.gz") if f.is_file()]
+    return {"files": files}
+
+@app.get("/metrics/download/{scenario_name}/{filename}")
+async def download_metrics_file(scenario_name: str, filename: str):
+    """
+    Serves a .tar.gz metrics file for a given scenario.
+    """
+    metrics_root = pathlib.Path(__file__).parent / "metrics"
+    file_path = metrics_root / filename
+    if not file_path.exists():
+        raise HTTPException(status_code=404, detail="File not found")
+    return FileResponse(str(file_path), media_type="application/gzip", filename=filename)
+
+# --- Nuevo endpoint: devuelve el mapeo de métricas para un escenario ---
+@app.get("/metrics/map/{scenario_name}")
+async def get_metrics_map(scenario_name: str):
+    import pathlib, json
+    metrics_root = pathlib.Path(__file__).parent / "metrics"
+    mapfile = metrics_root / f"{scenario_name}_metrics_map.json"
+    if not mapfile.exists():
+        return {"map": {}}
+    with open(mapfile, "r") as f:
+        metrics_map = json.load(f)
+    return {"map": metrics_map}
 
 
 if __name__ == "__main__":

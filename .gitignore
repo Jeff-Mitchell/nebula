@@ -158,3 +158,12 @@ data/
 data-analysis/
 network-analysis/
 docker-compose.yml
+
+# --- NEBULA: Ignore generated metrics and device uploads ---
+# Ignore all contents of metrics folders, but not the folders themselves
+nebula/frontend/config/metrics/*
+nebula/controller/metrics/*
+# Ignore compressed files from devices (anywhere in the repo)
+*.tar.gz
+*.tgz
+*.zip

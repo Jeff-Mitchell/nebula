@@ -699,7 +699,7 @@ class ScenarioManagement:
             participant_config["training_args"]["epochs"] = int(self.scenario.epochs)
             participant_config["device_args"]["accelerator"] = self.scenario.accelerator
             participant_config["device_args"]["gpu_id"] = self.scenario.gpu_id
-            participant_config["device_args"]["logging"] = self.scenario.logginglevel
+            participant_config["device_args"]["logging"] = True
             participant_config["aggregator_args"]["algorithm"] = self.scenario.agg_algorithm
             # To be sure that benign nodes have no attack parameters
             if node_config["malicious"]:

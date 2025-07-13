@@ -1,5 +1,49 @@
 {% extends "layout.html" %}
 {% block body %}
+<!-- Botón para descargar métricas físicas si aplica -->
+{% if scenario_name and deployment_type == 'physical' %}
+<!-- El botón ahora está en la barra superior -->
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const btn = document.getElementById('download-metrics-btn-navbar');
+        if (btn) {
+            btn.addEventListener('click', async function(e) {
+                e.preventDefault();
+                const originalText = btn.innerHTML;
+                btn.innerHTML = '<i class="fa fa-spinner fa-spin me-2"></i>Descargando...';
+                btn.classList.add('disabled');
+                try {
+                    const response = await fetch(`/platform/api/physical/metrics/download-scenario/{{ scenario_name }}`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' }
+                    });
+                    const result = await response.json();
+                    if (response.ok) {
+                        if (typeof showAlert === 'function') {
+                            showAlert('success', `¡Métricas descargadas! ${result.successful_downloads} archivos procesados.`);
+                        } else {
+                            alert('¡Métricas descargadas correctamente!');
+                        }
+                        setTimeout(() => { window.location.reload(); }, 1200);
+                    } else {
+                        if (typeof showAlert === 'function') {
+                            showAlert('error', `Error al descargar métricas: ${result.error || 'Error desconocido'}`);
+                        } else {
+                            alert(`Error al descargar métricas: ${result.error || 'Error desconocido'}`);
+                        }
+                        btn.innerHTML = originalText;
+                        btn.classList.remove('disabled');
+                    }
+                } catch (e) {
+                    alert('Error de red al descargar métricas.');
+                    btn.innerHTML = originalText;
+                    btn.classList.remove('disabled');
+                }
+            });
+        }
+    });
+</script>
+{% endif %}
 <!-- Print statistics_url using jinja2 -->
 <!-- {{ statistics_url | safe }} -->
 <iframe src="{{ statistics_url | safe }}" width="100%" height="100%" style="border: none; overflow: hidden"></iframe>

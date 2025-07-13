@@ -24,6 +24,7 @@ const UIControls = (function() {
         // Initialize help icons
         window.HelpContent.initializePopovers();
         setupDeploymentRadios();
+        setupQuantizationSwitch();
     }
 
     function setupModeButton() {
@@ -736,6 +737,32 @@ const UIControls = (function() {
                 }
             });
         });
+    }
+
+    function setupQuantizationSwitch() {
+        const radios = document.querySelectorAll('input[name="deploymentRadioOptions"]');
+        const quantSwitchContainer = document.getElementById('quantization-switch-container');
+        const quantSwitch = document.getElementById('quantizationSwitch');
+        if (!quantSwitchContainer || !quantSwitch) return;
+
+        function toggleQuantizationSwitch() {
+            const sel = document.querySelector('input[name="deploymentRadioOptions"]:checked');
+            if (sel && sel.value === 'physical') {
+                quantSwitchContainer.style.display = '';
+                quantSwitch.checked = false; // reset to default off
+            } else {
+                quantSwitchContainer.style.display = 'none';
+                quantSwitch.checked = false;
+            }
+        }
+        radios.forEach(r => r.addEventListener('change', toggleQuantizationSwitch));
+        toggleQuantizationSwitch();
+
+        // Initialize tooltip
+        const quantInfoIcon = quantSwitchContainer.querySelector('i[data-bs-toggle="tooltip"]');
+        if (quantInfoIcon) {
+            new bootstrap.Tooltip(quantInfoIcon);
+        }
     }
 
     return {

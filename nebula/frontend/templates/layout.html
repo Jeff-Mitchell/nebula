@@ -242,6 +242,13 @@
 
                     <li style="display: flex"><a class="getstarted scrollto"
                             href="{{ url_for('nebula_dashboard') }}">Dashboard</a></li>
+                    {% if scenario_name and deployment_type == 'physical' and request.path.startswith('/platform/dashboard/' + scenario_name + '/statistics') %}
+                    <li style="display: flex">
+                        <a id="download-metrics-btn-navbar" class="getstarted scrollto" href="#" title="Descarga las métricas físicas del escenario actual">
+                            <i class="fa fa-download me-2"></i>Descargar métricas físicas
+                        </a>
+                    </li>
+                    {% endif %}
                 </ul>
                 <i class="bi bi-list mobile-nav-toggle"></i>
             </nav>

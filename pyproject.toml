@@ -147,6 +147,7 @@ frontend = [
     "tensorboardx==2.6.2.2",
     "uvicorn==0.30.6",
     "wheel==0.44.0",
+    "aiofiles",
 ]
 
 [build-system]

@@ -10,12 +10,17 @@ import sys
 import time
 import zipfile
 from urllib.parse import urlencode
+import shutil
+import tarfile
+import re
 
 import aiohttp
 import requests
 from dotenv import load_dotenv
 from aiohttp import ClientConnectorError
 from aiohttp.client_exceptions import ClientError
+from pathlib import Path
+import aiofiles
 
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", ".."))
@@ -516,14 +521,14 @@ async def frontend_discover_vpn(session: dict = Depends(get_session)):
  
     # 1) Enforce authentication
     if "user" not in session:
-        # If there’s no user in session, return HTTP 401 Unauthorized
+        # If there's no user in session, return HTTP 401 Unauthorized
         raise HTTPException(status_code=401, detail="Login required")
  
     # 2) Build the controller URL (using host/port from settings)
     url = f"http://{settings.controller_host}:{settings.controller_port}/discover-vpn"
  
     try:
-        # 3) Call the controller’s /discover-vpn endpoint
+        # 3) Call the controller's /discover-vpn endpoint
         data = await controller_get(url)
  
         # 4) Return whatever JSON the controller gave us
@@ -1904,19 +1909,27 @@ else:
 async def nebula_dashboard_statistics(request: Request, scenario_name: str = None):
     """
     Render the TensorBoard statistics page for all experiments or filter by scenario.
-
-    Parameters:
-        request (Request): FastAPI request object.
-        scenario_name (str, optional): Scenario name to filter statistics by; defaults to None.
-
-    Returns:
-        TemplateResponse: Rendered 'statistics.html' with the appropriate URL parameter for TensorBoard.
     """
     statistics_url = "/platform/statistics/"
+    deployment_type = None
     if scenario_name is not None:
-        statistics_url += f"?smoothing=0&runFilter={scenario_name}"
-
-    return templates.TemplateResponse("statistics.html", {"request": request, "statistics_url": statistics_url})
+        # Intentar cargar la configuración del escenario para discriminar si es físico
+        import os, json
+        config_dir = os.environ.get("NEBULA_CONFIG_DIR")
+        json_path = os.path.join(config_dir, scenario_name, "scenario.json")
+        try:
+            with open(json_path) as file:
+                scenario_data = json.load(file)
+            deployment_type = scenario_data.get("deployment", None)
+            if deployment_type is None:
+                deployment_type = scenario_data.get("scenario_args", {}).get("deployment", None)
+        except Exception as e:
+            logging.warning(f"No se pudo leer la configuración de {scenario_name}: {e}")
+        if deployment_type == "physical":
+            statistics_url += f"?logdir=physical/{scenario_name}&runFilter={scenario_name}"
+        else:
+            statistics_url += f"?runFilter={scenario_name}"
+    return templates.TemplateResponse("statistics.html", {"request": request, "statistics_url": statistics_url, "scenario_name": scenario_name, "deployment_type": deployment_type})
 
 
 @app.api_route("/platform/statistics/", methods=["GET", "POST"])
@@ -2280,6 +2293,290 @@ async def nebula_dashboard_deployment_run(
     )
     return RedirectResponse(url="/platform/dashboard", status_code=303)
     # return Response(content="Success", status_code=200)
+
+
+@app.post("/platform/api/physical/metrics/download/{filename}", response_class=JSONResponse)
+async def download_and_extract_physical_metrics(filename: str):
+    """
+    Descarga un archivo .tar.gz de métricas físicas desde el controller, lo guarda en frontend/config/metrics/physical,
+    lo descomprime directamente en frontend/config/metrics/physical/<scenario_name>/ y devuelve el path local donde se extrajo.
+    """
+    import aiohttp
+    from pathlib import Path
+    import os
+    import re
+
+    # Configuración de rutas
+    metrics_dir = Path(__file__).parent / "config" / "metrics" / "physical"
+    metrics_dir.mkdir(parents=True, exist_ok=True)
+
+    # Extraer información del nombre del archivo: <ip>_<idx>_<timestamp>.tar.gz
+    match = re.match(r"^([\d.]+)_(\d+)_(\d{8}-\d{6})\.tar\.gz$", filename)
+    if not match:
+        return JSONResponse(
+            status_code=400,
+            content={"error": f"Invalid filename format: {filename}. Expected: <ip>_<idx>_<timestamp>.tar.gz"}
+        )
+    
+    ip, participant_idx, timestamp = match.groups()
+    
+    # Usar el nombre real del escenario
+    scenario_name = f"nebula_DFL_{timestamp}"
+    scenario_root = metrics_dir / scenario_name
+    scenario_root.mkdir(parents=True, exist_ok=True)
+
+    # Configuración del controller
+    controller_host = settings.controller_host or "controller"
+    controller_port = settings.controller_port or 5050
+    download_url = f"http://{controller_host}:{controller_port}/metrics/download/{filename}"
+
+    try:
+        # Descargar archivo desde el controller
+        async with aiohttp.ClientSession() as session:
+            async with session.get(download_url) as resp:
+                if resp.status != 200:
+                    return JSONResponse(
+                        status_code=resp.status,
+                        content={"error": f"Failed to download file from controller: HTTP {resp.status}"}
+                    )
+                
+                # Guardar archivo temporalmente
+                temp_file = metrics_dir / filename
+                with open(temp_file, 'wb') as f:
+                    f.write(await resp.read())
+
+        # Descomprimir archivo directamente en el directorio del escenario
+        import tarfile
+        logging.info(f"[EXTRACT-DEBUG] filename={filename}, participant_idx={participant_idx}, scenario_root={scenario_root}")
+        with tarfile.open(temp_file, 'r:gz') as tar:
+            safe_extract_by_participant(tar, path=scenario_root, participant_idx=participant_idx)
+        logging.info(f"[EXTRACT-DEBUG] Extracción finalizada para {filename} en participant_{participant_idx}")
+
+        # Depuración: listar todos los archivos en scenario_root
+        logging.info(f"[PHYSICAL METRICS] Archivos en {scenario_root}: {list(scenario_root.glob('*'))}")
+
+        # Limpiar archivo temporal
+        temp_file.unlink()
+
+        return {
+            "filename": filename,
+            "extracted_path": str(scenario_root),
+            "scenario_name": scenario_name,
+            "participant_idx": participant_idx,
+            "ip": ip,
+            "timestamp": timestamp
+        }
+
+    except Exception as e:
+        # Limpiar archivo temporal si existe
+        temp_file = metrics_dir / filename
+        if temp_file.exists():
+            temp_file.unlink()
+        
+        return JSONResponse(
+            status_code=500,
+            content={"error": f"Failed to process file: {str(e)}"}
+        )
+
+
+@app.post("/platform/api/physical/metrics/download-scenario/{scenario_name}", response_class=JSONResponse)
+async def download_and_extract_scenario_metrics(scenario_name: str):
+    import aiohttp
+    logging.info(f"Download-scenario called for: {scenario_name}")
+    controller_host = settings.controller_host or "controller"
+    controller_port = settings.controller_port or 5050
+    list_url = f"http://{controller_host}:{controller_port}/metrics/list/{scenario_name}"
+    logging.info(f"Calling controller at: {list_url}")
+    try:
+        async with aiohttp.ClientSession() as session:
+            async with session.get(list_url) as resp:
+                logging.info(f"Controller responded: {resp.status}")
+                try:
+                    scenario_metrics = await resp.json()
+                    print(f"[DEBUG] Controller response: {scenario_metrics}")
+                except Exception as e:
+                    logging.info(f"Error parsing JSON from controller: {e}")
+                    scenario_metrics = None
+                if resp.status != 200:
+                    return JSONResponse(
+                        status_code=resp.status, 
+                        content={"error": f"Controller responded {resp.status} when listing metrics"}
+                    )
+    except Exception as e:
+        logging.info(f"Exception connecting to controller: {e}")
+        return JSONResponse(
+            status_code=500, 
+            content={"error": f"Failed to connect to controller: {str(e)}"}
+        )
+    if not scenario_metrics or not scenario_metrics.get("files"):
+        logging.info(f"No metrics files found for scenario {scenario_name}")
+        return JSONResponse(
+            status_code=404, 
+            content={"message": "No metrics files found for this scenario", "scenario_name": scenario_name}
+        )
+    logging.info(f"Found {len(scenario_metrics['files'])} files for scenario {scenario_name}")
+    # Obtener el mapeo de métricas
+    metrics_map = await get_metrics_map(scenario_name)
+    logging.info(f"[METRICS-DEBUG] Metrics map: {metrics_map}")
+    # 2. Descargar y descomprimir cada archivo
+    results = []
+    from pathlib import Path
+    metrics_dir = Path(__file__).parent / "config" / "metrics" / "physical"
+    scenario_root = metrics_dir / scenario_name
+    scenario_root.mkdir(parents=True, exist_ok=True)
+    for filename in scenario_metrics["files"]:
+        logging.info(f"[METRICS-DEBUG] Processing file: {filename}")
+        try:
+            participant_idx = None
+            ip = None
+            if filename in metrics_map:
+                participant_idx = metrics_map[filename].get("idx")
+                ip = metrics_map[filename].get("ip")
+            else:
+                logging.warning(f"[METRICS-DEBUG] File {filename} not found in metrics map. Skipping.")
+                results.append({
+                    "filename": filename,
+                    "status": "error",
+                    "error": "File not found in metrics map",
+                    "participant_idx": None,
+                    "ip": None
+                })
+                continue
+            # Descargar archivo desde el controller
+            download_url = f"http://{controller_host}:{controller_port}/metrics/download/{scenario_name}/{filename}"
+            logging.info(f"[METRICS-DEBUG] Downloading from: {download_url}")
+            async with aiohttp.ClientSession() as session:
+                async with session.get(download_url) as resp:
+                    logging.info(f"[METRICS-DEBUG] Download endpoint response: {resp.status}")
+                    if resp.status == 200:
+                        # Guardar archivo temporalmente
+                        temp_file = metrics_dir / filename
+                        with open(temp_file, 'wb') as f:
+                            f.write(await resp.read())
+                        # Descomprimir archivo directamente en el directorio del escenario
+                        import tarfile
+                        logging.info(f"[METRICS-DEBUG] Extracting {filename} to {scenario_root}/participant_{participant_idx if participant_idx is not None else 'unknown'}")
+                        try:
+                            with tarfile.open(temp_file, 'r:gz') as tar:
+                                safe_extract_by_participant(tar, path=scenario_root, participant_idx=participant_idx)
+                            logging.info(f"[METRICS-DEBUG] Extraction finished for {filename}")
+                        except Exception as e:
+                            logging.error(f"[METRICS-DEBUG] Error extracting {filename}: {e}")
+                            results.append({
+                                "filename": filename,
+                                "status": "error",
+                                "error": f"Extraction error: {e}",
+                                "participant_idx": participant_idx,
+                                "ip": ip
+                            })
+                            temp_file.unlink(missing_ok=True)
+                            continue
+                        # Limpiar archivo temporal
+                        temp_file.unlink()
+                        logging.info(f"[METRICS-DEBUG] Downloaded and extracted to: {scenario_root}")
+                        results.append({
+                            "filename": filename,
+                            "status": "success",
+                            "extracted_path": str(scenario_root),
+                            "participant_idx": participant_idx,
+                            "ip": ip
+                        })
+                    else:
+                        logging.info(f"[METRICS-DEBUG] Error downloading file: HTTP {resp.status}")
+                        results.append({
+                            "filename": filename,
+                            "status": "error",
+                            "error": f"HTTP {resp.status}",
+                            "participant_idx": participant_idx,
+                            "ip": ip
+                        })
+        except Exception as e:
+            logging.error(f"[METRICS-DEBUG] Exception processing file {filename}: {e}")
+            results.append({
+                "filename": filename,
+                "status": "error",
+                "error": str(e),
+                "participant_idx": None,
+                "ip": None
+            })
+    successful = len([r for r in results if r["status"] == "success"])
+    failed = len([r for r in results if r["status"] == "error"])
+    logging.info(f"Download summary: {successful} success, {failed} failed")
+    return {
+        "scenario_name": scenario_name,
+        "total_files": len(scenario_metrics["files"]),
+        "successful_downloads": successful,
+        "failed_downloads": failed,
+        "results": results
+    }
+
+
+def safe_extract_by_participant(tar, path=".", participant_idx=None, ip=None):
+    """
+    Extrae todos los archivos del tar en una subcarpeta participant_{participant_idx} o participant_{ip}.
+    Si participant_idx es None, intenta extraer el id del participante como el número tras el último punto en el nombre del archivo.
+    """
+    import os
+    import re
+    if participant_idx is not None:
+        dest_dir = os.path.join(path, f"participant_{participant_idx}")
+        os.makedirs(dest_dir, exist_ok=True)
+        for member in tar.getmembers():
+            if member.isfile():
+                dest_path = os.path.join(dest_dir, os.path.basename(member.name))
+                with open(dest_path, "wb") as out_f, tar.extractfile(member) as in_f:
+                    out_f.write(in_f.read())
+                print(f"[EXTRACT] {member.name} -> {dest_path}")
+    else:
+        # Extraer en participant_{id} según el último número tras el último punto
+        for member in tar.getmembers():
+            if member.isfile():
+                filename = os.path.basename(member.name)
+                # Buscar el número tras el último punto
+                match = re.search(r"\.([0-9]+)$", filename)
+                if match:
+                    extracted_idx = match.group(1)
+                    dest_dir = os.path.join(path, f"participant_{extracted_idx}")
+                else:
+                    dest_dir = os.path.join(path, "participant_unknown")
+                os.makedirs(dest_dir, exist_ok=True)
+                dest_path = os.path.join(dest_dir, filename)
+                with open(dest_path, "wb") as out_f, tar.extractfile(member) as in_f:
+                    out_f.write(in_f.read())
+                print(f"[EXTRACT] {member.name} -> {dest_path}")
+
+
+# --- Metrics Polling Background Task ---
+
+# [ELIMINADO] POLL_INTERVAL = 20  # seconds
+# [ELIMINADO] METRICS_BASE_DIR = os.path.join(os.path.dirname(__file__), 'config', 'metrics', 'physical')
+# [ELIMINADO] PROCESSED_FILES = {}  # {scenario_name: set(filenames)}
+
+# [ELIMINADO] async def list_active_scenarios():
+# [ELIMINADO] async def list_metrics_files(scenario_name):
+# [ELIMINADO] async def download_and_extract_metrics_file(scenario_name, filename, metrics_map=None):
+# [ELIMINADO] async def metrics_polling_task():
+# [ELIMINADO] @app.on_event("startup")
+# [ELIMINADO] async def start_metrics_polling():
+
+
+async def get_metrics_map(scenario_name):
+    """
+    Query the controller for the mapping of metrics files to participant idx for a scenario.
+    Returns a dict: {filename: {idx, ip}}
+    """
+    controller_host = settings.controller_host or "controller"
+    controller_port = settings.controller_port or 5050
+    url = f"http://{controller_host}:{controller_port}/metrics/map/{scenario_name}"
+    try:
+        async with aiohttp.ClientSession() as session:
+            async with session.get(url) as resp:
+                if resp.status == 200:
+                    data = await resp.json()
+                    return data.get('map', {})
+    except Exception as e:
+        logging.warning(f"Error getting metrics map for {scenario_name}: {e}")
+    return {}
 
 
 if __name__ == "__main__":
