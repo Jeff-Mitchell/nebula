@@ -166,8 +166,13 @@ async def main(config):
 
     trainer = None
     trainer_str = config.participant["training_args"]["trainer"]
+    use_quantization = config.participant["training_args"].get("use_quantization", False)
+    
     if trainer_str == "lightning":
-        trainer = PQLightning
+        if use_quantization:
+            trainer = PQLightning
+        else:
+            trainer = Lightning
     elif trainer_str == "scikit":
         raise NotImplementedError
     elif trainer_str == "siamese":
