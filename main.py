@@ -22,12 +22,12 @@ import warnings
 import logging
 
 # --- Silence warnings and logs for a clean demo output ---
-# warnings.filterwarnings("ignore", category=UserWarning)
-# warnings.filterwarnings("ignore", category=FutureWarning)
-# logging.getLogger("lightning").setLevel(logging.ERROR)
-# logging.getLogger("pytorch_lightning").setLevel(logging.ERROR)
-# logging.getLogger("torch").setLevel(logging.ERROR)
-# logging.getLogger("matplotlib").setLevel(logging.ERROR)
+warnings.filterwarnings("ignore", category=UserWarning)
+warnings.filterwarnings("ignore", category=FutureWarning)
+logging.getLogger("lightning").setLevel(logging.ERROR)
+logging.getLogger("pytorch_lightning").setLevel(logging.ERROR)
+logging.getLogger("torch").setLevel(logging.ERROR)
+logging.getLogger("matplotlib").setLevel(logging.ERROR)
 # ---------------------------------------------------------
 
 # ──────────────────────────────  GLOBAL CONFIG  ──────────────────────────────

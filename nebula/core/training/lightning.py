@@ -185,25 +185,29 @@ class Lightning:
                 gpu_index = self.config.participant["device_args"]["gpu_id"]
             logging_training.info(f"Creating trainer with accelerator GPU ({gpu_index})")
             self._trainer = Trainer(
-                callbacks=[ModelSummary(max_depth=1), NebulaProgressBar()],
+                callbacks=[ModelSummary(max_depth=1) #, NebulaProgressBar()
+                ],
                 max_epochs=self.epochs,
                 accelerator="gpu",
                 devices=gpu_index,
                 logger=self._logger,
                 enable_checkpointing=False,
                 enable_model_summary=False,
+                enable_progress_bar=False,  # Suppress Lightning's progress/table output
                 # deterministic=True
             )
         else:
             logging_training.info("Creating trainer with accelerator CPU")
             self._trainer = Trainer(
-                callbacks=[ModelSummary(max_depth=1), NebulaProgressBar()],
+                callbacks=[ModelSummary(max_depth=1) #, NebulaProgressBar()
+                ],
                 max_epochs=self.epochs,
                 accelerator="cpu",
                 devices="auto",
                 logger=self._logger,
                 enable_checkpointing=False,
                 enable_model_summary=False,
+                enable_progress_bar=False,  # Suppress Lightning's progress/table output
                 # deterministic=True
             )
         logging_training.info(f"Trainer strategy: {self._trainer.strategy}")
