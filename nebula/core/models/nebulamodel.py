@@ -16,6 +16,7 @@ from torchmetrics.classification import (
 )
 
 from nebula.addons.functions import print_msg_box
+from nebula.core.utils.helper import print_metrics_table  # NEW: pretty metrics table
 
 matplotlib.use("Agg")
 plt.switch_backend("Agg")
@@ -88,11 +89,16 @@ class NebulaModel(pl.LightningModule, ABC):
         metrics_str = ""
         for key, value in output.items():
             metrics_str += f"{key}: {value:.4f}\n"
-        print_msg_box(
-            metrics_str,
-            indent=2,
-            title=f"{phase} Metrics | Epoch: {self.global_number[phase]} | Round: {self.round}",
-            logger_name=TRAINING_LOGGER,
+        # print_msg_box(
+        #     metrics_str,
+        #     indent=2,
+        #     title=f"{phase} Metrics | Epoch: {self.global_number[phase]} | Round: {self.round}",
+        #     logger_name=TRAINING_LOGGER,
+        # )
+        print_metrics_table(
+            round_num=self.round,
+            metrics_dict=output,
+            phase=phase
         )
 
     def generate_confusion_matrix(self, phase, print_cm=False, plot_cm=False):

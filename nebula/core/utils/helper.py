@@ -3,6 +3,10 @@ import logging
 from collections import OrderedDict
 
 import torch
+from rich.console import Console
+from rich.table import Table
+
+console = Console()
 
 
 def cosine_metric2(
@@ -252,3 +256,22 @@ def normalise_layers(untrusted_params, trusted_params):
         normalised_params[layer] = normalised_layer
 
     return normalised_params
+
+
+def print_metrics_table(round_num, metrics_dict, phase="Validation"):
+    """
+    Pretty print metrics using rich.
+    Args:
+        round_num (int): Current round/epoch.
+        metrics_dict (dict): Dictionary with metric names and values.
+        phase (str): Phase name (e.g., 'Validation', 'Test', etc.)
+    """
+    table = Table(title=f"{phase} Metrics | Round {round_num}")
+    table.add_column("Metric", style="cyan", justify="right")
+    table.add_column("Value", style="magenta", justify="left")
+    for key, value in metrics_dict.items():
+        try:
+            table.add_row(key, f"{value:.4f}")
+        except Exception:
+            table.add_row(key, str(value))
+    console.print(table)
