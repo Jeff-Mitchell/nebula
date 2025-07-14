@@ -162,7 +162,9 @@ docker-compose.yml
 # --- NEBULA: Ignore generated metrics and device uploads ---
 # Ignore all contents of metrics folders, but not the folders themselves
 nebula/frontend/config/metrics/*
+!nebula/frontend/config/metrics/README.md
 nebula/controller/metrics/*
+!nebula/controller/metrics/README.md
 # Ignore compressed files from devices (anywhere in the repo)
 *.tar.gz
 *.tgz
