@@ -30,6 +30,11 @@ logging.getLogger("torch").setLevel(logging.ERROR)
 logging.getLogger("matplotlib").setLevel(logging.ERROR)
 # ---------------------------------------------------------
 
+import os
+os.environ["PYTHONWARNINGS"] = "ignore"
+import warnings
+warnings.filterwarnings("ignore", message="You are using `torch.load` with `weights_only=False`*")
+
 # ──────────────────────────────  GLOBAL CONFIG  ──────────────────────────────
 
 app = Flask(__name__)
