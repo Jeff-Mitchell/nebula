@@ -12,7 +12,7 @@ from collections import OrderedDict
 
 import torch
 from lightning import Trainer
-from lightning.pytorch.callbacks import ModelSummary, ProgressBar
+from lightning.pytorch.callbacks import ModelSummary, ProgressBar, ModelPruning
 from lightning.pytorch.loggers import CSVLogger
 from torch.nn import functional as F
 
@@ -176,6 +176,16 @@ class Lightning:
         # Create a new trainer and logger for each round
         self.create_logger()
         num_gpus = len(self.config.participant["device_args"]["gpu_id"])
+        # --- Pruning support: check config ---
+        use_pruning = self.config.participant["training_args"].get("use_pruning", False)
+        pruning_callback = None
+        if use_pruning:
+            pruning_callback = ModelPruning("l1_unstructured", amount=0.8)
+        # -------------------------------------
+        callbacks_list = [ModelSummary(max_depth=1)]
+        # callbacks_list.append(NebulaProgressBar())  # Progress bar (commented for clean output)
+        if pruning_callback:
+            callbacks_list.append(pruning_callback)
         if self.config.participant["device_args"]["accelerator"] == "gpu" and num_gpus > 0:
             # Use all available GPUs
             if num_gpus > 1:
@@ -185,8 +195,7 @@ class Lightning:
                 gpu_index = self.config.participant["device_args"]["gpu_id"]
             logging_training.info(f"Creating trainer with accelerator GPU ({gpu_index})")
             self._trainer = Trainer(
-                callbacks=[ModelSummary(max_depth=1) #, NebulaProgressBar()
-                ],
+                callbacks=callbacks_list,
                 max_epochs=self.epochs,
                 accelerator="gpu",
                 devices=gpu_index,
@@ -199,8 +208,7 @@ class Lightning:
         else:
             logging_training.info("Creating trainer with accelerator CPU")
             self._trainer = Trainer(
-                callbacks=[ModelSummary(max_depth=1) #, NebulaProgressBar()
-                ],
+                callbacks=callbacks_list,
                 max_epochs=self.epochs,
                 accelerator="cpu",
                 devices="auto",
