@@ -180,7 +180,10 @@ class Lightning:
         use_pruning = self.config.participant["training_args"].get("use_pruning", False)
         pruning_callback = None
         if use_pruning:
+            logging_training.info("[Pruning] ENABLED: ModelPruning(l1_unstructured, amount=0.8) will be applied.")
             pruning_callback = ModelPruning("l1_unstructured", amount=0.8)
+        else:
+            logging_training.info("[Pruning] DISABLED: ModelPruning will NOT be applied.")
         # -------------------------------------
         callbacks_list = [ModelSummary(max_depth=1)]
         # callbacks_list.append(NebulaProgressBar())  # Progress bar (commented for clean output)

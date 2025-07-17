@@ -277,6 +277,13 @@ class NebulaModel(pl.LightningModule, ABC):
         self.log_metrics_end("Train")
         self.train_metrics.reset()
         self.global_number["Train"] += 1
+        # Log pruning stats for each layer (if pruning is applied)
+        for name, module in self.named_modules():
+            if hasattr(module, 'weight_mask'):
+                mask = module.weight_mask
+                total = mask.numel()
+                zeros = (mask == 0).sum().item()
+                logging.info(f"[Pruning] Layer {name}: {100 * zeros / total:.1f}% weights pruned ({zeros}/{total})")
 
     def validation_step(self, batch, batch_idx):
         """
