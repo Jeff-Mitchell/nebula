@@ -258,14 +258,18 @@ def normalise_layers(untrusted_params, trusted_params):
     return normalised_params
 
 
-def print_metrics_table(round_num, metrics_dict, phase="Validation"):
+def print_metrics_table(round_num, metrics_dict, phase="Validation", pruning_active=None, pruning_avg=None, pruning_layers=None):
     """
     Pretty print metrics using rich.
     Args:
         round_num (int): Current round/epoch.
         metrics_dict (dict): Dictionary with metric names and values.
         phase (str): Phase name (e.g., 'Validation', 'Test', etc.)
+        pruning_active (bool, optional): Whether pruning is active.
+        pruning_avg (float, optional): Average percentage of pruned weights.
+        pruning_layers (dict, optional): Dict of {layer_name: percent_pruned}.
     """
+    from rich.text import Text
     table = Table(title=f"{phase} Metrics | Round {round_num}")
     table.add_column("Metric", style="cyan", justify="right")
     table.add_column("Value", style="magenta", justify="left")
@@ -274,4 +278,16 @@ def print_metrics_table(round_num, metrics_dict, phase="Validation"):
             table.add_row(key, f"{value:.4f}")
         except Exception:
             table.add_row(key, str(value))
+    # --- Pruning info ---
+    if pruning_active is not None:
+        emoji = "✅🟢" if pruning_active else "❌🔴"
+        table.add_row("Pruning Active", Text(emoji, style="green" if pruning_active else "red"))
+    if pruning_avg is not None:
+        color = "green" if pruning_avg < 50 else ("yellow" if pruning_avg < 80 else "red")
+        table.add_row("Pruned Weights (%)", Text(f"{pruning_avg:.1f}", style=color))
+    if pruning_layers:
+        for lname, percent in pruning_layers.items():
+            color = "green" if percent < 50 else ("yellow" if percent < 80 else "red")
+            table.add_row(f"{lname} Pruned (%)", Text(f"{percent:.1f}", style=color))
+    # ---
     console.print(table)

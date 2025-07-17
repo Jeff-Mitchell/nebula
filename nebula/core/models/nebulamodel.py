@@ -86,19 +86,30 @@ class NebulaModel(pl.LightningModule, ABC):
 
         self.logger.log_data(output, step=self.global_number[phase])
 
-        metrics_str = ""
-        for key, value in output.items():
-            metrics_str += f"{key}: {value:.4f}\n"
-        # print_msg_box(
-        #     metrics_str,
-        #     indent=2,
-        #     title=f"{phase} Metrics | Epoch: {self.global_number[phase]} | Round: {self.round}",
-        #     logger_name=TRAINING_LOGGER,
-        # )
+        # --- Pruning info for pretty table ---
+        pruning_active = False
+        pruning_layers = {}
+        total_zeros = 0
+        total_weights = 0
+        for name, module in self.named_modules():
+            if hasattr(module, 'weight_mask'):
+                pruning_active = True
+                mask = module.weight_mask
+                total = mask.numel()
+                zeros = (mask == 0).sum().item()
+                percent = 100 * zeros / total if total > 0 else 0.0
+                pruning_layers[name] = percent
+                total_zeros += zeros
+                total_weights += total
+        pruning_avg = (100 * total_zeros / total_weights) if pruning_active and total_weights > 0 else None
+        # ---
         print_metrics_table(
             round_num=self.round,
             metrics_dict=output,
-            phase=phase
+            phase=phase,
+            pruning_active=pruning_active if pruning_active else None,
+            pruning_avg=pruning_avg,
+            pruning_layers=pruning_layers if pruning_layers else None
         )
 
     def generate_confusion_matrix(self, phase, print_cm=False, plot_cm=False):
