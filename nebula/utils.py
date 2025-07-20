@@ -9,9 +9,9 @@ import re
 from typing import Optional
 
 from fastapi import HTTPException
-
-from nebula.frontend.app import retry_with_backoff
-
+from aiohttp import ClientConnectorError
+from aiohttp.client_exceptions import ClientError
+import asyncio
 
 class FileUtils:
     """
@@ -220,7 +220,7 @@ class LoggerUtils:
         level: int = logging.INFO,
         console: bool = True,
         strip_ansi: bool = True,
-        file_mode: str = "a",
+        file_mode: str = "w",
         log_format: str = "[%(asctime)s] [%(name)s] [%(levelname)s] %(message)s",
         date_format: str = "%Y-%m-%d %H:%M:%S",
     ) -> logging.Logger:
@@ -271,6 +271,39 @@ class LoggerUtils:
 class APIUtils():
     
     @staticmethod
+    async def retry_with_backoff(func, *args, max_retries=5, initial_delay=1):
+        """
+        Retry a function with exponential backoff.
+
+        Args:
+            func: The async function to retry
+            *args: Arguments to pass to the function
+            max_retries: Maximum number of retry attempts
+            initial_delay: Initial delay between retries in seconds
+
+        Returns:
+            The result of the function if successful
+
+        Raises:
+            The last exception if all retries fail
+        """
+        delay = initial_delay
+        last_exception = None
+
+        for attempt in range(max_retries):
+            try:
+                return await func(*args)
+            except (ClientConnectorError, ClientError) as e:
+                last_exception = e
+                if attempt < max_retries - 1:
+                    logging.warning(f"Connection attempt {attempt + 1} failed: {str(e)}. Retrying in {delay} seconds...")
+                    await asyncio.sleep(delay)
+                    delay *= 2  # Exponential backoff
+                else:
+                    logging.error(f"All {max_retries} connection attempts failed")
+                    raise last_exception
+
+    @staticmethod
     async def get(url):
         """
         Fetch JSON data from a remote controller endpoint via asynchronous HTTP GET.
@@ -293,7 +326,7 @@ class APIUtils():
                     else:
                         raise HTTPException(status_code=response.status, detail="Error fetching data")
 
-        return await retry_with_backoff(_get)
+        return await APIUtils.retry_with_backoff(_get)
 
     @staticmethod
     async def post(url, data=None):
@@ -320,4 +353,6 @@ class APIUtils():
                         detail = await response.text()
                         raise HTTPException(status_code=response.status, detail=detail)
 
-        return await retry_with_backoff(_post)
+        return await APIUtils.retry_with_backoff(_post)
+
+    

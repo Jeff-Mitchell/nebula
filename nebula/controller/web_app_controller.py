@@ -318,14 +318,17 @@ async def run_scenario(
     import subprocess
 
     from nebula.controller.scenarios import ScenarioManagement
-
-    fed_controller_port = os.environ.get("NEBULA_FEDERATION_CONTROLLER_PORT")
-    fed_controller_host = os.environ.get("NEBULA_CONTROLLER_HOST")
-    url = f"http://{fed_controller_host}:{fed_controller_port}/init"
-    data = {"type": "docker"}
-    data2 = {"scenario_data": scenario_data, "role": role, "user": user}
-    APIUtils.post(url, data)
-    APIUtils.post(url, data2)
+    try:
+        fed_controller_port = os.environ.get("NEBULA_FEDERATION_CONTROLLER_PORT")
+        fed_controller_host = os.environ.get("NEBULA_CONTROLLER_HOST")
+        url = f"http://{fed_controller_host}:{fed_controller_port}/init"
+        url2 = f"http://{fed_controller_host}:{fed_controller_port}/scenarios/run"
+        data = {"type": "docker"}
+        data2 = {"scenario_data": scenario_data, "role": role, "user": user}
+        await APIUtils.post(url, data)
+        await APIUtils.post(url2, data2)
+    except Exception as e:
+        logging.info(e)
 
     validate_physical_fields(scenario_data)
 
@@ -334,29 +337,29 @@ async def run_scenario(
     # Manager for the actual scenario
     scenarioManagement = ScenarioManagement(scenario_data, user)
 
-    await update_scenario(
-        scenario_name=scenarioManagement.scenario_name,
-        start_time=scenarioManagement.start_date_scenario,
-        end_time="",
-        scenario=scenario_data,
-        status="running",
-        role=role,
-        username=user,
-    )
+    # await update_scenario(
+    #     scenario_name=scenarioManagement.scenario_name,
+    #     start_time=scenarioManagement.start_date_scenario,
+    #     end_time="",
+    #     scenario=scenario_data,
+    #     status="running",
+    #     role=role,
+    #     username=user,
+    # )
 
     # Run the actual scenario
-    try:
-        if scenarioManagement.scenario.mobility:
-            additional_participants = scenario_data["additional_participants"]
-            schema_additional_participants = scenario_data["schema_additional_participants"]
-            await scenarioManagement.load_configurations_and_start_nodes(
-                additional_participants, schema_additional_participants
-            )
-        else:
-            await scenarioManagement.load_configurations_and_start_nodes()
-    except subprocess.CalledProcessError as e:
-        logging.exception(f"Error docker-compose up: {e}")
-        return
+    # try:
+    #     if scenarioManagement.scenario.mobility:
+    #         additional_participants = scenario_data["additional_participants"]
+    #         schema_additional_participants = scenario_data["schema_additional_participants"]
+    #         await scenarioManagement.load_configurations_and_start_nodes(
+    #             additional_participants, schema_additional_participants
+    #         )
+    #     else:
+    #         await scenarioManagement.load_configurations_and_start_nodes()
+    # except subprocess.CalledProcessError as e:
+    #     logging.exception(f"Error docker-compose up: {e}")
+    #     return
 
     return scenarioManagement.scenario_name
 

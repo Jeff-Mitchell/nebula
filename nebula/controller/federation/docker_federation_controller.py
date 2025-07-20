@@ -14,7 +14,7 @@ from nebula.core.utils.certificate import generate_ca_certificate, generate_cert
 class DockerFederationController(FederationController):
     
     def __init__(self, wa_controller_url, logger):
-        super.__init__(wa_controller_url, logger)
+        super().__init__(wa_controller_url, logger)
         self._user = ""
         self.root_path = ""
         self.host_platform = ""
@@ -37,6 +37,8 @@ class DockerFederationController(FederationController):
         generate_ca_certificate(dir_path=self.cert_dir)
         await self._load_configuration_and_start_nodes()
         #self._start_nodes()
+
+        return self.sb.get_scenario_name()
          
     async def stop_scenario(self, scenario_name: str, username: str, all: bool):
         pass
@@ -79,7 +81,7 @@ class DockerFederationController(FederationController):
         os.chmod(self.cert_dir, 0o777)
 
         # Save the scenario configuration
-        scenario_file = os.path.join(self.config_dir, "scenario.json")
+        scenario_file = os.path.join(self.config_dir, "scenario2.json")
         with open(scenario_file, "w") as f:
             json.dump(scenario_data, f, sort_keys=False, indent=2)
 
@@ -107,15 +109,23 @@ class DockerFederationController(FederationController):
         self.logger.info("Building general configuration done")
         
         # Create participant configs and .json
-        for index, node in enumerate(self.sb.get_federation_nodes().keys()):
+        for index, (_, node) in enumerate(self.sb.get_federation_nodes().items()):
+            self.logger.info(f"Creating .json file for participant: {index}, Configuration: {node}")
             node_config = node
-            participant_file = os.path.join(self.config_dir, f"participant_{node_config['id']}.json")
-            os.makedirs(os.path.dirname(participant_file), exist_ok=True)
-            os.chmod(participant_file, 0o777)
-            
-            participant_config = self.sb.build_scenario_config_for_node(index, node)
-            with open(participant_file, "w") as f:
-                json.dump(participant_config, f, sort_keys=False, indent=2)
+            try:
+                participant_file = os.path.join(self.config_dir, f"participant_{node_config['id']}_xxx.json")
+                self.logger.info(f"{participant_file}")
+                os.makedirs(os.path.dirname(participant_file), exist_ok=True)
+            except Exception as e:
+                 self.logger.info(f"ERROR while creating files: {e}")
+                 
+            try:         
+                participant_config = self.sb.build_scenario_config_for_node(index, node)
+                with open(participant_file, "w") as f:
+                    json.dump(participant_config, f, sort_keys=False, indent=2)
+                os.chmod(participant_file, 0o777)
+            except Exception as e:
+                 self.logger.info(f"ERROR while dumping configuration into files: {e}")
 
         self.logger.info("Initializing Scenario Builder done")
                 

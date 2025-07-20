@@ -1,6 +1,8 @@
 import logging
 from datetime import datetime
 import hashlib
+import math
+from collections import defaultdict
 from nebula.addons.topologymanager import TopologyManager
 from nebula.config.config import Config
 from nebula.core.utils.certificate import generate_certificate
@@ -29,7 +31,8 @@ class ScenarioBuilder():
     
     def set_scenario_data(self, scenario_data: dict):
         self._scenario_data = scenario_data
-        self._scenario_name = f"nebula_{self.sd["federation"]}_{datetime.now().strftime('%Y_%m_%d_%H_%M_%S')}"
+        federation_name = self.sd["federation"]
+        self._scenario_name = f"nebula_{federation_name}_{datetime.now().strftime('%Y_%m_%d_%H_%M_%S')}"
         
     def set_config_setup(self, setup: dict):
         self._config_setup = setup
@@ -49,84 +52,19 @@ class ScenarioBuilder():
                                                             ###############################
     """        
     def build_general_configuration(self):
-        self.sd["nodes"] = self._configure_nodes_attacks()
-        
-        if self.sd.get("mobility", None):
-            mobile_participants_percent = int(self.sd["mobile_participants_percent"])
-            self.sd["nodes"] = self._mobility_assign(self.sd["nodes"], mobile_participants_percent)
-        else:
-            self.sd["nodes"] = self._mobility_assign(self.sd["nodes"], 0)        
-        
-    """                                                     ###############################
-                                                            #     SCENARIO CONFIG NODE    #
-                                                            ###############################
-    """
-
-    def build_scenario_config_for_node(self, index, node) -> dict:
-        self.logger.info("Start building the scenario configuration")
-        participant_config = {"addons": set()}
-        
-                                    # General configuration
-        participant_config["scenario_args"]["name"] = self._scenario_name
-        participant_config["scenario_args"]["start_time"] = datetime.now().strftime("%d/%m/%Y %H:%M:%S")                           
-                                    
-        node_config = self.sd["nodes"][node]
-        participant_config["network_args"]["ip"] = node_config["ip"]
-        if self.sd["deployment"] == "physical":
-            participant_config["network_args"]["port"] = 8000
-        else:
-            participant_config["network_args"]["port"] = int(node_config["port"])
+        try:
+            self.sd["nodes"] = self._configure_nodes_attacks()
             
-        participant_config["network_args"]["simulation"] = self.sd["network_simulation"]
-        participant_config["device_args"]["idx"] = node_config["id"]
-        participant_config["device_args"]["start"] = node_config["start"]
-        participant_config["device_args"]["role"] = node_config["role"]
-        participant_config["device_args"]["proxy"] = node_config["proxy"]
-        participant_config["device_args"]["malicious"] = node_config["malicious"]
-        participant_config["scenario_args"]["rounds"] = int(self.sd["rounds"])
-        participant_config["data_args"]["dataset"] = self.sd["dataset"]
-        participant_config["data_args"]["iid"] = self.sd["iid"]
-        participant_config["data_args"]["partition_selection"] = self.sd["partition_selection"]
-        participant_config["data_args"]["partition_parameter"] = self.sd["partition_parameter"]
-        participant_config["model_args"]["model"] = self.sd["model"]
-        participant_config["training_args"]["epochs"] = int(self.sd["epochs"])
-        participant_config["device_args"]["accelerator"] = self.sd["accelerator"]
-        participant_config["device_args"]["gpu_id"] = self.sd["gpu_id"]
-        participant_config["device_args"]["logging"] = self.sd["logginglevel"]
-        participant_config["aggregator_args"]["algorithm"] = self.sd["agg_algorithm"]
-        
-                                    # Addons configuration
-        
-        # Trustworthiness
-        if self.sd.get("with_trustworthiness", None):
-            participant_config["trust_args"] = self._configure_trustworthiness()
-            participant_config["addons"].add("trustworthiness")
+            if self.sd.get("mobility", None):
+                mobile_participants_percent = int(self.sd["mobile_participants_percent"])
+                self.sd["nodes"] = self._mobility_assign(self.sd["nodes"], mobile_participants_percent)
+            else:
+                self.sd["nodes"] = self._mobility_assign(self.sd["nodes"], 0)
+        except Exception as e:
+            self.logger.info(f"ERROR: {e}")
             
-        # Reputation
-        if self.sd.get("reputation", None):
-            participant_config["defense_args"]["reputation"] = self._configure_reputation()
-            participant_config["addons"].add("reputation")
-            
-        # Network simulation
-        if dict(self.sd.get("network_args"))["enabled"]:
-            participant_config["network_args"]["network_simulation"] =  self._configure_network_simulation()
-            participant_config["addons"].add("network_simulation")
-
-        # Attacks
-        self._configure_role(participant_config, node_config)
-
-        # Mobility
-        if self.sd.get("mobility", None):
-            participant_config["addons"].add("mobility")
-        
-        # Situational awareness module
-        if self._situational_awareness_needed():
-            participant_config["situational_awareness"] = self._configure_situational_awareness(index)
-            participant_config["addons"].add("situational_awareness")
-                      
-        return participant_config
-    
     def _configure_nodes_attacks(self):
+        self.logger.info("Configurating node attacks...")
         poisoned_node_percent = self.sd["attack_params"].get("poisoned_node_percent", 0)
         poisoned_sample_percent = self.sd["attack_params"].get("poisoned_sample_percent", 0)
         poisoned_noise_percent = self.sd["attack_params"].get("poisoned_noise_percent", 0)
@@ -140,6 +78,7 @@ class ScenarioBuilder():
             self.sd.get("attack_params"),
         )
         
+        self.logger.info("Configurating node attacks done")
         return nodes
      
     def attack_node_assign(
@@ -179,8 +118,6 @@ class ScenarioBuilder():
         Raises:
             ValueError: If any input parameter is invalid or attack type is unrecognized.
         """
-        import logging
-        import math
         import random
 
         # Validate input parameters
@@ -272,12 +209,12 @@ class ScenarioBuilder():
                 if nodes[node]["role"] != "server":
                     nodes_index.append(node)
 
-        logging.info(f"Nodes index: {nodes_index}")
-        logging.info(f"Attack type: {attack}")
-        logging.info(f"Poisoned node percent: {poisoned_node_percent}")
+        self.logger.info(f"Nodes index: {nodes_index}")
+        self.logger.info(f"Attack type: {attack}")
+        self.logger.info(f"Poisoned node percent: {poisoned_node_percent}")
 
         mal_nodes_defined = any(nodes[node]["malicious"] for node in nodes)
-        logging.info(f"Malicious nodes already defined: {mal_nodes_defined}")
+        self.logger.info(f"Malicious nodes already defined: {mal_nodes_defined}")
 
         attacked_nodes = []
 
@@ -290,20 +227,20 @@ class ScenarioBuilder():
 
             # Get the index of attacked nodes
             attacked_nodes = random.sample(nodes_index, num_attacked)
-            logging.info(f"Number of nodes to attack: {num_attacked}")
-            logging.info(f"Attacked nodes: {attacked_nodes}")
+            self.logger.info(f"Number of nodes to attack: {num_attacked}")
+            self.logger.info(f"Attacked nodes: {attacked_nodes}")
 
         # Assign the role of each node
         for node in nodes:
             node_att = "No Attack"
             malicious = False
-            node_reputation = self.reputation.copy() if self.reputation else None
+            #node_reputation = self.reputation.copy() if self.reputation else None
 
             if node in attacked_nodes or nodes[node]["malicious"]:
                 malicious = True
                 node_reputation = None
                 node_att = attack
-                logging.info(f"Node {node} marked as malicious with attack {attack}")
+                self.logger.info(f"Node {node} marked as malicious with attack {attack}")
 
                 # Initialize attack parameters with defaults
                 node_attack_params = attack_params.copy() if attack_params else {}
@@ -388,21 +325,19 @@ class ScenarioBuilder():
                 nodes[node]["attack_params"] = node_attack_params
                 nodes[node]["fake_behavior"] = nodes[node]["role"]
                 nodes[node]["role"] = "malicious"
+            # else:
+            #     nodes[node]["attack_params"] = {"attacks": "No Attack"}
+
+            if nodes[node].get("attack_params", None):
+                self.logger.info(
+                    f"Node {node} final configuration - malicious: {nodes[node]['malicious']}, attack: {nodes[node]['attack_params']['attacks']}"
+                )
             else:
-                nodes[node]["attack_params"] = {"attacks": "No Attack"}
-
-            nodes[node]["reputation"] = node_reputation
-
-            logging.info(
-                f"Node {node} final configuration - malicious: {nodes[node]['malicious']}, attack: {nodes[node]['attack_params']['attacks']}"
-            )
+                self.logger.info(
+                    f"Node {node} final configuration - malicious: {nodes[node]['malicious']}"
+                )
 
         return nodes
-
-    def _configure_role(self, participant_config, node_config: dict):
-        if node_config["role"] == "malicious":
-            participant_config["adversarial_args"]["fake_behavior"] = node_config["fake_behavior"]
-            participant_config["adversarial_args"]["attack_params"] = node_config["attack_params"]
 
     def _mobility_assign(self, nodes, mobile_participants_percent):
         """
@@ -437,6 +372,83 @@ class ScenarioBuilder():
                 node_mob = True
             nodes[node]["mobility"] = node_mob
         return nodes
+        
+        
+    """                                                     ###############################
+                                                            #     SCENARIO CONFIG NODE    #
+                                                            ###############################
+    """
+
+    def build_scenario_config_for_node(self, index, node) -> dict:
+        self.logger.info(f"Start building the scenario configuration for participant {index}")
+        participant_config = defaultdict()
+        participant_config["addons"] = list()
+        
+                                    # General configuration
+        participant_config["scenario_args"]["name"] = self._scenario_name
+        participant_config["scenario_args"]["start_time"] = datetime.now().strftime("%d/%m/%Y %H:%M:%S")                           
+                                    
+        node_config = self.sd["nodes"][node]
+        participant_config["network_args"]["ip"] = node_config["ip"]
+        if self.sd["deployment"] == "physical":
+            participant_config["network_args"]["port"] = 8000
+        else:
+            participant_config["network_args"]["port"] = int(node_config["port"])
+            
+        participant_config["network_args"]["simulation"] = self.sd["network_simulation"]
+        participant_config["device_args"]["idx"] = node_config["id"]
+        participant_config["device_args"]["start"] = node_config["start"]
+        participant_config["device_args"]["role"] = node_config["role"]
+        participant_config["device_args"]["proxy"] = node_config["proxy"]
+        participant_config["device_args"]["malicious"] = node_config["malicious"]
+        participant_config["scenario_args"]["rounds"] = int(self.sd["rounds"])
+        participant_config["data_args"]["dataset"] = self.sd["dataset"]
+        participant_config["data_args"]["iid"] = self.sd["iid"]
+        participant_config["data_args"]["partition_selection"] = self.sd["partition_selection"]
+        participant_config["data_args"]["partition_parameter"] = self.sd["partition_parameter"]
+        participant_config["model_args"]["model"] = self.sd["model"]
+        participant_config["training_args"]["epochs"] = int(self.sd["epochs"])
+        participant_config["device_args"]["accelerator"] = self.sd["accelerator"]
+        participant_config["device_args"]["gpu_id"] = self.sd["gpu_id"]
+        participant_config["device_args"]["logging"] = self.sd["logginglevel"]
+        participant_config["aggregator_args"]["algorithm"] = self.sd["agg_algorithm"]
+        
+                                    # Addons configuration
+        
+        # Trustworthiness
+        if self.sd.get("with_trustworthiness", None):
+            participant_config["trust_args"] = self._configure_trustworthiness()
+            participant_config["addons"].append("trustworthiness")
+            
+        # Reputation
+        if self.sd.get("reputation", None):
+            participant_config["defense_args"]["reputation"] = self._configure_reputation()
+            participant_config["addons"].append("reputation")
+            
+        # Network simulation
+        #TODO revisar
+        if dict(self.sd.get("network_args"))["enabled"]:
+            participant_config["network_args"]["network_simulation"] =  self._configure_network_simulation()
+            participant_config["addons"].append("network_simulation")
+
+        # Attacks
+        self._configure_role(participant_config, node_config)
+
+        # Mobility
+        if self.sd.get("mobility", None):
+            participant_config["addons"].append("mobility")
+        
+        # Situational awareness module
+        if self._situational_awareness_needed():
+            participant_config["situational_awareness"] = self._configure_situational_awareness(index)
+            participant_config["addons"].append("situational_awareness")
+                      
+        return participant_config
+    
+    def _configure_role(self, participant_config, node_config: dict):
+        if node_config["role"] == "malicious":
+            participant_config["adversarial_args"]["fake_behavior"] = node_config["fake_behavior"]
+            participant_config["adversarial_args"]["attack_params"] = node_config["attack_params"]
 
     def _configure_trustworthiness(self) -> dict:
         trust_config = {
@@ -713,7 +725,8 @@ class ScenarioBuilder():
             topologymanager = TopologyManager(scenario_name=self._scenario_name, n_nodes=n_nodes, b_symmetric=True)
             topologymanager.generate_server_topology()
         else:
-            raise ValueError(f"Unknown topology type: {self.sd["topology"]}")
+            top = self.sd["topology"]
+            raise ValueError(f"Unknown topology type: {top}")
 
         # Assign nodes to topology
         nodes_ip_port = []
