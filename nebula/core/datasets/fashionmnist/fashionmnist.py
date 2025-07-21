@@ -51,6 +51,7 @@ class FashionMNISTDataset(NebulaDataset):
         partition_parameter=0.5,
         seed=42,
         config_dir=None,
+        remove_classes_count=0,
     ):
         super().__init__(
             num_classes=num_classes,
@@ -62,6 +63,7 @@ class FashionMNISTDataset(NebulaDataset):
             partition_parameter=partition_parameter,
             seed=seed,
             config_dir=config_dir,
+            remove_classes_count=remove_classes_count,
         )
 
     def initialize_dataset(self):
@@ -85,7 +87,7 @@ class FashionMNISTDataset(NebulaDataset):
         if partition == "dirichlet":
             partitions_map = self.dirichlet_partition(dataset, alpha=partition_parameter)
         elif partition == "percent":
-            partitions_map = self.percentage_partition(dataset, percentage=partition_parameter)
+            partitions_map = self.percentage_partition(dataset, percentage=float(partition_parameter))
         else:
             raise ValueError(f"Partition {partition} is not supported for Non-IID map")
 

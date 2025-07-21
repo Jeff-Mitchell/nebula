@@ -72,6 +72,7 @@ const ScenarioManager = (function() {
             iid: document.getElementById("iidSelect").value === "true",
             partition_selection: document.getElementById("partitionSelect").value,
             partition_parameter: parseFloat(document.getElementById("partitionParameter").value),
+            remove_classes_count: parseInt(document.getElementById("removeClassesCount").value) || 0,
             model: document.getElementById("modelSelect").value,
             agg_algorithm: document.getElementById("aggregationSelect").value,
             logginglevel: document.getElementById("loggingLevel").value === "true",

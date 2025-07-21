@@ -1,11 +1,14 @@
 import os
+import logging
 
 from PIL import Image
 from torchvision import transforms
 from torchvision.datasets import MNIST
 
 from nebula.core.datasets.nebuladataset import NebulaDataset, NebulaPartitionHandler
+from nebula.config.config import TRAINING_LOGGER
 
+logging_training = logging.getLogger(TRAINING_LOGGER)
 
 class MNISTPartitionHandler(NebulaPartitionHandler):
     def __init__(self, file_path, prefix, config, empty=False):
@@ -51,6 +54,7 @@ class MNISTDataset(NebulaDataset):
         partition_parameter=0.5,
         seed=42,
         config_dir=None,
+        remove_classes_count=0,
     ):
         super().__init__(
             num_classes=num_classes,
@@ -62,9 +66,18 @@ class MNISTDataset(NebulaDataset):
             partition_parameter=partition_parameter,
             seed=seed,
             config_dir=config_dir,
+            remove_classes_count=remove_classes_count,
         )
 
     def initialize_dataset(self):
+        logging_training.info(f"Initializing MNIST dataset with parameters:")
+        logging_training.info(f"  - num_classes: {self.num_classes}")
+        logging_training.info(f"  - partitions_number: {self.partitions_number}")
+        logging_training.info(f"  - iid: {self.iid}")
+        logging_training.info(f"  - partition: {self.partition}")
+        logging_training.info(f"  - partition_parameter: {self.partition_parameter}")
+        logging_training.info(f"  - remove_classes_count: {self.remove_classes_count}")
+
         if self.train_set is None:
             self.train_set = self.load_mnist_dataset(train=True)
         if self.test_set is None:
@@ -85,7 +98,7 @@ class MNISTDataset(NebulaDataset):
         if partition == "dirichlet":
             partitions_map = self.dirichlet_partition(dataset, alpha=partition_parameter, n_clients=num_clients)
         elif partition == "percent":
-            partitions_map = self.percentage_partition(dataset, percentage=partition_parameter, n_clients=num_clients)
+            partitions_map = self.percentage_partition(dataset, percentage=float(partition_parameter), n_clients=num_clients)
         else:
             raise ValueError(f"Partition {partition} is not supported for Non-IID map")
 

@@ -55,6 +55,7 @@ class CIFAR10Dataset(NebulaDataset):
         partition_parameter=0.5,
         seed=42,
         config_dir=None,
+        remove_classes_count=0,
     ):
         super().__init__(
             num_classes=num_classes,
@@ -66,6 +67,7 @@ class CIFAR10Dataset(NebulaDataset):
             partition_parameter=partition_parameter,
             seed=seed,
             config_dir=config_dir,
+            remove_classes_count=remove_classes_count,
         )
 
     def initialize_dataset(self):
@@ -90,7 +92,7 @@ class CIFAR10Dataset(NebulaDataset):
         if partition == "dirichlet":
             partitions_map = self.dirichlet_partition(dataset, alpha=partition_parameter, n_clients=num_clients)
         elif partition == "percent":
-            partitions_map = self.percentage_partition(dataset, percentage=partition_parameter, n_clients=num_clients)
+            partitions_map = self.percentage_partition(dataset, percentage=float(partition_parameter), n_clients=num_clients)
         else:
             raise ValueError(f"Partition {partition} is not supported for Non-IID map")
 

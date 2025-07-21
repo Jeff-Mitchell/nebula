@@ -313,6 +313,7 @@ class NebulaDataset:
         npartitions_parameter=[0.1],
         seed=42,
         config_dir=None,
+        remove_classes_count=0,
     ):
         self.num_classes = num_classes
         self.partitions_number = partitions_number
@@ -328,9 +329,10 @@ class NebulaDataset:
         self._npartitions = npartitions
         self._npartitions_parameter = npartitions_parameter
         self._targets_reales = None
+        self.remove_classes_count = remove_classes_count
 
         logging.info(
-            f"Dataset {self.__class__.__name__} initialized | Partitions: {self.partitions_number} | IID: {self.iid} | Partition: {self.partition} | Partition parameter: {self.partition_parameter}"
+            f"Dataset {self.__class__.__name__} initialized | Partitions: {self.partitions_number} | IID: {self.iid} | Partition: {self.partition} | Partition parameter: {self.partition_parameter} | Remove classes: {self.remove_classes_count}"
         )
 
         # Dataset
@@ -339,6 +341,7 @@ class NebulaDataset:
         self.test_set = None
         self.test_indices_map = None
         self.local_test_indices_map = None
+        self.removed_classes = None
 
         enable_deterministic(self.seed)
 
@@ -380,8 +383,31 @@ class NebulaDataset:
             self.train_indices_map = self.generate_non_iid_map(
                 self.train_set, partition=self.partition, partition_parameter=self.partition_parameter
             )
-        # else:
-        #     self.train_indices_map = self.generate_hybrid_map()
+
+        # Remove samples from least represented classes in training and local test
+        if self.remove_classes_count > 0:
+            self.removed_classes = {}  # Dictionary to store removed classes per participant
+            # Remove from training set for each participant independently
+            for participant_id in range(self.partitions_number):
+                train_indices = self.train_indices_map[participant_id]
+                train_labels = np.array([self.train_set.targets[idx] for idx in train_indices])
+                # Get class counts for this participant
+                label_counts = np.bincount(train_labels, minlength=self.num_classes)
+                # Get indices of n least represented classes for this participant
+                removed_classes_participant = np.argsort(label_counts)[:self.remove_classes_count]
+                self.removed_classes[participant_id] = removed_classes_participant
+                logging.info(f"Participant {participant_id} - Original class distribution: {label_counts}")
+                logging.info(f"Participant {participant_id} - Removing classes: {removed_classes_participant}")
+
+                # Keep only indices where label is not in removed_classes
+                keep_mask = ~np.isin(train_labels, removed_classes_participant)
+                self.train_indices_map[participant_id] = np.array(train_indices)[keep_mask].tolist()
+
+                # Log final distribution
+                final_labels = np.array([self.train_set.targets[idx] for idx in self.train_indices_map[participant_id]])
+                final_counts = np.bincount(final_labels, minlength=self.num_classes)
+                logging.info(f"Participant {participant_id} - Final class distribution: {final_counts}")
+                logging.info(f"Participant {participant_id} - Samples after removal: {len(self.train_indices_map[participant_id])}")
 
         self.test_indices_map = self.get_test_indices_map()
         self.local_test_indices_map = self.get_local_test_indices_map()
@@ -413,6 +439,7 @@ class NebulaDataset:
         """
         Get the indices of the local test set for each participant.
         Indices whose labels are the same as the training set are selected.
+        If classes have been removed, those samples are also excluded from local test.
 
         Returns:
             A dictionary mapping participant_id to a list of indices.
@@ -420,11 +447,36 @@ class NebulaDataset:
         try:
             local_test_indices_map = {}
             test_targets = np.array(self.test_set.targets)
+
             for participant_id in range(self.partitions_number):
                 train_labels = np.array([self.train_set.targets[idx] for idx in self.train_indices_map[participant_id]])
-                indices = np.where(np.isin(test_targets, train_labels))[0].tolist()
+                # Get unique labels in training set for this participant
+                unique_train_labels = np.unique(train_labels)
+
+                # If we have removed classes, exclude them from local test
+                if self.remove_classes_count > 0 and participant_id in self.removed_classes:
+                    # Keep only indices where test label is in unique_train_labels AND not in removed_classes for this participant
+                    indices = np.where(
+                        np.logical_and(
+                            np.isin(test_targets, unique_train_labels),
+                            ~np.isin(test_targets, self.removed_classes[participant_id])
+                        )
+                    )[0].tolist()
+                else:
+                    # Original behavior - keep indices where test label is in training labels
+                    indices = np.where(np.isin(test_targets, unique_train_labels))[0].tolist()
+
                 local_test_indices_map[participant_id] = indices
+
+                if self.remove_classes_count > 0:
+                    test_labels = test_targets[indices]
+                    test_counts = np.bincount(test_labels, minlength=self.num_classes)
+                    logging.info(
+                        f"Local test set for participant {participant_id} - Class distribution: {test_counts} - Total samples: {len(indices)}"
+                    )
+
             return local_test_indices_map
+
         except Exception as e:
             logging.exception(f"Error in get_local_test_indices_map: {e}")
             raise
@@ -465,6 +517,10 @@ class NebulaDataset:
         """
         try:
             logging.info(f"Saving partitions data for ALL participants ({self.partitions_number}) in {self.config_dir}")
+            if self.remove_classes_count > 0:
+                for participant_id, removed in self.removed_classes.items():
+                    logging.info(f"Participant {participant_id} had {self.remove_classes_count} classes removed: {removed}")
+
             path = self.config_dir
             if not os.path.exists(path):
                 raise FileNotFoundError(f"Path {path} does not exist")
@@ -487,6 +543,10 @@ class NebulaDataset:
                 test_targets = np.array(self.test_set.targets)
                 f.create_dataset("test_targets", data=test_targets, compression="gzip")
 
+                # Log global test distribution
+                test_counts = np.bincount(test_targets, minlength=self.num_classes)
+                logging.info(f"Global test set class distribution: {test_counts}")
+
             for participant in range(self.partitions_number):
                 file_name = os.path.join(path, f"participant_{participant}_train.h5")
                 with h5py.File(file_name, "w") as f:
@@ -497,6 +557,14 @@ class NebulaDataset:
                     f["train_data"].attrs["num_classes"] = self.num_classes
                     train_targets = np.array([self.train_set.targets[i] for i in indices])
                     f.create_dataset("train_targets", data=train_targets, compression="gzip")
+
+                    # Log training distribution and removed classes
+                    train_counts = np.bincount(train_targets, minlength=self.num_classes)
+                    logging.info(f"Participant {participant} training class distribution: {train_counts}")
+                    if self.remove_classes_count > 0 and participant in self.removed_classes:
+                        f["train_data"].attrs["removed_classes"] = self.removed_classes[participant]
+                        logging.info(f"Participant {participant} removed classes: {self.removed_classes[participant]}")
+
                     logging.info(f"Partition saved for participant {participant}.")
 
             logging.info("Successfully saved all partition files.")

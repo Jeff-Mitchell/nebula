@@ -111,6 +111,7 @@ class Scenario:
         communication_mode="epoch",
         batches_per_communication=1,
         physical_ips=None,
+        remove_classes_count=0,
     ):
         """
         Initialize a Scenario instance.
@@ -165,6 +166,7 @@ class Scenario:
             communication_mode (str): Mode of communication ("epoch" or "batch"). Defaults to "epoch".
             batches_per_communication (int): Number of batches per communication when in batch mode. Defaults to 1.
             physical_ips (list, optional): List of physical IPs for nodes. Defaults to None.
+            remove_classes_count (int): Number of classes to be remove from the clients dataset,
         """
         self.scenario_title = scenario_title
         self.scenario_description = scenario_description
@@ -240,6 +242,7 @@ class Scenario:
         self.communication_mode = communication_mode
         self.batches_per_communication = batches_per_communication
         self.physical_ips = physical_ips
+        self.remove_classes_count = remove_classes_count
 
     def attack_node_assign(
         self,
@@ -694,6 +697,13 @@ class ScenarioManagement:
             participant_config["data_args"]["iid"] = self.scenario.iid
             participant_config["data_args"]["partition_selection"] = self.scenario.partition_selection
             participant_config["data_args"]["partition_parameter"] = self.scenario.partition_parameter
+            participant_config["data_args"]["remove_classes_count"] = self.scenario.remove_classes_count
+            logging.info(f"Setting participant {participant_config['device_args']['idx']} data configuration:")
+            logging.info(f"  - dataset: {participant_config['data_args']['dataset']}")
+            logging.info(f"  - iid: {participant_config['data_args']['iid']}")
+            logging.info(f"  - partition_selection: {participant_config['data_args']['partition_selection']}")
+            logging.info(f"  - partition_parameter: {participant_config['data_args']['partition_parameter']}")
+            logging.info(f"  - remove_classes_count: {participant_config['data_args']['remove_classes_count']}")
             participant_config["model_args"]["model"] = self.scenario.model
             participant_config["device_args"]["accelerator"] = self.scenario.accelerator
             participant_config["device_args"]["gpu_id"] = self.scenario.gpu_id
@@ -1003,6 +1013,11 @@ class ScenarioManagement:
         # Splitting dataset
         dataset_name = self.scenario.dataset
         dataset = None
+        logging.info(f"Initializing dataset {dataset_name} with parameters:")
+        logging.info(f"  - iid: {self.scenario.iid}")
+        logging.info(f"  - partition_selection: {self.scenario.partition_selection}")
+        logging.info(f"  - partition_parameter: {self.scenario.partition_parameter}")
+        logging.info(f"  - remove_classes_count: {self.scenario.remove_classes_count}")
         if dataset_name == "MNIST":
             dataset = MNISTDataset(
                 num_classes=10,
@@ -1012,6 +1027,7 @@ class ScenarioManagement:
                 partition_parameter=self.scenario.partition_parameter,
                 seed=42,
                 config_dir=self.config_dir,
+                remove_classes_count=self.scenario.remove_classes_count,
             )
         elif dataset_name == "FashionMNIST":
             dataset = FashionMNISTDataset(
@@ -1022,6 +1038,7 @@ class ScenarioManagement:
                 partition_parameter=self.scenario.partition_parameter,
                 seed=42,
                 config_dir=self.config_dir,
+                remove_classes_count=self.scenario.remove_classes_count,
             )
         elif dataset_name == "EMNIST":
             dataset = EMNISTDataset(
@@ -1032,6 +1049,7 @@ class ScenarioManagement:
                 partition_parameter=self.scenario.partition_parameter,
                 seed=42,
                 config_dir=self.config_dir,
+                remove_classes_count=self.scenario.remove_classes_count,
             )
         elif dataset_name == "CIFAR10":
             dataset = CIFAR10Dataset(
@@ -1042,6 +1060,7 @@ class ScenarioManagement:
                 partition_parameter=self.scenario.partition_parameter,
                 seed=42,
                 config_dir=self.config_dir,
+                remove_classes_count=self.scenario.remove_classes_count,
             )
         elif dataset_name == "CIFAR100":
             dataset = CIFAR100Dataset(
@@ -1052,6 +1071,7 @@ class ScenarioManagement:
                 partition_parameter=self.scenario.partition_parameter,
                 seed=42,
                 config_dir=self.config_dir,
+                remove_classes_count=self.scenario.remove_classes_count,
             )
         else:
             raise ValueError(f"Dataset {dataset_name} not supported")

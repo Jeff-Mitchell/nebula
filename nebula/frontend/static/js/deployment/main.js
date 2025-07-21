@@ -273,6 +273,21 @@ const DeploymentManager = (function() {
         });
     }
 
+    function setupDeploymentPage() {
+        setupDeploymentButtons();
+        setupDatasetListeners();
+        initializeSelectElements();
+        setupHelpIcons();
+
+        // Add event listener for removeClassesHelp icon
+        const removeClassesIcon = document.getElementById('removeClassesHelpIcon');
+        if (removeClassesIcon) {
+            removeClassesIcon.addEventListener('click', () => {
+                showHelp(helpContent.removeClassesHelp.title, helpContent.removeClassesHelp.content);
+            });
+        }
+    }
+
     return {
         initialize,
         validateScenario

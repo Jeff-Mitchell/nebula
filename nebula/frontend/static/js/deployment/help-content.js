@@ -13,7 +13,8 @@ const HelpContent = (function() {
             'partitionMethodsHelpIcon': partitionMethods,
             'parameterSettingHelpIcon': parameterSetting,
             'modelHelpIcon': model,
-            'maliciousHelpIcon': malicious
+            'maliciousHelpIcon': malicious,
+            'removeClassesHelpIcon': removeClassesHelp
         };
 
         Object.entries(tooltipElements).forEach(([id, content]) => {
@@ -136,6 +137,11 @@ const HelpContent = (function() {
         </ul>
     </div>`;
 
+    const removeClassesHelp = {
+        title: "Remove Least Represented Classes",
+        content: `Specify how many of the least represented classes to remove from the dataset. This creates a more aggressive non-IID scenario by completely removing samples from certain classes. For example, if set to 2 in MNIST (which has 10 classes), the two classes with the fewest samples will be removed entirely. Set to 0 to keep all classes.`
+    };
+
     const deployment = {
         process: `<div style="text-align: left;">
             <strong>Process Deployment</strong>
@@ -173,7 +179,8 @@ const HelpContent = (function() {
         model,
         malicious,
         deployment,
-        reputation
+        reputation,
+        removeClassesHelp
     };
 })();
 
