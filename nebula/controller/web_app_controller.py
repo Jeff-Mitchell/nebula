@@ -335,7 +335,7 @@ async def run_scenario(
     db_scenario = copy.deepcopy(scenario_data)
 
     # Manager for the actual scenario
-    scenarioManagement = ScenarioManagement(scenario_data, user)
+    #scenarioManagement = ScenarioManagement(scenario_data, user)
 
     # await update_scenario(
     #     scenario_name=scenarioManagement.scenario_name,
@@ -361,7 +361,7 @@ async def run_scenario(
     #     logging.exception(f"Error docker-compose up: {e}")
     #     return
 
-    return scenarioManagement.scenario_name
+    return ""#scenarioManagement.scenario_name
 
 
 @app.post("/scenarios/stop")

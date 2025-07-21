@@ -56,7 +56,7 @@ class DockerFederationController(FederationController):
 
     async def _initialize_scenario(self, scenario_data):
         # Initialize Scenario builder using scenario_data from user
-        self.logger.info("Initializing Scenario Builder using scenario data")
+        self.logger.info("🔧  Initializing Scenario Builder using scenario data")
         self.sb.set_scenario_data(scenario_data)
         scenario_name = self.sb.get_scenario_name()
         
@@ -81,7 +81,7 @@ class DockerFederationController(FederationController):
         os.chmod(self.cert_dir, 0o777)
 
         # Save the scenario configuration
-        scenario_file = os.path.join(self.config_dir, "scenario2.json")
+        scenario_file = os.path.join(self.config_dir, "scenario.json")
         with open(scenario_file, "w") as f:
             json.dump(scenario_data, f, sort_keys=False, indent=2)
 
@@ -104,33 +104,38 @@ class DockerFederationController(FederationController):
         os.chmod(settings_file, 0o777)
         
         # Attacks assigment and mobility
-        self.logger.info("Building general configuration")
+        self.logger.info("🔧  Building general configuration")
         self.sb.build_general_configuration()
-        self.logger.info("Building general configuration done")
+        self.logger.info("✅  Building general configuration done")
         
         # Create participant configs and .json
         for index, (_, node) in enumerate(self.sb.get_federation_nodes().items()):
             self.logger.info(f"Creating .json file for participant: {index}, Configuration: {node}")
             node_config = node
             try:
-                participant_file = os.path.join(self.config_dir, f"participant_{node_config['id']}_xxx.json")
-                self.logger.info(f"{participant_file}")
+                participant_file = os.path.join(self.config_dir, f"participant_{node_config['id']}.json")
+                self.logger.info(f"Filename: {participant_file}")
                 os.makedirs(os.path.dirname(participant_file), exist_ok=True)
             except Exception as e:
                  self.logger.info(f"ERROR while creating files: {e}")
                  
             try:         
                 participant_config = self.sb.build_scenario_config_for_node(index, node)
+                #self.logger.info(f"dictionary: {participant_config}")
+            except Exception as e:
+                 self.logger.info(f"ERROR while building configuration for node: {e}")
+
+            try:
                 with open(participant_file, "w") as f:
                     json.dump(participant_config, f, sort_keys=False, indent=2)
                 os.chmod(participant_file, 0o777)
             except Exception as e:
                  self.logger.info(f"ERROR while dumping configuration into files: {e}")
 
-        self.logger.info("Initializing Scenario Builder done")
+        self.logger.info("✅  Initializing Scenario Builder done")
                 
     async def _load_configuration_and_start_nodes(self):
-        self.logger.info("Loading Scenario configuration...")
+        self.logger.info("🔧  Loading Scenario configuration...")
         # Get participants configurations
         participant_files = glob.glob(f"{self.config_dir}/participant_*.json")
         participant_files.sort()
@@ -154,32 +159,46 @@ class DockerFederationController(FederationController):
         participant_files.sort(key=lambda x: int(x.split("_")[-1].split(".")[0]))
         
         # Initial participants
-        self.logger.info("Building preload configuration for initial nodes...")
+        self.logger.info("🔧  Building preload configuration for initial nodes...")
         for i in range(self.n_nodes):
-            with open(f"{self.config_dir}/participant_" + str(i) + ".json") as f:
-                participant_config = json.load(f)
-            
-            self.sb.build_preload_configuration(i, participant_config, self.log_dir, self.config_dir, self.cert_dir, self.advanced_analytics)
-            
-            with open(f"{self.config_dir}/participant_" + str(i) + ".json", "w") as f:
-                json.dump(participant_config, f, sort_keys=False, indent=2)
+            try:
+                with open(f"{self.config_dir}/participant_" + str(i) + ".json") as f:
+                    participant_config = json.load(f)
+            except Exception as e:
+                self.logger.info(f"ERROR: open/load participant .json")
+
+            self.logger.info(f"Building preload conf for participant {i}")
+            try:
+                self.sb.build_preload_initial_node_configuration(i, participant_config, self.log_dir, self.config_dir, self.cert_dir, self.advanced_analytics)
+            except Exception as e:
+                self.logger.info(f"ERROR: cannot build preload configuration")
+
+            try:
+                with open(f"{self.config_dir}/participant_" + str(i) + ".json", "w") as f:
+                    json.dump(participant_config, f, sort_keys=False, indent=2)
+            except Exception as e:
+                self.logger.info(f"ERROR: cannot dump preload configuration into participant .json file")
 
             config_participants.append((
                 participant_config["network_args"]["ip"],
                 participant_config["network_args"]["port"],
                 participant_config["device_args"]["role"],
             ))
+            if participant_config["device_args"]["start"]:
+                if not is_start_node:
+                    is_start_node = True
+                else:
+                    raise ValueError("Only one node can be start node")
 
-        self.logger.info("Building preload configuration for initial nodes done")    
-        if not is_start_node:
-            raise ValueError("No start node found")
+        self.logger.info("✅  Building preload configuration for initial nodes done")    
+        
         self.config.set_participants_config(participant_files)
         
         # Add role to the topology (visualization purposes)
         self.sb.visualize_topology(config_participants, path=f"{self.config_dir}/topology.png", plot=False)
         
         # Additional participants
-        self.logger.info("Building preload configuration for additional nodes...")
+        self.logger.info("🔧  Building preload configuration for additional nodes...")
         additional_participants_files = []
         if additional_participants:
             last_participant_file = participant_files[-1]
@@ -206,13 +225,13 @@ class DockerFederationController(FederationController):
         if additional_participants:
             self.n_nodes += len(additional_participants)
 
-        self.logger.info("Building preload configuration for additional nodes done")
+        self.logger.info("✅  Building preload configuration for additional nodes done")
         
         # Build dataset    
         dataset = self.sb.configure_dataset(self.config_dir)
-        self.logger.info(f"Splitting {self.sb.get_dataset_name()} dataset...")
+        self.logger.info(f"🔧  Splitting {self.sb.get_dataset_name()} dataset...")
         dataset.initialize_dataset()
-        self.logger.info(f"Splitting {self.sb.get_dataset_name()} dataset... Done")
+        self.logger.info(f"✅  Splitting {self.sb.get_dataset_name()} dataset... Done")
 
     #TODO delay additionals deployment until conditions
     def _start_nodes(self):

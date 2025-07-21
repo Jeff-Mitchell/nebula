@@ -45,7 +45,6 @@ class ScenarioBuilder():
     
     def get_dataset_name(self) -> str:
          return self.sd["dataset"]
-    
         
     """                                                     ###############################
                                                             #     SCENARIO CONFIG NODE    #
@@ -381,14 +380,25 @@ class ScenarioBuilder():
 
     def build_scenario_config_for_node(self, index, node) -> dict:
         self.logger.info(f"Start building the scenario configuration for participant {index}")
-        participant_config = defaultdict()
-        participant_config["addons"] = list()
+
+        def recursive_defaultdict():
+            return defaultdict(recursive_defaultdict)
+        
+        def dictify(d):
+            if isinstance(d, defaultdict):
+                return {k: dictify(v) for k, v in d.items()}
+            return d
+
+        participant_config = recursive_defaultdict()
+
+        addons_config = defaultdict()
+        #participant_config["addons"] = dict()
         
                                     # General configuration
         participant_config["scenario_args"]["name"] = self._scenario_name
         participant_config["scenario_args"]["start_time"] = datetime.now().strftime("%d/%m/%Y %H:%M:%S")                           
                                     
-        node_config = self.sd["nodes"][node]
+        node_config = node #self.sd["nodes"][index]
         participant_config["network_args"]["ip"] = node_config["ip"]
         if self.sd["deployment"] == "physical":
             participant_config["network_args"]["port"] = 8000
@@ -416,39 +426,69 @@ class ScenarioBuilder():
                                     # Addons configuration
         
         # Trustworthiness
-        if self.sd.get("with_trustworthiness", None):
-            participant_config["trust_args"] = self._configure_trustworthiness()
-            participant_config["addons"].append("trustworthiness")
+        try:
+            if self.sd.get("with_trustworthiness", None):
+                #participant_config["trust_args"] = 
+                addons_config["trustworthiness"] = self._configure_trustworthiness()
+        except Exception as e:
+            self.logger.info(f"ERROR: Cannot build trustworthiness configuration - {e}")
             
         # Reputation
-        if self.sd.get("reputation", None):
-            participant_config["defense_args"]["reputation"] = self._configure_reputation()
-            participant_config["addons"].append("reputation")
+        try:
+            if self.sd.get("reputation", None) and self.sd["reputation"]["enabled"]:
+                #participant_config["defense_args"]["reputation"] = self._configure_reputation()
+                addons_config["reputation"] = self._configure_reputation() 
+        except Exception as e:
+            self.logger.info(f"ERROR: Cannot build reputation configuration - {e}")
             
         # Network simulation
-        #TODO revisar
-        if dict(self.sd.get("network_args"))["enabled"]:
-            participant_config["network_args"]["network_simulation"] =  self._configure_network_simulation()
-            participant_config["addons"].append("network_simulation")
+        try:
+            network_args: dict = (self.sd.get("network_args"), None)
+            if network_args and isinstance(network_args, dict) and network_args.get("enabled", None):
+                #participant_config["network_args"]["network_simulation"] =  self._configure_network_simulation()
+                addons_config["network_simulation"] = self._configure_network_simulation()
+        except Exception as e:
+            self.logger.info(f"ERROR: Cannot build network simulation configuration - {e}")
 
         # Attacks
-        self._configure_role(participant_config, node_config)
+        try:
+            #TODO moverlo a addons-adversarial_args
+            if node_config["role"] == "malicious":
+                addons_config["adversarial_args"] = self._configure_malicious_role(node_config)
+        except Exception as e:
+            self.logger.info(f"ERROR: Cannot build role configuration - {e}")
 
         # Mobility
-        if self.sd.get("mobility", None):
-            participant_config["addons"].append("mobility")
+        try:
+            if self.sd.get("mobility", None):
+                #participant_config["addons"].append("mobility")
+                addons_config["mobility"] = {"enabled": True}
+        except Exception as e:
+            self.logger.info(f"ERROR: Cannot build mobility configuration - {e}")
         
         # Situational awareness module
-        if self._situational_awareness_needed():
-            participant_config["situational_awareness"] = self._configure_situational_awareness(index)
-            participant_config["addons"].append("situational_awareness")
-                      
-        return participant_config
+        try:
+            if self._situational_awareness_needed():
+                #participant_config["situational_awareness"] = self._configure_situational_awareness(index)
+                addons_config["situational_awareness"] =  self._configure_situational_awareness(index)
+        except Exception as e:
+            self.logger.info(f"ERROR: Cannot build situational awareness configuration - {e}")
+
+        # Addon addition to the configuration
+        participant_config["addons"] = addons_config
+
+        try:
+            config = dictify(participant_config)
+        except Exception as e:
+            self.logger.info(f"ERROR: Translating into dictionary - {e}")    
+                       
+        return config
     
-    def _configure_role(self, participant_config, node_config: dict):
-        if node_config["role"] == "malicious":
-            participant_config["adversarial_args"]["fake_behavior"] = node_config["fake_behavior"]
-            participant_config["adversarial_args"]["attack_params"] = node_config["attack_params"]
+    def _configure_malicious_role(self, node_config: dict):
+        return {
+            "fake_behavior": node_config["fake_behavior"],
+            "attack_params": node_config["attack_params"]
+        }
 
     def _configure_trustworthiness(self) -> dict:
         trust_config = {
@@ -469,7 +509,7 @@ class ScenarioBuilder():
             "post_hoc_methods": self.sd["post_hoc_methods"],
             "accountability_pillar": self.sd["accountability_pillar"],
             "factsheet_completeness": self.sd["factsheet_completeness"],
-            "architectural_soundness_pillar": self.sd["sd.architectural_soundness_pillar"],
+            "architectural_soundness_pillar": self.sd["architectural_soundness_pillar"],
             "client_management": self.sd["client_management"],
             "optimization": self.sd["optimization"],
             "sustainability_pillar": self.sd["sustainability_pillar"],
@@ -522,7 +562,11 @@ class ScenarioBuilder():
         return with_sa or enabled or arrivals_dep or additionals or mob
 
     def _configure_situational_awareness(self, index) -> dict:
-        scheduled_isolation = self._configure_arrivals_departures(index)
+        try:
+            scheduled_isolation = self._configure_arrivals_departures(index)
+        except Exception as e:
+            self.logger.info(f"ERROR: cannot configure arrival departures section - {e}")
+
         snp = self.sd.get("sar_neighbor_policy", None)
         topology_management = snp if (snp != "") else self.sd["topology"]
         
@@ -554,9 +598,10 @@ class ScenarioBuilder():
         return situational_awareness_config
      
     def _configure_arrivals_departures(self, index) -> dict:
-        if not self.sd["arrivals_departures_args"]["enabled"]:
+        arrival_dep_section = self.sd.get("arrivals_departures_args", None)
+        if not arrival_dep_section or (arrival_dep_section and not self.sd["arrivals_departures_args"]["enabled"]):
             return {"enabled": False}
-        
+     
         config = {"enabled": True}
         departures: list = self.sd["arrivals_departures_args"]["departures"]
         index_departure_config: dict = departures[index]
@@ -573,49 +618,57 @@ class ScenarioBuilder():
                                                             ###############################
     """
         
-    def build_preload_configuration(self, index, participant_config, log_dir, config_dir, cert_dir, advanced_analytics):
-        participant_config["scenario_args"]["federation"] = self.sd["federation"]
-        n_nodes = len(self.sd["nodes"].keys())
-        n_additionals = len(self.sd["additional_participants"])
-        participant_config["scenario_args"]["n_nodes"] = n_nodes + n_additionals
-        
-        participant_config["network_args"]["neighbors"] = self.tm.get_neighbors_string(index)
-        
-        participant_config["device_args"]["idx"] = index
-        participant_config["device_args"]["uid"] = hashlib.sha1(
-            (
-                str(participant_config["network_args"]["ip"])
-                + str(participant_config["network_args"]["port"])
-                + str(participant_config["scenario_args"]["name"])
-            ).encode()
-        ).hexdigest()
-        
-        if participant_config["mobility_args"]["random_geo"]:
-            (
-                participant_config["mobility_args"]["latitude"],
-                participant_config["mobility_args"]["longitude"],
-            ) = TopologyManager.get_coordinates(random_geo=True)
-        else:
-            participant_config["mobility_args"]["latitude"] = self.sd["latitude"]
-            participant_config["mobility_args"]["longitude"] = self.sd["scenario.longitude"]
+    def build_preload_initial_node_configuration(self, index, participant_config: dict, log_dir, config_dir, cert_dir, advanced_analytics):
+        try:
+            participant_config["scenario_args"]["federation"] = self.sd["federation"]
+            n_nodes = len(self.sd["nodes"].keys())
+            n_additionals = len(self.sd["additional_participants"])
+            participant_config["scenario_args"]["n_nodes"] = n_nodes + n_additionals
             
-        # If not, use the given coordinates in the frontend
-        participant_config["tracking_args"]["local_tracking"] = "advanced" if advanced_analytics else "basic"
-        participant_config["tracking_args"]["log_dir"] = log_dir
-        participant_config["tracking_args"]["config_dir"] = config_dir
-        # Generate node certificate
-        keyfile_path, certificate_path = generate_certificate(
-            dir_path=cert_dir,
-            node_id=f"participant_{index}",
-            ip=participant_config["network_args"]["ip"],
-        )
-        participant_config["security_args"]["certfile"] = certificate_path
-        participant_config["security_args"]["keyfile"] = keyfile_path
-        if participant_config["device_args"]["start"]:
-            if not is_start_node:
-                is_start_node = True
-            else:
-                raise ValueError("Only one node can be start node")
+            participant_config["network_args"]["neighbors"] = self.tm.get_neighbors_string(index)
+            
+            participant_config["device_args"]["idx"] = index
+            participant_config["device_args"]["uid"] = hashlib.sha1(
+                (
+                    str(participant_config["network_args"]["ip"])
+                    + str(participant_config["network_args"]["port"])
+                    + str(participant_config["scenario_args"]["name"])
+                ).encode()
+            ).hexdigest()
+        except Exception as e:
+                self.logger.info(f"ERROR while setting up general stuff")
+        
+        try:
+            if participant_config.get("addons", None) and participant_config["addons"].get("mobility", None):
+                if participant_config["addons"]["mobility"].get("random_geo", None):
+                    (
+                        participant_config["addons"]["mobility"]["latitude"],
+                        participant_config["addons"]["mobility"]["longitude"],
+                    ) = TopologyManager.get_coordinates(random_geo=True)
+                else:
+                    participant_config["addons"]["mobility"]["latitude"] = self.sd["latitude"]
+                    participant_config["addons"]["mobility"]["longitude"] = self.sd["longitude"]
+        except Exception as e:
+                self.logger.info(f"ERROR while setting up mobility parameters - {e}")
+            
+        try:
+            participant_config["tracking_args"] = {}
+            participant_config["security_args"] = {}
+
+            # If not, use the given coordinates in the frontend
+            participant_config["tracking_args"]["local_tracking"] = "advanced" if advanced_analytics else "basic"
+            participant_config["tracking_args"]["log_dir"] = log_dir
+            participant_config["tracking_args"]["config_dir"] = config_dir
+            # Generate node certificate
+            keyfile_path, certificate_path = generate_certificate(
+                dir_path=cert_dir,
+                node_id=f"participant_{index}",
+                ip=participant_config["network_args"]["ip"],
+            )
+            participant_config["security_args"]["certfile"] = certificate_path
+            participant_config["security_args"]["keyfile"] = keyfile_path
+        except Exception as e:
+                self.logger.info(f"ERROR while setting up tracking args and certificates")
     
     def build_preload_additional_node_configuration(self, last_participant_index, index, participant_config):
         n_nodes = len(self.sd["nodes"].keys())
@@ -648,9 +701,12 @@ class ScenarioBuilder():
     """
     
     def create_topology_manager(self, config: Config):
-        self._topology_manager = (
-            self._create_topology(config, matrix=self.sd["matrix"]) if self.sd["matrix"] else self._create_topology(config)
-        )
+        try:
+            self._topology_manager = (
+                self._create_topology(config, matrix=self.sd["matrix"]) if self.sd["matrix"] else self._create_topology(config)
+            )
+        except Exception as e:
+            self.logger.info(f"ERROR: cannot create topology manager - {e}")
         
     def _create_topology(self, config: Config, matrix=None):
         """
@@ -742,8 +798,11 @@ class ScenarioBuilder():
         return topologymanager
     
     def visualize_topology(self, config_participants, path, plot):
-        self.tm.update_nodes(config_participants)
-        self.tm.draw_graph(path, plot)    
+        try:
+            self.tm.update_nodes(config_participants)
+            self.tm.draw_graph(path, plot)
+        except Exception as e:
+            self.logger.info(f"ERROR: cannot visualize topology - {e}")    
 
     """                                                     ###############################
                                                             #    DATASET CONFIGURATION    #
@@ -751,11 +810,14 @@ class ScenarioBuilder():
     """
     
     def configure_dataset(self, config_dir) -> NebulaDataset:
-        dataset_name = self.get_dataset_name()    
-        dataset = factory_nebuladataset(
-            dataset_name,
-            **self._configure_dataset_config(dataset_name, config_dir)                              
-        )
+        try:
+            dataset_name = self.get_dataset_name()    
+            dataset = factory_nebuladataset(
+                dataset_name,
+                **self._configure_dataset_config(dataset_name, config_dir)                              
+            )
+        except Exception as e:
+            self.logger.info(f"ERROR: cannot configure dataset - {e}")
         return dataset
         
     def _configure_dataset_config(self, dataset_name, config_dir):
