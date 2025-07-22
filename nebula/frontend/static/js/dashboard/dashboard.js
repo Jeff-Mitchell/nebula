@@ -1,3 +1,4 @@
+
 import ScenarioActions from './scenario-actions.js';
 import NotesManager from './notes-manager.js';
 import ConfigManager from './config-manager.js';

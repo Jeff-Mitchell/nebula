@@ -178,6 +178,7 @@ def create_aggregator(config, engine) -> Aggregator:
     from nebula.core.aggregation.median import Median
     from nebula.core.aggregation.trimmedmean import TrimmedMean
     from nebula.core.optimization.performance.ProserProto.aggregation.proserproto_aggregator import ProserProtoAggregator
+    from nebula.core.research.FedProto.aggregation.protoavg import ProtoAvg
 
     ALGORITHM_MAP = {
         "FedAvg": FedAvg,
@@ -185,6 +186,7 @@ def create_aggregator(config, engine) -> Aggregator:
         "Median": Median,
         "TrimmedMean": TrimmedMean,
         "ProserProto": ProserProtoAggregator,
+        "FedProto": ProtoAvg,
     }
     algorithm = config.participant["aggregator_args"]["algorithm"]
     aggregator = ALGORITHM_MAP.get(algorithm)

@@ -126,6 +126,9 @@ const HelpContent = (function() {
             <li>RNN: Recurrent neural network</li>
             <li>ProserProtoCNN: CNN with prototype learning for MNIST</li>
             <li>ProserProtoResNet18: ResNet18 with prototype learning for CIFAR10</li>
+            <li>FedProtoCNN: CNN with FedProto learning (MNIST, FashionMNIST, CIFAR10)</li>
+            <li>FedProtoResNet8: ResNet8 with FedProto learning for CIFAR10</li>
+            <li>FedProtoResNet18: ResNet18 with FedProto learning for CIFAR100</li>
         </ul>
     </div>`;
 

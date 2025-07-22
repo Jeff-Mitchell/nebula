@@ -31,6 +31,7 @@ from nebula.core.models import MODELS
 from nebula.core.engine import Engine
 from nebula.core.training.lightning import Lightning
 from nebula.core.training.siamese import Siamese
+from nebula.core.research.FedProto.training.protolightning import ProtoLightning
 
 # os.environ["PYTORCH_ENABLE_MPS_FALLBACK"] = "1"
 # os.environ["TORCH_LOGS"] = "+dynamo"
@@ -138,9 +139,14 @@ async def main(config: Config):
     )
 
     trainer = None
+    # if model_name contains "fedproto" then trainer is ProtoLightning in lowercase
+    if "fedproto" in model_name.lower():
+        trainer = ProtoLightning
+
     trainer_str = config.participant["training_args"]["trainer"]
     if trainer_str == "lightning":
-        trainer = Lightning
+        if trainer == None:
+            trainer = Lightning
     elif trainer_str == "scikit":
         raise NotImplementedError
     elif trainer_str == "siamese":
