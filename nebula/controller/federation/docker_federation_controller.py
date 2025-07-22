@@ -1,3 +1,4 @@
+import datetime
 import glob
 import json
 import os
@@ -25,7 +26,7 @@ class DockerFederationController(FederationController):
         self.controller = ""
         self.config = Config(entity="scenarioManagement")
         self.round_per_node = {}
-        self.additionals: list[tuple[str, int]] = []
+        self.additionals: dict[str, int] = {}
 
     """                                             ###############################
                                                     #      ENDPOINT CALLBACKS     #
@@ -38,7 +39,7 @@ class DockerFederationController(FederationController):
         await self._initialize_scenario(scenario_data)
         generate_ca_certificate(dir_path=self.cert_dir)
         await self._load_configuration_and_start_nodes()
-        self._start_nodes()
+        self._start_initial_nodes()
 
         return self.sb.get_scenario_name()
          
@@ -49,7 +50,24 @@ class DockerFederationController(FederationController):
         pass
 
     async def update_nodes(self, scenario_name: str, request: Request):
-        pass
+        config = await request.json()
+        participant_idx = str(config["device_args"]["idx"])
+        participant_round = int(config["federation_args"]["round"])
+        
+        self.round_per_node[participant_idx] = participant_round
+        federation_round = min(self.round_per_node.values())
+        
+        additionals_deployables = [
+            idx
+            for idx, round in self.additionals.items() 
+            if federation_round >= round
+        ]
+        
+        #TODO deploy additionals deployables
+        # update self.round_per_node -> add additional nodes that are going to
+        # be deployed
+        
+        #TODO get the others parameters
 
     """                                             ###############################
                                                     #       FUNCTIONALITIES       #
@@ -236,8 +254,7 @@ class DockerFederationController(FederationController):
         dataset.initialize_dataset()
         self.logger.info(f"✅  Splitting {self.sb.get_dataset_name()} dataset... Done")
 
-    #TODO delay additionals deployment until conditions
-    def _start_nodes(self):
+    def _start_initial_nodes(self):
         self.logger.info("Starting nodes using Docker Compose...")
   
         self.config.participants.sort(key=lambda x: x["device_args"]["idx"])
@@ -245,16 +262,15 @@ class DockerFederationController(FederationController):
         container_ids = []
         for idx, node in enumerate(self.config.participants):
             if node["deployment_args"]["additional"]:
-                self.additionals.append((idx, int(node["deployment_args"]["deployment_round"])))
+                self.additionals[idx] = int(node["deployment_args"]["deployment_round"])
                 continue
             
             # deploy initial node
+            self.round_per_node[idx] = 0
         
         # Ordered list for additional participants deployment
-        ordered = sorted(self.additionals, key=lambda t: t[1])
-        self.additionals = ordered
-        for an in self.additionals:
-            self.logger.info(f"Additional node: {an}")
+        for an, anr in self.additionals.items():
+            self.logger.info(f"Additional node: {an}:{anr}")
             
     def _start_node(self):
         """
