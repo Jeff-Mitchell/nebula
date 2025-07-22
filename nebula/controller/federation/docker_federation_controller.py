@@ -24,6 +24,8 @@ class DockerFederationController(FederationController):
         self.advanced_analytics = ""
         self.controller = ""
         self.config = Config(entity="scenarioManagement")
+        self.round_per_node = {}
+        self.additionals: list[tuple[str, int]] = []
 
     """                                             ###############################
                                                     #      ENDPOINT CALLBACKS     #
@@ -36,7 +38,7 @@ class DockerFederationController(FederationController):
         await self._initialize_scenario(scenario_data)
         generate_ca_certificate(dir_path=self.cert_dir)
         await self._load_configuration_and_start_nodes()
-        #self._start_nodes()
+        self._start_nodes()
 
         return self.sb.get_scenario_name()
          
@@ -190,8 +192,8 @@ class DockerFederationController(FederationController):
                 else:
                     raise ValueError("Only one node can be start node")
 
-        self.logger.info("✅  Building preload configuration for initial nodes done")    
-        
+        self.logger.info("✅  Building preload configuration for initial nodes done")
+            
         self.config.set_participants_config(participant_files)
         
         # Add role to the topology (visualization purposes)
@@ -226,6 +228,7 @@ class DockerFederationController(FederationController):
             self.n_nodes += len(additional_participants)
 
         self.logger.info("✅  Building preload configuration for additional nodes done")
+        self.logger.info("✅  Loading Scenario configuration done")
         
         # Build dataset    
         dataset = self.sb.configure_dataset(self.config_dir)
@@ -235,6 +238,25 @@ class DockerFederationController(FederationController):
 
     #TODO delay additionals deployment until conditions
     def _start_nodes(self):
+        self.logger.info("Starting nodes using Docker Compose...")
+  
+        self.config.participants.sort(key=lambda x: x["device_args"]["idx"])
+        i = 2
+        container_ids = []
+        for idx, node in enumerate(self.config.participants):
+            if node["deployment_args"]["additional"]:
+                self.additionals.append((idx, int(node["deployment_args"]["deployment_round"])))
+                continue
+            
+            # deploy initial node
+        
+        # Ordered list for additional participants deployment
+        ordered = sorted(self.additionals, key=lambda t: t[1])
+        self.additionals = ordered
+        for an in self.additionals:
+            self.logger.info(f"Additional node: {an}")
+            
+    def _start_node(self):
         """
         Starts participant nodes as Docker containers using Docker SDK.
 
@@ -259,7 +281,7 @@ class DockerFederationController(FederationController):
         Note:
             - The method assumes Docker and NVIDIA runtime are properly installed and configured.
             - IP addresses in node configurations are replaced with network base dynamically.
-        """
+        """      
         self.logger.info("Starting nodes using Docker Compose...")
 
         network_name = f"{os.environ.get('NEBULA_CONTROLLER_NAME')}_{str(self._user).lower()}-nebula-net-scenario"
@@ -272,7 +294,8 @@ class DockerFederationController(FederationController):
         self.config.participants.sort(key=lambda x: x["device_args"]["idx"])
         i = 2
         container_ids = []
-        for idx, node in enumerate(self.config.participants):
+        for idx, node in enumerate(self.config.participants):      
+            self.logger.info(f"Deploying participant {idx}...")
             image = "nebula-core"
             name = f"{os.environ.get('NEBULA_CONTROLLER_NAME')}_{self._user}-participant{node['device_args']['idx']}"
 
@@ -303,7 +326,7 @@ class DockerFederationController(FederationController):
             command = [
                 "/bin/bash",
                 "-c",
-                f"{start_command} && ifconfig && echo '{base}.1 host.docker.internal' >> /etc/hosts && python /nebula/nebula/core/node.py /nebula/app/config/{self.scenario_name}/participant_{node['device_args']['idx']}.json",
+                f"{start_command} && ifconfig && echo '{base}.1 host.docker.internal' >> /etc/hosts && python /nebula/nebula/core/node.py /nebula/app/config/{self.sb.get_scenario_name()}/participant_{node['device_args']['idx']}.json",
             ]
 
             networking_config = client.api.create_networking_config({

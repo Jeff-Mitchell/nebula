@@ -57,18 +57,18 @@ class Mobility:
         self._mobility_task = None  # Track the background task
 
         # Mobility configuration
-        self.mobility = self.config.participant["mobility_args"]["mobility"]
-        self.mobility_type = self.config.participant["mobility_args"]["mobility_type"]
-        self.grace_time = self.config.participant["mobility_args"]["grace_time_mobility"]
-        self.period = self.config.participant["mobility_args"]["change_geo_interval"]
+        self.mobility = self.config.participant["addons"]["mobility"]["mobility"]
+        self.mobility_type = self.config.participant["addons"]["mobility"]["mobility_type"]
+        self.grace_time = self.config.participant["addons"]["mobility"]["grace_time_mobility"]
+        self.period = self.config.participant["addons"]["mobility"]["change_geo_interval"]
         # INFO: These values may change according to the needs of the federation
         self.max_distance_with_direct_connections = 150  # meters
         self.max_movement_random_strategy = 50  # meters
         self.max_movement_nearest_strategy = 50  # meters
         self.max_initiate_approximation = self.max_distance_with_direct_connections * 1.2
-        self.radius_federation = float(config.participant["mobility_args"]["radius_federation"])
-        self.scheme_mobility = config.participant["mobility_args"]["scheme_mobility"]
-        self.round_frequency = int(config.participant["mobility_args"]["round_frequency"])
+        self.radius_federation = float(config.participant["addons"]["mobility"]["radius_federation"])
+        self.scheme_mobility = config.participant["addons"]["mobility"]["scheme_mobility"]
+        self.round_frequency = int(config.participant["addons"]["mobility"]["round_frequency"])
         # Logging box with mobility information
         mobility_msg = f"Mobility: {self.mobility}\nMobility type: {self.mobility_type}\nRadius federation: {self.radius_federation}\nScheme mobility: {self.scheme_mobility}\nEach {self.round_frequency} rounds"
         print_msg_box(msg=mobility_msg, indent=2, title="Mobility information")

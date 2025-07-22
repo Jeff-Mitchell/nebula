@@ -160,12 +160,12 @@ class Engine:
         self._addon_manager = AddondManager(self, self.config)
 
         # Additional Components
-        if "situational_awareness" in self.config.participant:
+        if "situational_awareness" in self.config.participant["addons"]:
             self._situational_awareness = SituationalAwareness(self.config, self)
         else:
             self._situational_awareness = None
 
-        if self.config.participant["defense_args"]["reputation"]["enabled"]:
+        if self.config.participant["addons"]["reputation"]["enabled"]:
             self._reputation = Reputation(engine=self, config=self.config)
 
     @property
@@ -620,9 +620,9 @@ class Engine:
         """
         await self.aggregator.init()
         if "situational_awareness" in self.config.participant:
-            await self.sa.init()
-        if self.config.participant["defense_args"]["reputation"]["enabled"]:
-            await self._reputation.setup()
+            await self.sa.start()
+        if self.config.participant["addons"]["reputation"]["enabled"]:
+            await self._reputation.start()
         await self._reporter.start()
         await self._addon_manager.deploy_additional_services()
 

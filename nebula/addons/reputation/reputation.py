@@ -3,7 +3,7 @@ import random
 import time
 import numpy as np
 import torch
-
+from nebula.core.addonmanager import NebulaAddon
 from datetime import datetime
 from typing import TYPE_CHECKING
 from nebula.addons.functions import print_msg_box
@@ -54,7 +54,7 @@ class Metrics:
         self.similarity = []
 
 
-class Reputation:
+class Reputation(NebulaAddon):
     """
     Class to define and manage the reputation of a participant in the network.
 
@@ -316,7 +316,7 @@ class Reputation:
         except Exception:
             logging.exception(f"Error saving data for type {type_data} and neighbor {nei}")
 
-    async def setup(self):
+    async def start(self):
         """Set up the reputation system by subscribing to relevant events."""
         if self._enabled:
             await EventManager.get_instance().subscribe_node_event(RoundStartEvent, self.on_round_start)
@@ -339,6 +339,9 @@ class Reputation:
                     ("federation", "federation_models_included"), self.recollect_number_message
                 )
                 await EventManager.get_instance().subscribe_node_event(DuplicatedMessageEvent, self.recollect_duplicated_number_message)
+
+    async def stop():
+        pass
 
     async def init_reputation(
         self, federation_nodes=None, round_num=None, last_feedback_round=None, init_reputation=None
