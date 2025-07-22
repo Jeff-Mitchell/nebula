@@ -121,15 +121,6 @@ logging.info(f"🚀  Starting Nebula Frontend on port {settings.port}")
 logging.info(f"NEBULA_PRODUCTION: {settings.env_tag == 'prod'}")
 logging.info(f"NEBULA_DEPLOYMENT_PREFIX: {settings.prefix_tag}")
 
-if "SECRET_KEY" not in os.environ:
-    logging.info("Generating SECRET_KEY")
-    os.environ["SECRET_KEY"] = os.urandom(24).hex()
-    logging.info(f"Saving SECRET_KEY to {settings.env_file}")
-    with open(settings.env_file, "a") as f:
-        f.write(f"SECRET_KEY={os.environ['SECRET_KEY']}\n")
-else:
-    logging.info("SECRET_KEY already set")
-
 app = FastAPI()
 app.add_middleware(
     SessionMiddleware,
@@ -696,7 +687,7 @@ async def remove_scenario_by_name(scenario_name):
     await controller_post(url, data)
 
 
-async def check_scenario_with_role(role, scenario_name):
+async def check_scenario_with_role(role, scenario_name, user):
     """
     Check if a specific scenario is allowed for the session's role.
 
@@ -710,7 +701,7 @@ async def check_scenario_with_role(role, scenario_name):
     Raises:
         HTTPException: If the underlying HTTP GET request fails.
     """
-    url = f"http://{settings.controller_host}:{settings.controller_port}/scenarios/check/{role}/{scenario_name}"
+    url = f"http://{settings.controller_host}:{settings.controller_port}/scenarios/check/{user}/{role}/{scenario_name}"
     check_data = await controller_get(url)
     return check_data.get("allowed", False)
 
@@ -1611,7 +1602,7 @@ async def nebula_dashboard_monitor(scenario_name: str, request: Request, session
                     "ip": node["ip"],
                     "port": node["port"],
                     "role": node["role"],
-                    "neighbors": node["neighbors"],
+                    "neighbors": " ".join(node["neighbors"]),
                     "latitude": node["latitude"],
                     "longitude": node["longitude"],
                     "timestamp": node["timestamp"],
@@ -1715,8 +1706,7 @@ async def nebula_update_node(scenario_name: str, request: Request):
                 "ip": config["network_args"]["ip"],
                 "port": str(config["network_args"]["port"]),
                 "role": config["device_args"]["role"],
-                "malicious": config["device_args"]["malicious"],
-                "neighbors": config["network_args"]["neighbors"],
+                "neighbors": " ".join(config["network_args"]["neighbors"]),
                 "latitude": config["mobility_args"]["latitude"],
                 "longitude": config["mobility_args"]["longitude"],
                 "timestamp": config["timestamp"],
@@ -1893,7 +1883,7 @@ async def nebula_relaunch_scenario(
         if session["role"] == "demo":
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED)
         elif session["role"] == "user":
-            if not await check_scenario_with_role(session["role"], scenario_name):
+            if not await check_scenario_with_role(session["role"], scenario_name, session["user"]):
                 raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED)
 
         scenario_path = FileUtils.check_path(settings.config_dir, os.path.join(scenario_name, "scenario.json"))
@@ -1934,7 +1924,7 @@ async def nebula_remove_scenario(scenario_name: str, session: dict = Depends(get
         if session["role"] == "demo":
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED)
         elif session["role"] == "user":
-            if not await check_scenario_with_role(session["role"], scenario_name):
+            if not await check_scenario_with_role(session["role"], scenario_name, session["user"]):
                 raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED)
         await remove_scenario(scenario_name, session["user"])
         return RedirectResponse(url="/platform/dashboard")
@@ -2163,7 +2153,8 @@ async def assign_available_gpu(scenario_data, role):
             running_gpus = []
             # Obtain associated gpus of the running scenarios
             for scenario in running_scenarios:
-                scenario_gpus = json.loads(scenario["gpu_id"])
+                config = json.loads(scenario["config"])
+                scenario_gpus = config.get("gpu_id", [])
                 # Obtain the list of gpus in use without duplicates
                 for gpu in scenario_gpus:
                     if gpu not in running_gpus:
