@@ -129,6 +129,8 @@ const HelpContent = (function() {
             <li>FedProtoCNN: CNN with FedProto learning (MNIST, FashionMNIST, CIFAR10)</li>
             <li>FedProtoResNet8: ResNet8 with FedProto learning for CIFAR10</li>
             <li>FedProtoResNet18: ResNet18 with FedProto learning for CIFAR100</li>
+            <li>ProserCNN: PROSER CNN with dummy class and manifold mixup for MNIST</li>
+            <li>ProserResNet18: PROSER ResNet18 with dummy class and manifold mixup for CIFAR10</li>
         </ul>
     </div>`;
 

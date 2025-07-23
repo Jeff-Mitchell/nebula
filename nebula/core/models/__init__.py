@@ -18,6 +18,8 @@ from nebula.core.research.FedProto.models.fashionmnist.FedProtoCNN import FedPro
 from nebula.core.research.FedProto.models.cifar10.FedProtoCNN import FedProtoCIFAR10ModelCNN
 from nebula.core.research.FedProto.models.cifar10.FedProtoResnet8 import FedProtoCIFAR10ModelResNet8
 from nebula.core.research.FedProto.models.cifar100.FedProtoResnet18 import FedProtoCIFAR100ModelResNet18
+from nebula.core.research.Proser.models.mnist.cnn import ProserCNNNebula
+from nebula.core.research.Proser.models.cifar10.resnet import ProserResNet18Nebula
 
 # Mapping of model names to model classes
 MODELS = {
@@ -25,7 +27,8 @@ MODELS = {
         'MLP': MNISTModelMLP,
         'CNN': MNISTModelCNN,
         'ProserProtoCNN': ProserProtoCNN,
-        'FedProtoCNN': FedProtoMNISTModelCNN
+        'FedProtoCNN': FedProtoMNISTModelCNN,
+        'ProserCNN': ProserCNNNebula
     },
     'fashionmnist': {
         'MLP': FashionMNISTModelMLP,
@@ -45,7 +48,8 @@ MODELS = {
         'fastermobilenet': FasterMobileNet,
         'ProserProtoResNet18': ProserProtoResNet18,
         'FedProtoCNN': FedProtoCIFAR10ModelCNN,
-        'FedProtoResNet8': FedProtoCIFAR10ModelResNet8
+        'FedProtoResNet8': FedProtoCIFAR10ModelResNet8,
+        'ProserResNet18': ProserResNet18Nebula
     },
     'cifar100': {
         'CNN': CIFAR100ModelCNN,
@@ -64,5 +68,6 @@ __all__ = [
     'FedProtoMNISTModelCNN', 'FedProtoFashionMNISTModelCNN',
     'FedProtoCIFAR10ModelCNN', 'FedProtoCIFAR10ModelResNet8',
     'FedProtoCIFAR100ModelResNet18',
+    'ProserCNNNebula', 'ProserResNet18Nebula',
     'MODELS'
 ]

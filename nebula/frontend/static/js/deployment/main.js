@@ -247,13 +247,13 @@ const DeploymentManager = (function() {
         // Return appropriate models based on dataset
         switch(dataset.toLowerCase()) {
             case 'mnist':
-                return ['MLP', 'CNN', 'ProserProtoCNN', 'FedProtoCNN'];
+                return ['MLP', 'CNN', 'ProserProtoCNN', 'FedProtoCNN', 'ProserCNN'];
             case 'fashionmnist':
                 return ['MLP', 'CNN', 'FedProtoCNN'];
             case 'emnist':
                 return ['MLP', 'CNN'];
             case 'cifar10':
-                return ['CNN', 'ResNet9', 'fastermobilenet', 'simplemobilenet', 'CNNv2', 'CNNv3', 'ProserProtoResNet18', 'FedProtoCNN', 'FedProtoResNet8'];
+                return ['CNN', 'ResNet9', 'fastermobilenet', 'simplemobilenet', 'CNNv2', 'CNNv3', 'ProserProtoResNet18', 'FedProtoCNN', 'FedProtoResNet8', 'ProserResNet18'];
             case 'cifar100':
                 return ['CNN', 'FedProtoResNet18'];
             default:
