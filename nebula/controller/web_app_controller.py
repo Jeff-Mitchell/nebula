@@ -324,7 +324,7 @@ async def run_scenario(
         url = f"http://{fed_controller_host}:{fed_controller_port}/init"
         url2 = f"http://{fed_controller_host}:{fed_controller_port}/scenarios/run"
         data = {"type": "docker"}
-        data2 = {"scenario_data": scenario_data, "role": role, "user": user}
+        data2 = {"scenario_data": scenario_data, "federation_id": "id_nebula", "user": user}
         await APIUtils.post(url, data)
         await APIUtils.post(url2, data2)
     except Exception as e:

@@ -8,7 +8,9 @@ from typing import Annotated
 from functools import wraps
 from fastapi import HTTPException
 from nebula.utils import LoggerUtils
-from nebula.controller.federation.federation_controller import FederationController, federation_controller_factory
+from nebula.controller.federation.federation_controller import FederationController 
+from nebula.controller.federation.factory_federation_controller import federation_controller_factory
+from nebula.controller.federation.api_requests import InitFederationRequest, RunScenarioRequest, StopScenarioRequest
 
 def require_initialized_controller(func):
     @wraps(func)
@@ -46,11 +48,12 @@ async def read_root():
     logger.info("Test curl succesfull")
     return {"message": "Welcome to the NEBULA Federation Controller API"}
 
+#TODO modificar para q reciba str en vez de dict
 @app.post("/init")
-async def init_federation_experiment(payload: dict = Body(...)):
+async def init_federation_experiment(ifr: InitFederationRequest):
     global fed_controller
 
-    experiment_type = payload["type"]
+    experiment_type = ifr.experiment_type
     logger = logging.getLogger("Federation-Controller")
     logger.info(f"Experiment type received: {experiment_type}")
     
@@ -67,31 +70,15 @@ async def init_federation_experiment(payload: dict = Body(...)):
 
 @app.post("/scenarios/run")
 @require_initialized_controller
-async def run_scenario(
-    scenario_data: dict = Body(..., embed=True),
-    role: str = Body(..., embed=True),
-    user: str = Body(..., embed=True),
-):
+async def run_scenario(run_scenario_request: RunScenarioRequest):
     global fed_controller
-    return await fed_controller.run_scenario(scenario_data, role, user)
+    return await fed_controller.run_scenario(run_scenario_request.federation_id, run_scenario_request.scenario_data, run_scenario_request.user)
 
 @app.post("/scenarios/stop")
 @require_initialized_controller
-async def stop_scenario(
-    scenario_name: str = Body(..., embed=True),
-    username: str = Body(..., embed=True),
-    all: bool = Body(False, embed=True),
-):
+async def stop_scenario(stop_scenario_request: StopScenarioRequest):
     global fed_controller
-    return await fed_controller.stop_scenario(scenario_name, username, all)
-
-@app.post("/scenarios/remove")
-@require_initialized_controller
-async def remove_scenario(
-    scenario_name: str = Body(..., embed=True),
-):
-    global fed_controller
-    return await fed_controller.remove_scenario(scenario_name)
+    return await fed_controller.stop_scenario(stop_scenario_request.federation_id)
 
 @app.post("/nodes/{scenario_name}/update")
 @require_initialized_controller

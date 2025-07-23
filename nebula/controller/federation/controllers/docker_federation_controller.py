@@ -33,7 +33,7 @@ class DockerFederationController(FederationController):
                                                     ###############################
     """
 
-    async def run_scenario(self, scenario_data: Dict, role: str, user: str):
+    async def run_scenario(self, id: str, scenario_data: Dict, user: str):
         #TODO maintain files on memory, not read them again
         self._user = user
         await self._initialize_scenario(scenario_data)
@@ -43,11 +43,89 @@ class DockerFederationController(FederationController):
 
         return self.sb.get_scenario_name()
          
-    async def stop_scenario(self, scenario_name: str, username: str, all: bool):
-        pass
+    async def stop_scenario(self, id: str):
+        """
+        Remove all participant containers and the scenario network.
+        Reads ALL scenario.metadata and removes all listed containers and the network, then deletes the metadata file.
+        Also forcibly stops and removes any containers still attached to the network before removing it.
+        """
+        # Try multiple possible config directory locations. This depends on where the user called the function from.
+        possible_config_dirs = [
+            os.environ.get("NEBULA_CONFIG_DIR"),
+            "/nebula/app/config",
+            "./app/config",
+            os.path.join(os.getcwd(), "app", "config"),
+            os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "app", "config"),
+        ]
 
-    async def remove_scenario(self, scenario_name: str):
-        pass
+        config_dir = None
+        for dir_path in possible_config_dirs:
+            if dir_path and os.path.exists(dir_path):
+                config_dir = dir_path
+                break
+
+        if not config_dir:
+            self.logger.warning("No valid config directory found, skipping cleanup")
+            return
+
+        scenario_dirs = []
+        self.logger.info(f"Config directory: {config_dir}")
+        if os.path.exists(config_dir):
+            for item in os.listdir(config_dir):
+                scenario_path = os.path.join(config_dir, item)
+                if os.path.isdir(scenario_path):
+                    metadata_file = os.path.join(scenario_path, "scenario.metadata")
+                    if os.path.exists(metadata_file):
+                        scenario_dirs.append(scenario_path)
+
+        self.logger.info(f"Removing scenario containers for {scenario_dirs}")
+        if not scenario_dirs:
+            self.logger.info("No active scenarios found to clean up")
+            return
+
+        client = docker.from_env()
+
+        for scenario_dir in scenario_dirs:
+            metadata_path = os.path.join(scenario_dir, "scenario.metadata")
+            if not os.path.exists(metadata_path):
+                self.logger.info(f"Skipping {scenario_dir} - no scenario.metadata found")
+                continue
+
+            with open(metadata_path) as f:
+                meta = json.load(f)
+
+            # Remove containers listed in metadata
+            for name in meta.get("containers", []):
+                try:
+                    container = client.containers.get(name)
+                    container.remove(force=True)
+                    self.logger.info(f"Removed scenario container {name}")
+                except Exception as e:
+                    self.logger.warning(f"Could not remove scenario container {name}: {e}")
+
+            # Remove network, but first forcibly remove any containers still attached
+            network_name = meta.get("network")
+            if network_name:
+                try:
+                    network = client.networks.get(network_name)
+                    attached_containers = network.attrs.get("Containers") or {}
+                    for container_id in attached_containers:
+                        try:
+                            c = client.containers.get(container_id)
+                            c.remove(force=True)
+                            self.logger.info(f"Force-removed container {c.name} attached to {network_name}")
+                        except Exception as e:
+                            self.logger.warning(f"Could not force-remove container {container_id}: {e}")
+                    network.remove()
+                    self.logger.info(f"Removed scenario network {network_name}")
+                except Exception as e:
+                    self.logger.warning(f"Could not remove scenario network {network_name}: {e}")
+
+            # Remove metadata file
+            try:
+                os.remove(metadata_path)
+            except Exception as e:
+                self.logger.warning(f"Could not remove scenario.metadata: {e}")
 
     async def update_nodes(self, scenario_name: str, request: Request):
         config = await request.json()
@@ -87,6 +165,9 @@ class DockerFederationController(FederationController):
         self.cert_dir = os.environ.get("NEBULA_CERTS_DIR")
         self.advanced_analytics = os.environ.get("NEBULA_ADVANCED_ANALYTICS", "False") == "True"
         self.config = Config(entity="scenarioManagement")
+        self.env_tag = os.environ.get("NEBULA_ENV_TAG", "dev")
+        self.prefix_tag = os.environ.get("NEBULA_PREFIX_TAG", "dev")
+        self.user_tag = os.environ.get("NEBULA_USER_TAG", os.environ.get("USER", "unknown"))
         
         self.controller = f"{os.environ.get('NEBULA_CONTROLLER_HOST')}:{os.environ.get('NEBULA_CONTROLLER_PORT')}"
         
@@ -254,6 +335,26 @@ class DockerFederationController(FederationController):
         dataset.initialize_dataset()
         self.logger.info(f"✅  Splitting {self.sb.get_dataset_name()} dataset... Done")
 
+    def get_network_name(self, suffix: str) -> str:
+        """
+        Generate a standardized network name using tags.
+        Args:
+            suffix (str): Suffix for the network (default: 'net-base').
+        Returns:
+            str: The composed network name.
+        """
+        return f"{self.env_tag}_{self.prefix_tag}_{self.user_tag}_{suffix}"
+    
+    def get_participant_container_name(self, idx: int) -> str:
+        """
+        Generate a standardized container name for a participant using tags.
+        Args:
+            idx (int): The participant index.
+        Returns:
+            str: The composed container name.
+        """
+        return f"{self.env_tag}_{self.prefix_tag}_{self.user_tag}_{self.sb.get_scenario_name()}_participant{idx}"
+
     def _start_initial_nodes(self):
         self.logger.info("Starting nodes using Docker Compose...")
   
@@ -271,7 +372,7 @@ class DockerFederationController(FederationController):
         # Ordered list for additional participants deployment
         for an, anr in self.additionals.items():
             self.logger.info(f"Additional node: {an}:{anr}")
-            
+             
     def _start_node(self):
         """
         Starts participant nodes as Docker containers using Docker SDK.
@@ -297,10 +398,11 @@ class DockerFederationController(FederationController):
         Note:
             - The method assumes Docker and NVIDIA runtime are properly installed and configured.
             - IP addresses in node configurations are replaced with network base dynamically.
-        """      
+        """
         self.logger.info("Starting nodes using Docker Compose...")
 
-        network_name = f"{os.environ.get('NEBULA_CONTROLLER_NAME')}_{str(self._user).lower()}-nebula-net-scenario"
+        network_name = self.get_network_name(f"{self.sb.get_scenario_name()}-net-scenario")
+        base_network_name = self.get_network_name("net-base")
 
         # Create the Docker network
         base = DockerUtils.create_docker_network(network_name)
@@ -310,10 +412,10 @@ class DockerFederationController(FederationController):
         self.config.participants.sort(key=lambda x: x["device_args"]["idx"])
         i = 2
         container_ids = []
-        for idx, node in enumerate(self.config.participants):      
-            self.logger.info(f"Deploying participant {idx}...")
+        container_names = []  # Track names for metadata
+        for idx, node in enumerate(self.config.participants):
             image = "nebula-core"
-            name = f"{os.environ.get('NEBULA_CONTROLLER_NAME')}_{self._user}-participant{node['device_args']['idx']}"
+            name = self.get_participant_container_name(node["device_args"]["idx"])
 
             if node["device_args"]["accelerator"] == "gpu":
                 environment = {
@@ -346,20 +448,26 @@ class DockerFederationController(FederationController):
             ]
 
             networking_config = client.api.create_networking_config({
-                f"{network_name}": client.api.create_endpoint_config(
+                network_name: client.api.create_endpoint_config(
                     ipv4_address=f"{base}.{i}",
                 ),
-                f"{os.environ.get('NEBULA_CONTROLLER_NAME')}_nebula-net-base": client.api.create_endpoint_config(),
+                base_network_name: client.api.create_endpoint_config(),
             })
 
             node["tracking_args"]["log_dir"] = "/nebula/app/logs"
             node["tracking_args"]["config_dir"] = f"/nebula/app/config/{self.sb.get_scenario_name()}"
             node["scenario_args"]["controller"] = self.controller
-            node["scenario_args"]["deployment"] = "docker"
+            node["scenario_args"]["deployment"] = self.sb.get_deployment()
             node["security_args"]["certfile"] = f"/nebula/app/certs/participant_{node['device_args']['idx']}_cert.pem"
             node["security_args"]["keyfile"] = f"/nebula/app/certs/participant_{node['device_args']['idx']}_key.pem"
             node["security_args"]["cafile"] = "/nebula/app/certs/ca_cert.pem"
             node = json.loads(json.dumps(node).replace("192.168.50.", f"{base}."))  # TODO change this
+
+            try:
+                existing = client.containers.get(name)
+                self.logger.warning(f"Container {name} already exists. Deployment may fail or cause conflicts.")
+            except docker.errors.NotFound:
+                pass  # No conflict, safe to proceed
 
             # Write the config file in config directory
             with open(f"{self.config_dir}/participant_{node['device_args']['idx']}.json", "w") as f:
@@ -382,6 +490,12 @@ class DockerFederationController(FederationController):
             try:
                 client.api.start(container_id)
                 container_ids.append(container_id)
+                container_names.append(name)
             except Exception as e:
                 self.logger.exception(f"Starting participant {name} error: {e}")
             i += 1
+
+        # Write scenario-level metadata for cleanup
+        scenario_metadata = {"containers": container_names, "network": network_name}
+        with open(os.path.join(self.config_dir, "scenario.metadata"), "w") as f:
+            json.dump(scenario_metadata, f, indent=2)

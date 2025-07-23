@@ -45,6 +45,9 @@ class ScenarioBuilder():
     
     def get_dataset_name(self) -> str:
          return self.sd["dataset"]
+     
+    def get_deployment(self) -> str:
+        return self.sd["deployment"]
         
     """                                                     ###############################
                                                             #     SCENARIO CONFIG NODE    #
