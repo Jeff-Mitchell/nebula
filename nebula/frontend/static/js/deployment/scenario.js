@@ -3,6 +3,8 @@ const ScenarioManager = (function() {
     let scenariosList = [];
     let actual_scenario = 0;
     let physical_ips     = [];
+    let isLoadingScenario = false;
+    let isNavigating = false;  // Flag to prevent auto-save during navigation
 
     // Initialize scenarios from session storage
     function initializeScenarios() {
@@ -18,6 +20,32 @@ const ScenarioManager = (function() {
 
         // Update UI
         updateScenariosPosition(true);
+
+        // Setup automatic saving when topology changes
+        setupTopologyAutoSave();
+    }
+
+    function setupTopologyAutoSave() {
+        // Listen for topology changes and auto-save the scenario
+        document.addEventListener('graphDataUpdated', function() {
+            // Only auto-save if we have existing scenarios and we're not currently loading or navigating
+            if (scenariosList.length > 0 && !isLoadingScenario && !isNavigating) {
+                console.log('Topology changed, auto-saving scenario...', {
+                    actualScenario: actual_scenario,
+                    scenariosCount: scenariosList.length,
+                    isLoading: isLoadingScenario,
+                    isNavigating: isNavigating
+                });
+                replaceScenario();
+                console.log('Auto-save completed');
+            } else {
+                console.log('Topology changed but auto-save skipped:', {
+                    hasScenarios: scenariosList.length > 0,
+                    isLoading: isLoadingScenario,
+                    isNavigating: isNavigating
+                });
+            }
+        });
     }
 
     function collectScenarioData() {
@@ -56,6 +84,15 @@ const ScenarioManager = (function() {
 
         // Get training configuration
         const trainingConfig = window.TrainingManager.getTrainingConfig();
+
+        // Validate that we have required fields
+        const scenarioTitle = document.getElementById("scenario-title").value.trim();
+        const dataset = document.getElementById("datasetSelect").value;
+        const model = document.getElementById("modelSelect").value;
+
+        if (!scenarioTitle) {
+            console.warn("Scenario title is empty, using default");
+        }
 
         return {
             scenario_title: document.getElementById("scenario-title").value,
@@ -139,6 +176,17 @@ const ScenarioManager = (function() {
     function loadScenario(scenario) {
         if (!scenario) return;
 
+        console.log('loadScenario: Loading scenario:', scenario.scenario_title);
+        console.log('loadScenario: Topology data being loaded:', {
+            topology: scenario.topology,
+            n_nodes: scenario.n_nodes,
+            nodes_count: Object.keys(scenario.nodes || {}).length,
+            has_custom_topology: scenario.nodes && Object.keys(scenario.nodes).length > 0
+        });
+
+        // Mark that we're loading a scenario to prevent auto-save
+        isLoadingScenario = true;
+
         // Load basic fields
         document.getElementById("scenario-title").value = scenario.scenario_title || "";
         document.getElementById("scenario-description").value = scenario.scenario_description || "";
@@ -151,8 +199,24 @@ const ScenarioManager = (function() {
         document.getElementById("federationArchitecture").value = scenario.federation;
         document.getElementById("rounds").value = scenario.rounds;
 
-        // Load topology
-        if (scenario.nodes && scenario.nodes_graph) {
+        // Load topology configuration UI
+        if (scenario.topology) {
+            document.getElementById("predefined-topology-select").value = scenario.topology;
+        }
+        if (scenario.n_nodes) {
+            document.getElementById("predefined-topology-nodes").value = scenario.n_nodes;
+        }
+        if (scenario.random_topology_probability) {
+            document.getElementById("random-probability").value = scenario.random_topology_probability;
+        }
+
+        // Set topology type (predefined vs custom)
+        if (scenario.nodes && scenario.nodes_graph && Object.keys(scenario.nodes).length > 0) {
+            // If we have custom topology data, set to custom
+            document.getElementById("custom-topology-btn").checked = true;
+            document.getElementById("predefined-topology-btn").checked = false;
+            document.getElementById("predefined-topology").style.display = "none";
+
             const topologyData = {
                 nodes: Object.values(scenario.nodes),
                 links: []
@@ -172,6 +236,10 @@ const ScenarioManager = (function() {
 
             window.TopologyManager.setData(topologyData);
         } else {
+            // If no custom topology data, set to predefined
+            document.getElementById("predefined-topology-btn").checked = true;
+            document.getElementById("custom-topology-btn").checked = false;
+            document.getElementById("predefined-topology").style.display = "block";
             window.TopologyManager.generatePredefinedTopology();
         }
 
@@ -186,9 +254,9 @@ const ScenarioManager = (function() {
         document.getElementById("iidSelect").value = scenario.iid ? "true" : "false";
         document.getElementById("partitionSelect").value = scenario.partition_selection;
         document.getElementById("partitionParameter").value = scenario.partition_parameter;
+        document.getElementById("removeClassesCount").value = scenario.remove_classes_count || 0;
 
-        // Load model and aggregation
-        document.getElementById("modelSelect").value = scenario.model;
+        // Load aggregation first
         document.getElementById("aggregationSelect").value = scenario.agg_algorithm;
 
         // Load advanced settings
@@ -223,12 +291,12 @@ const ScenarioManager = (function() {
                 additionalParticipants: scenario.additional_participants
             });
         }
-        if (scenario.reputation.enabled) {
+        if (scenario.reputation && scenario.reputation.enabled) {
             window.ReputationManager.setReputationConfig({
                 enabled: scenario.reputation.enabled,
-                metrics: scenario.reputation.metrics,
-                initialReputation: scenario.reputation.initialReputation,
-                weightingFactor: scenario.reputation.weighting_factor,
+                metrics: scenario.reputation.metrics || {},
+                initialReputation: scenario.reputation.initialReputation || 0.2,
+                weightingFactor: scenario.reputation.weighting_factor || "dynamic",
             });
         }
         if (scenario.with_sa) {
@@ -244,10 +312,34 @@ const ScenarioManager = (function() {
             });
         }
 
-        // Trigger necessary events
+        // Trigger necessary events (this will update model options and topology)
         document.getElementById("federationArchitecture").dispatchEvent(new Event('change'));
         document.getElementById("datasetSelect").dispatchEvent(new Event('change'));
         document.getElementById("iidSelect").dispatchEvent(new Event('change'));
+
+        // Trigger topology events to ensure UI is in sync
+        if (document.getElementById("predefined-topology-btn").checked) {
+            document.getElementById("predefined-topology-select").dispatchEvent(new Event('change'));
+        }
+
+        // Load model AFTER the dataset change event has updated the model options
+        setTimeout(() => {
+            const modelSelect = document.getElementById("modelSelect");
+            const modelValue = scenario.model;
+
+            // Check if the model is available in the current options
+            const availableOptions = Array.from(modelSelect.options).map(option => option.value);
+
+            if (availableOptions.includes(modelValue)) {
+                modelSelect.value = modelValue;
+            } else {
+                console.warn(`Model "${modelValue}" not available for dataset "${scenario.dataset}". Using first available model.`);
+                // Use the first available model if the configured one isn't available
+                if (availableOptions.length > 0) {
+                    modelSelect.value = availableOptions[0];
+                }
+            }
+        }, 100);
 
         // Load training configuration
         const trainingConfig = {
@@ -256,6 +348,9 @@ const ScenarioManager = (function() {
             batches_per_communication: scenario.batches_per_communication || 1
         };
         window.TrainingManager.setTrainingConfig(trainingConfig);
+
+        // Mark loading as complete
+        isLoadingScenario = false;
     }
 
     function saveScenario() {
@@ -285,11 +380,25 @@ const ScenarioManager = (function() {
     }
 
     function replaceScenario() {
-        if (actual_scenario < 0 || actual_scenario >= scenariosList.length) return;
+        if (actual_scenario < 0 || actual_scenario >= scenariosList.length) {
+            console.log('replaceScenario: Invalid scenario index', actual_scenario, 'of', scenariosList.length);
+            return;
+        }
 
+        console.log('replaceScenario: Saving scenario', actual_scenario);
         const scenarioData = collectScenarioData();
+
+        // Debug topology data
+        console.log('replaceScenario: Topology data being saved:', {
+            topology: scenarioData.topology,
+            n_nodes: scenarioData.n_nodes,
+            nodes_count: Object.keys(scenarioData.nodes || {}).length,
+            has_custom_topology: scenarioData.nodes && Object.keys(scenarioData.nodes).length > 0
+        });
+
         scenariosList[actual_scenario] = scenarioData;
         sessionStorage.setItem("ScenarioList", JSON.stringify(scenariosList));
+        console.log('replaceScenario: Scenario saved successfully');
     }
 
     function updateScenariosPosition(isEmptyScenario = false) {
@@ -318,18 +427,29 @@ const ScenarioManager = (function() {
     }
 
     function clearFields() {
+        // Mark that we're clearing/loading to prevent auto-save
+        isLoadingScenario = true;
+
         // Reset form fields to default values
         document.getElementById("scenario-title").value = "";
         document.getElementById("scenario-description").value = "";
         document.getElementById("docker-radio").checked = true;
         document.getElementById("federationArchitecture").value = "DFL";
         document.getElementById("rounds").value = "10";
-        document.getElementById("custom-topology-btn").checked = true;
-        document.getElementById("predefined-topology").style.display = "none";
+
+        // Reset topology configuration
+        document.getElementById("predefined-topology-btn").checked = true;
+        document.getElementById("custom-topology-btn").checked = false;
+        document.getElementById("predefined-topology").style.display = "block";
+        document.getElementById("predefined-topology-select").value = "Fully";
+        document.getElementById("predefined-topology-nodes").value = "3";
+        document.getElementById("random-probability").value = "0.5";
+
         document.getElementById("datasetSelect").value = "MNIST";
         document.getElementById("iidSelect").value = "false";
         document.getElementById("partitionSelect").value = "dirichlet";
         document.getElementById("partitionParameter").value = "0.5";
+        document.getElementById("removeClassesCount").value = "0";
         document.getElementById("modelSelect").value = "MLP";
         document.getElementById("aggregationSelect").value = "FedAvg";
         document.getElementById("loggingLevel").value = "false";
@@ -357,6 +477,13 @@ const ScenarioManager = (function() {
         document.getElementById("federationArchitecture").dispatchEvent(new Event('change'));
         document.getElementById("datasetSelect").dispatchEvent(new Event('change'));
         document.getElementById("iidSelect").dispatchEvent(new Event('change'));
+
+        // Set model back to MLP after dataset change has updated options
+        setTimeout(() => {
+            document.getElementById("modelSelect").value = "MLP";
+            // Mark loading as complete after all async operations
+            isLoadingScenario = false;
+        }, 150);
     }
 
     function setPhysicalIPs(ipList = []) {
@@ -364,6 +491,11 @@ const ScenarioManager = (function() {
     }
 
     function setActualScenario(index) {
+        console.log('setActualScenario: Changing from', actual_scenario, 'to', index);
+
+        // Mark as navigating to prevent auto-save conflicts
+        isNavigating = true;
+
         actual_scenario = index;
         if (scenariosList[index]) {
             // Clear the current graph
@@ -377,6 +509,29 @@ const ScenarioManager = (function() {
                 window.TopologyManager.setPhysicalIPs(scenariosList[index].physical_ips);
             }
         }
+
+        // Clear navigation flag after a delay to allow all async operations to complete
+        setTimeout(() => {
+            isNavigating = false;
+            console.log('setActualScenario: Navigation completed, auto-save re-enabled');
+        }, 200);
+    }
+
+    // Function specifically for navigation that handles proper saving/loading sequence
+    function navigateToScenario(direction) {
+        console.log('navigateToScenario: Direction:', direction);
+
+        // Save current scenario before navigating
+        if (scenariosList.length > 0) {
+            console.log('navigateToScenario: Saving current scenario before navigation');
+            replaceScenario();
+        }
+
+        // Calculate new index
+        const newIndex = direction === 'prev' ? actual_scenario - 1 : actual_scenario + 1;
+
+        // Navigate to new scenario
+        setActualScenario(newIndex);
     }
 
     return {
@@ -391,11 +546,17 @@ const ScenarioManager = (function() {
         getScenariosList: () => scenariosList,
         getActualScenario: () => actual_scenario,
         setActualScenario,
+        navigateToScenario,  // New function for proper navigation
         setScenariosList: (list) => {
             scenariosList = list;
+            actual_scenario = 0;
+            sessionStorage.setItem("ScenarioList", JSON.stringify(scenariosList));
+            updateScenariosPosition(list.length === 0);
+
             if (list.length > 0) {
-                actual_scenario = 0;
                 loadScenario(list[0]);
+            } else {
+                clearFields();
             }
         },
         setPhysicalIPs

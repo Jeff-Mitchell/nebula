@@ -542,6 +542,7 @@ class Scenario:
 
         This class method:
             - Copies the input dictionary to prevent modification of the original data.
+            - Provides default values for new fields that may not exist in older configurations.
             - Instantiates the class using the dictionary unpacked as keyword arguments.
 
         Args:
@@ -552,6 +553,17 @@ class Scenario:
         """
         # Create a copy of the data to avoid modifying the original
         scenario_data = data.copy()
+
+        # Provide default values for new fields that may not exist in older configurations
+        defaults = {
+            "communication_mode": "epoch",
+            "batches_per_communication": 1,
+            "remove_classes_count": 0,
+        }
+
+        for key, default_value in defaults.items():
+            if key not in scenario_data:
+                scenario_data[key] = default_value
 
         # Create the scenario object
         scenario = cls(**scenario_data)

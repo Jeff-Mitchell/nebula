@@ -21,6 +21,7 @@ const UIControls = (function() {
         setupParticipantDisplay();
         setupParticipantModal();
         setupConfigButtons();
+        setupQueueButtons();
         // Initialize help icons
         window.HelpContent.initializePopovers();
         setupDeploymentRadios();
@@ -239,8 +240,8 @@ const UIControls = (function() {
         const prevBtn = document.getElementById('prev-btn');
         if (prevBtn) {
             prevBtn.addEventListener('click', function() {
-                window.ScenarioManager.replaceScenario();
-                window.ScenarioManager.setActualScenario(window.ScenarioManager.getActualScenario() - 1);
+                console.log('Previous button clicked');
+                window.ScenarioManager.navigateToScenario('prev');
                 window.ScenarioManager.updateScenariosPosition();
                 updateButtonVisibility();
             });
@@ -250,8 +251,8 @@ const UIControls = (function() {
         const nextBtn = document.getElementById('next-btn');
         if (nextBtn) {
             nextBtn.addEventListener('click', function() {
-                window.ScenarioManager.replaceScenario();
-                window.ScenarioManager.setActualScenario(window.ScenarioManager.getActualScenario() + 1);
+                console.log('Next button clicked');
+                window.ScenarioManager.navigateToScenario('next');
                 window.ScenarioManager.updateScenariosPosition();
                 updateButtonVisibility();
             });
@@ -608,7 +609,7 @@ const UIControls = (function() {
                 const url = URL.createObjectURL(blob);
                 const a = document.createElement('a');
                 a.href = url;
-                a.download = `${scenarioData.title || 'scenario'}.json`;
+                a.download = `${scenarioData.scenario_title || 'scenario'}.json`;
                 document.body.appendChild(a);
                 a.click();
                 document.body.removeChild(a);
@@ -630,13 +631,162 @@ const UIControls = (function() {
                         reader.onload = function(e) {
                             try {
                                 const scenarioData = JSON.parse(e.target.result);
-                                window.ScenarioManager.loadScenarioData(scenarioData);
+
+                                // Validate required fields
+                                const requiredFields = ['scenario_title', 'federation', 'dataset', 'model'];
+                                const missingFields = requiredFields.filter(field => !scenarioData[field]);
+
+                                if (missingFields.length > 0) {
+                                    throw new Error(`Missing required fields: ${missingFields.join(', ')}`);
+                                }
+
+                                // Add default values for new fields that may not exist in older configurations
+                                const normalizedScenario = {
+                                    communication_mode: "epoch",
+                                    batches_per_communication: 1,
+                                    remove_classes_count: 0,
+                                    ...scenarioData  // Override with actual values if they exist
+                                };
+
+                                window.ScenarioManager.loadScenario(normalizedScenario);
                                 window.ScenarioManager.saveScenario();
                                 window.ScenarioManager.updateScenariosPosition();
                                 updateButtonVisibility();
+
+                                // Show success message
+                                const successMessage = `Configuration "${normalizedScenario.scenario_title || 'Unnamed'}" loaded successfully!\nDataset: ${normalizedScenario.dataset}\nModel: ${normalizedScenario.model}`;
+                                alert(successMessage);
                             } catch (error) {
                                 console.error('Error loading configuration:', error);
-                                alert('Error loading configuration file. Please make sure it is a valid JSON file.');
+                                let errorMessage = 'Error loading configuration file.';
+
+                                if (error instanceof SyntaxError) {
+                                    errorMessage = 'Invalid JSON format. Please check the file syntax.';
+                                } else if (error.message.includes('Missing required fields')) {
+                                    errorMessage = `Configuration incomplete: ${error.message}`;
+                                } else {
+                                    errorMessage = `Configuration error: ${error.message}`;
+                                }
+
+                                alert(errorMessage);
+                            }
+                        };
+                        reader.readAsText(file);
+                    }
+                };
+                input.click();
+            });
+        }
+    }
+
+    function setupQueueButtons() {
+        // Save queue button
+        const saveQueueBtn = document.getElementById('save-queue-btn');
+        if (saveQueueBtn) {
+            saveQueueBtn.addEventListener('click', function() {
+                const scenariosList = window.ScenarioManager.getScenariosList();
+
+                if (scenariosList.length === 0) {
+                    alert('No scenarios to download. Please create at least one scenario first.');
+                    return;
+                }
+
+                // Include current scenario if it's not saved yet
+                if (window.ScenarioManager.getActualScenario() >= scenariosList.length - 1) {
+                    window.ScenarioManager.replaceScenario();
+                }
+
+                const queueData = {
+                    queue_name: `queue_${new Date().toISOString().split('T')[0]}`,
+                    created_at: new Date().toISOString(),
+                    scenarios_count: scenariosList.length,
+                    scenarios: scenariosList
+                };
+
+                const blob = new Blob([JSON.stringify(queueData, null, 2)], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `${queueData.queue_name}.json`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+
+                alert(`Queue downloaded successfully!\nScenarios: ${queueData.scenarios_count}\nFilename: ${queueData.queue_name}.json`);
+            });
+        }
+
+        // Load queue button
+        const loadQueueBtn = document.getElementById('load-queue-btn');
+        if (loadQueueBtn) {
+            loadQueueBtn.addEventListener('click', function() {
+                const input = document.createElement('input');
+                input.type = 'file';
+                input.accept = '.json';
+                input.onchange = function(e) {
+                    const file = e.target.files[0];
+                    if (file) {
+                        const reader = new FileReader();
+                        reader.onload = function(e) {
+                            try {
+                                const queueData = JSON.parse(e.target.result);
+
+                                // Validate queue structure
+                                if (!queueData.scenarios || !Array.isArray(queueData.scenarios)) {
+                                    throw new Error('Invalid queue format: missing scenarios array');
+                                }
+
+                                if (queueData.scenarios.length === 0) {
+                                    throw new Error('Queue is empty: no scenarios found');
+                                }
+
+                                // Validate each scenario in the queue
+                                const requiredFields = ['scenario_title', 'federation', 'dataset', 'model'];
+                                for (let i = 0; i < queueData.scenarios.length; i++) {
+                                    const scenario = queueData.scenarios[i];
+                                    const missingFields = requiredFields.filter(field => !scenario[field]);
+
+                                    if (missingFields.length > 0) {
+                                        throw new Error(`Scenario ${i + 1} incomplete: missing fields: ${missingFields.join(', ')}`);
+                                    }
+
+                                    // Normalize each scenario with default values
+                                    queueData.scenarios[i] = {
+                                        communication_mode: "epoch",
+                                        batches_per_communication: 1,
+                                        remove_classes_count: 0,
+                                        ...scenario
+                                    };
+                                }
+
+                                // Confirm before replacing current queue
+                                const confirmMessage = `Load scenario queue?\n\nQueue: ${queueData.queue_name || 'Unnamed'}\nScenarios: ${queueData.scenarios.length}\n\nThis will replace your current scenario queue.`;
+
+                                if (confirm(confirmMessage)) {
+                                    // Replace the entire scenarios list
+                                    window.ScenarioManager.setScenariosList(queueData.scenarios);
+                                    updateButtonVisibility();
+
+                                    const successMessage = `Queue "${queueData.queue_name || 'Unnamed'}" loaded successfully!\n\nScenarios loaded: ${queueData.scenarios.length}\nCurrent scenario: ${queueData.scenarios[0].scenario_title}`;
+                                    alert(successMessage);
+                                }
+
+                            } catch (error) {
+                                console.error('Error loading queue:', error);
+                                let errorMessage = 'Error loading scenario queue.';
+
+                                if (error instanceof SyntaxError) {
+                                    errorMessage = 'Invalid JSON format. Please check the file syntax.';
+                                } else if (error.message.includes('Invalid queue format')) {
+                                    errorMessage = `Queue format error: ${error.message}`;
+                                } else if (error.message.includes('incomplete')) {
+                                    errorMessage = `Queue validation error: ${error.message}`;
+                                } else {
+                                    errorMessage = `Queue loading error: ${error.message}`;
+                                }
+
+                                alert(errorMessage);
                             }
                         };
                         reader.readAsText(file);
