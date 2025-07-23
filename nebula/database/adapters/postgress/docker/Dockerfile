@@ -4,7 +4,7 @@ FROM postgres:17.5-alpine3.22
 RUN mv /usr/local/bin/docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh.orig
 
 # Copy SQL init file and custom entrypoint script
-COPY /nebula/database/docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
+COPY /nebula/database/docker/docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
 RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 
 # Install Python 3.11.7 from source

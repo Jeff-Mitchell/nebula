@@ -17,7 +17,7 @@ from watchdog.events import PatternMatchingEventHandler
 from watchdog.observers import Observer
 
 from nebula.addons.env import check_environment
-from nebula.controller.controller import TermEscapeCodeFormatter
+from nebula.controller.hub import TermEscapeCodeFormatter
 from nebula.controller.scenarios import ScenarioManagement
 from nebula.utils import DockerUtils, FileUtils, SocketUtils
 
@@ -1033,7 +1033,7 @@ class Deployer:
             "POSTGRES_PASSWORD": os.environ.get("POSTGRES_PASSWORD"),
             "POSTGRES_DB": "nebula",
         }
-        host_sql_path = os.path.join(self.root_path, "nebula/database/init-configs.sql")
+        host_sql_path = os.path.join(self.root_path, "nebula/database/adapters/postgress/docker/init-configs.sql")
         db_data_path = os.path.join(self.databases_dir, "postgres-data")
         os.makedirs(db_data_path, exist_ok=True)
 

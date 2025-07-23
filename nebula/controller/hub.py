@@ -16,15 +16,15 @@ import uvicorn
 from fastapi import Body, FastAPI, Request, status, HTTPException, Path, File, UploadFile
 from fastapi.concurrency import asynccontextmanager
 
-from nebula.controller.database import (
-    init_db_pool,
-    close_db_pool,
-    insert_default_admin,
-    scenario_set_all_status_to_finished,
-    scenario_set_status_to_finished,
-)
+from nebula.database.database_adapter_factory import factory_database_adapter
 from nebula.controller.http_helpers import remote_get, remote_post_form
 from nebula.utils import DockerUtils
+
+
+# Get a database instance
+# db = get_database()
+#TODO review
+db = factory_database_adapter("PostgresDB")
 
 
 # Setup controller logger
@@ -120,13 +120,13 @@ async def lifespan(app: FastAPI):
     configure_logger(controller_log)
 
     # Initialize the database connection pool
-    await init_db_pool()
-    await insert_default_admin()
+    await db.init_db_pool()
+    await db.insert_default_admin()
 
     yield
 
     # Code to run on shutdown
-    await close_db_pool()
+    await db.close_db_pool()
 
 
 # Initialize FastAPI app outside the Controller class
@@ -383,9 +383,9 @@ async def stop_scenario(
     ScenarioManagement.cleanup_scenario_containers()
     try:
         if all:
-            await scenario_set_all_status_to_finished()
+            await db.scenario_set_all_status_to_finished()
         else:
-            await scenario_set_status_to_finished(scenario_name)
+            await db.scenario_set_status_to_finished(scenario_name)
     except Exception as e:
         logging.exception(f"Error setting scenario {scenario_name} to finished: {e}")
         raise HTTPException(status_code=500, detail="Internal server error")
@@ -404,11 +404,10 @@ async def remove_scenario(
     Returns:
         dict: A message indicating successful removal.
     """
-    from nebula.controller.database import remove_scenario_by_name, get_user_by_scenario_name
     from nebula.controller.scenarios import ScenarioManagement
 
     try:
-        await remove_scenario_by_name(scenario_name)
+        await db.remove_scenario_by_name(scenario_name)
         ScenarioManagement.remove_files_by_scenario(scenario_name)
 
     except Exception as e:
@@ -433,15 +432,13 @@ async def get_scenarios(
     Returns:
         dict: A list of scenarios and the currently running scenario.
     """
-    from nebula.controller.database import get_all_scenarios_and_check_completed, get_running_scenario
-
     try:
-        scenarios = await get_all_scenarios_and_check_completed(username=user, role=role)
+        scenarios = await db.get_all_scenarios_and_check_completed(username=user, role=role)
 
         if role == "admin":
-            scenario_running = await get_running_scenario()
+            scenario_running = await db.get_running_scenario()
         else:
-            scenario_running = await get_running_scenario(username=user)
+            scenario_running = await db.get_running_scenario(username=user)
     except Exception as e:
         logging.exception(f"Error obtaining scenarios: {e}")
         raise HTTPException(status_code=500, detail="Internal server error")
@@ -474,10 +471,8 @@ async def update_scenario(
     Returns:
         dict: A message confirming the update.
     """
-    from nebula.controller.database import scenario_update_record
-
     try:
-        await scenario_update_record(scenario_name, start_time, end_time, scenario, status, username)
+        await db.scenario_update_record(scenario_name, start_time, end_time, scenario, status, username)
     except Exception as e:
         logging.exception(f"Error updating scenario {scenario_name}: {e}")
         raise HTTPException(status_code=500, detail="Internal server error")
@@ -499,13 +494,11 @@ async def set_scenario_status_to_finished(
     Returns:
         dict: A message confirming the operation.
     """
-    from nebula.controller.database import scenario_set_all_status_to_finished, scenario_set_status_to_finished
-
     try:
         if all:
-            await scenario_set_all_status_to_finished()
+            await db.scenario_set_all_status_to_finished()
         else:
-            await scenario_set_status_to_finished(scenario_name)
+            await db.scenario_set_status_to_finished(scenario_name)
     except Exception as e:
         logging.exception(f"Error setting scenario {scenario_name} to finished: {e}")
         raise HTTPException(status_code=500, detail="Internal server error")
@@ -514,7 +507,7 @@ async def set_scenario_status_to_finished(
 
 
 @app.get("/scenarios/running")
-async def get_running_scenario(get_all: bool = False):
+async def get_running_scenario_endpoint(get_all: bool = False):
     """
     Retrieves the currently running scenario(s).
 
@@ -524,18 +517,15 @@ async def get_running_scenario(get_all: bool = False):
     Returns:
         dict or list: Running scenario(s) information.
     """
-    from nebula.controller.database import get_running_scenario
-
     try:
-        return await get_running_scenario(get_all=get_all)
+        return await db.get_running_scenario(get_all=get_all)
     except Exception as e:
         logging.exception(f"Error obtaining running scenario: {e}")
         raise HTTPException(status_code=500, detail="Internal server error")
 
 
-@app.get("/scenarios/check/{user}/{role}/{scenario_name}")
+@app.get("/scenarios/check/{role}/{scenario_name}")
 async def check_scenario(
-    user: Annotated[str, Path(regex="^[a-zA-Z0-9_-]+$", min_length=1, max_length=50, description="Valid username")],
     role: Annotated[str, Path(regex="^[a-zA-Z0-9_-]+$", min_length=1, max_length=50, description="Valid role")],
     scenario_name: Annotated[
         str, Path(regex="^[a-zA-Z0-9_-]+$", min_length=1, max_length=50, description="Valid scenario name")
@@ -551,10 +541,8 @@ async def check_scenario(
     Returns:
         dict: Whether the scenario is allowed for the role.
     """
-    from nebula.controller.database import check_scenario_with_role
-
     try:
-        allowed = await check_scenario_with_role(role, scenario_name, user)
+        allowed = await db.check_scenario_with_role(role, scenario_name)
         return {"allowed": allowed}
     except Exception as e:
         logging.exception(f"Error checking scenario with role: {e}")
@@ -562,7 +550,7 @@ async def check_scenario(
 
 
 @app.get("/scenarios/{scenario_name}")
-async def get_scenario_by_name(
+async def get_scenario_by_name_endpoint(
     scenario_name: Annotated[
         str, Path(regex="^[a-zA-Z0-9_-]+$", min_length=1, max_length=50, description="Valid scenario name")
     ],
@@ -576,10 +564,8 @@ async def get_scenario_by_name(
     Returns:
         dict: The scenario data.
     """
-    from nebula.controller.database import get_scenario_by_name
-
     try:
-        scenario = await get_scenario_by_name(scenario_name)
+        scenario = await db.get_scenario_by_name(scenario_name)
     except Exception as e:
         logging.exception(f"Error obtaining scenario {scenario_name}: {e}")
         raise HTTPException(status_code=500, detail="Internal server error")
@@ -588,7 +574,7 @@ async def get_scenario_by_name(
 
 
 @app.get("/nodes/{scenario_name}")
-async def list_nodes_by_scenario_name(
+async def list_nodes_by_scenario_name_endpoint(
     scenario_name: Annotated[
         str, Path(regex="^[a-zA-Z0-9_-]+$", min_length=1, max_length=50, description="Valid scenario name")
     ],
@@ -602,10 +588,8 @@ async def list_nodes_by_scenario_name(
     Returns:
         list: List of nodes.
     """
-    from nebula.controller.database import list_nodes_by_scenario_name
-
     try:
-        nodes = await list_nodes_by_scenario_name(scenario_name)
+        nodes = await db.list_nodes_by_scenario_name(scenario_name)
     except Exception as e:
         logging.exception(f"Error obtaining nodes: {e}")
         raise HTTPException(status_code=500, detail="Internal server error")
@@ -631,13 +615,11 @@ async def update_nodes(
     Returns:
         dict: Confirmation or response from the frontend.
     """
-    from nebula.controller.database import update_node_record
-
     try:
         config = await request.json()
         timestamp = datetime.datetime.now()
         # Update the node in database
-        await update_node_record(
+        await db.update_node_record(
             str(config["device_args"]["uid"]),
             str(config["device_args"]["idx"]),
             str(config["network_args"]["ip"]),
@@ -708,7 +690,7 @@ async def node_done(
 
 
 @app.post("/nodes/remove")
-async def remove_nodes_by_scenario_name(scenario_name: str = Body(..., embed=True)):
+async def remove_nodes_by_scenario_name_endpoint(scenario_name: str = Body(..., embed=True)):
     """
     Endpoint to remove all nodes associated with a scenario.
 
@@ -717,10 +699,8 @@ async def remove_nodes_by_scenario_name(scenario_name: str = Body(..., embed=Tru
 
     Returns a success message or an error if something goes wrong.
     """
-    from nebula.controller.database import remove_nodes_by_scenario_name
-
     try:
-        await remove_nodes_by_scenario_name(scenario_name)
+        await db.remove_nodes_by_scenario_name(scenario_name)
     except Exception as e:
         logging.exception(f"Error removing nodes: {e}")
         raise HTTPException(status_code=500, detail="Internal server error")
@@ -737,10 +717,8 @@ async def get_notes_by_scenario_name(
     """
     Endpoint to retrieve notes associated with a scenario.
     """
-    from nebula.controller.database import get_notes
-
     try:
-        notes_record = await get_notes(scenario_name)
+        notes_record = await db.get_notes(scenario_name)
 
         if notes_record is not None:
             notes_record = dict(notes_record.items())
@@ -763,10 +741,8 @@ async def update_notes_by_scenario_name(scenario_name: str = Body(..., embed=Tru
 
     Returns a success message or an error if something goes wrong.
     """
-    from nebula.controller.database import save_notes
-
     try:
-        await save_notes(scenario_name, notes)
+        await db.save_notes(scenario_name, notes)
     except Exception as e:
         logging.exception(f"Error updating notes: {e}")
         raise HTTPException(status_code=500, detail="Internal server error")
@@ -775,7 +751,7 @@ async def update_notes_by_scenario_name(scenario_name: str = Body(..., embed=Tru
 
 
 @app.post("/notes/remove")
-async def remove_notes_by_scenario_name(scenario_name: str = Body(..., embed=True)):
+async def remove_notes_by_scenario_name_endpoint(scenario_name: str = Body(..., embed=True)):
     """
     Endpoint to remove notes associated with a scenario.
 
@@ -784,10 +760,8 @@ async def remove_notes_by_scenario_name(scenario_name: str = Body(..., embed=Tru
 
     Returns a success message or an error if something goes wrong.
     """
-    from nebula.controller.database import remove_note
-
     try:
-        await remove_note(scenario_name)
+        await db.remove_note(scenario_name)
     except Exception as e:
         logging.exception(f"Error removing notes: {e}")
         raise HTTPException(status_code=500, detail="Internal server error")
@@ -805,10 +779,8 @@ async def list_users_controller(all_info: bool = False):
 
     Returns a list of users or raises an HTTPException on error.
     """
-    from nebula.controller.database import list_users
-
     try:
-        user_list = await list_users(all_info)
+        user_list = await db.list_users(all_info)
         if all_info:
             # Convert each asyncpg.Record to a dictionary so that it is JSON serializable.
             user_list = [dict(user) for user in user_list]
@@ -818,7 +790,7 @@ async def list_users_controller(all_info: bool = False):
 
 
 @app.get("/user/{scenario_name}")
-async def get_user_by_scenario_name(
+async def get_user_by_scenario_name_endpoint(
     scenario_name: Annotated[
         str, Path(regex="^[a-zA-Z0-9_-]+$", min_length=1, max_length=50, description="Valid scenario name")
     ],
@@ -831,10 +803,8 @@ async def get_user_by_scenario_name(
 
     Returns user info or raises an HTTPException on error.
     """
-    from nebula.controller.database import get_user_by_scenario_name
-
     try:
-        user = await get_user_by_scenario_name(scenario_name)
+        user = await db.get_user_by_scenario_name(scenario_name)
     except Exception as e:
         logging.exception(f"Error obtaining user {user}: {e}")
         raise HTTPException(status_code=500, detail="Internal server error")
@@ -995,11 +965,11 @@ async def get_physical_scenario_state(scenario_name: str):
         }
     """
     # 1) Retrieve scenario metadata and node list from the DB
-    scenario = await get_scenario_by_name(scenario_name)
+    scenario = await db.get_scenario_by_name(scenario_name)
     if not scenario:
         raise HTTPException(status_code=404, detail="Scenario not found")
 
-    nodes = await list_nodes_by_scenario_name(scenario_name)
+    nodes = await db.list_nodes_by_scenario_name(scenario_name)
     if not nodes:
         raise HTTPException(status_code=404, detail="No nodes found for scenario")
 
@@ -1036,10 +1006,8 @@ async def add_user_controller(user: str = Body(...), password: str = Body(...), 
 
     Returns a success message or an error if the user could not be added.
     """
-    from nebula.controller.database import add_user
-
     try:
-        await add_user(user, password, role)
+        await db.add_user(user, password, role)
         return {"detail": "User added successfully"}
     except Exception as e:
         logging.exception(f"Error adding user: {e}")
@@ -1056,10 +1024,8 @@ async def remove_user_controller(user: str = Body(..., embed=True)):
 
     Returns a success message if the user is deleted, or an HTTP error if an exception occurs.
     """
-    from nebula.controller.database import delete_user_from_db
-
     try:
-        await delete_user_from_db(user)
+        await db.delete_user_from_db(user)
         return {"detail": "User deleted successfully"}
     except Exception as e:
         logging.exception(f"Error deleting user: {e}")
@@ -1078,10 +1044,8 @@ async def update_user_controller(user: str = Body(...), password: str = Body(...
 
     Returns a success message if the user is updated, or an HTTP error if an exception occurs.
     """
-    from nebula.controller.database import update_user
-
     try:
-        await update_user(user, password, role)
+        await db.update_user(user, password, role)
         return {"detail": "User updated successfully"}
     except Exception as e:
         logging.exception(f"Error updating user: {e}")
@@ -1099,12 +1063,10 @@ async def verify_user_controller(user: str = Body(...), password: str = Body(...
 
     Returns the user role on success or raises an error on failure.
     """
-    from nebula.controller.database import get_user_info, list_users, verify
-
     try:
         user_submitted = user.upper()
-        if (await list_users() and await verify(user_submitted, password)):
-            user_info = await get_user_info(user_submitted)
+        if (await db.list_users() and await db.verify(user_submitted, password)):
+            user_info = await db.get_user_info(user_submitted)
             return {"user": user_submitted, "role": user_info[2]}
         else:
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED)

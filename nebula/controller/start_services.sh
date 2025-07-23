@@ -12,6 +12,6 @@ echo "path $(pwd)"
 NEBULA_SOCK=nebula.sock
 
 echo "Starting Gunicorn..."
-uvicorn nebula.controller.controller:app --host 0.0.0.0 --port $NEBULA_CONTROLLER_PORT --log-level debug --proxy-headers --forwarded-allow-ips "*" &
+uvicorn nebula.controller.hub:app --host 0.0.0.0 --port $NEBULA_CONTROLLER_PORT --log-level debug --proxy-headers --forwarded-allow-ips "*" &
 
 tail -f /dev/null
