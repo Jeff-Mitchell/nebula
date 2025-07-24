@@ -85,6 +85,7 @@ class SAReasoner(ISAReasoner):
             title="SA Reasoner",
         )
         logging.info("🌐  Initializing SAReasoner")
+        self._is_additional_node = config.participant["deployment_args"]["additional"]
         self._config = copy.deepcopy(config.participant["addons"])
         self._addr = config.participant["network_args"]["addr"]
         self._topology = config.participant["addons"]["mobility"]["topology_type"]
@@ -146,7 +147,8 @@ class SAReasoner(ISAReasoner):
         Returns:
             bool: True if the node is marked as an additional participant, False otherwise.
         """
-        return self._config["addons"]["mobility"]["additional_node"]["status"]
+        return self._is_additional_node
+    
 
     """                                                     ###############################
                                                             #    REESTRUCTURE TOPOLOGY    #

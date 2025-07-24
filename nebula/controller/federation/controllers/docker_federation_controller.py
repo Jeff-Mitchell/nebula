@@ -14,8 +14,8 @@ from nebula.core.utils.certificate import generate_ca_certificate, generate_cert
 
 class DockerFederationController(FederationController):
     
-    def __init__(self, wa_controller_url, logger):
-        super().__init__(wa_controller_url, logger)
+    def __init__(self, hub_url, logger):
+        super().__init__(hub_url, logger)
         self._user = ""
         self.root_path = ""
         self.host_platform = ""
@@ -23,10 +23,14 @@ class DockerFederationController(FederationController):
         self.log_dir = ""
         self.cert_dir = ""
         self.advanced_analytics = ""
-        self.controller = ""
+        self.url = ""
         self.config = Config(entity="scenarioManagement")
         self.round_per_node = {}
         self.additionals: dict[str, int] = {}
+        self._ip_last_index = 0
+        self._network_name = ""
+        self._base_network_name = ""
+        self._base = ""
 
     """                                             ###############################
                                                     #      ENDPOINT CALLBACKS     #
@@ -169,7 +173,7 @@ class DockerFederationController(FederationController):
         self.prefix_tag = os.environ.get("NEBULA_PREFIX_TAG", "dev")
         self.user_tag = os.environ.get("NEBULA_USER_TAG", os.environ.get("USER", "unknown"))
         
-        self.controller = f"{os.environ.get('NEBULA_CONTROLLER_HOST')}:{os.environ.get('NEBULA_CONTROLLER_PORT')}"
+        self.url = f"{os.environ.get('NEBULA_CONTROLLER_HOST')}:{os.environ.get('NEBULA_FEDERATION_CONTROLLER_PORT')}"
         
         # Create Scenario management dirs
         os.makedirs(self.config_dir, exist_ok=True)
@@ -357,143 +361,108 @@ class DockerFederationController(FederationController):
 
     def _start_initial_nodes(self):
         self.logger.info("Starting nodes using Docker Compose...")
-  
-        self.config.participants.sort(key=lambda x: x["device_args"]["idx"])
-        i = 2
-        container_ids = []
-        for idx, node in enumerate(self.config.participants):
-            if node["deployment_args"]["additional"]:
-                self.additionals[idx] = int(node["deployment_args"]["deployment_round"])
-                continue
-            
-            # deploy initial node
-            self.round_per_node[idx] = 0
-        
-        # Ordered list for additional participants deployment
-        for an, anr in self.additionals.items():
-            self.logger.info(f"Additional node: {an}:{anr}")
-             
-    def _start_node(self):
-        """
-        Starts participant nodes as Docker containers using Docker SDK.
-
-        This method performs the following steps:
-        - Logs the beginning of the Docker container startup process.
-        - Creates a Docker network specific to the current user and scenario.
-        - Sorts participant nodes by their index.
-        - For each participant node:
-            - Sets up environment variables and host configuration,
-              enabling GPU support if required.
-            - Prepares Docker volume bindings and static network IP assignment.
-            - Updates the node configuration, replacing IP addresses as needed,
-              and writes the configuration to a JSON file.
-            - Creates and starts the Docker container for the node.
-            - Logs any exceptions encountered during container creation or startup.
-
-        Raises:
-            docker.errors.DockerException: If there are issues communicating with the Docker daemon.
-            OSError: If there are issues accessing file system paths for volume binding.
-            Exception: For any other unexpected errors during container creation or startup.
-
-        Note:
-            - The method assumes Docker and NVIDIA runtime are properly installed and configured.
-            - IP addresses in node configurations are replaced with network base dynamically.
-        """
-        self.logger.info("Starting nodes using Docker Compose...")
-
         network_name = self.get_network_name(f"{self.sb.get_scenario_name()}-net-scenario")
         base_network_name = self.get_network_name("net-base")
 
         # Create the Docker network
         base = DockerUtils.create_docker_network(network_name)
-
+  
+        self.config.participants.sort(key=lambda x: x["device_args"]["idx"])
+        self._ip_last_index = 2
+        container_ids = []
+        for idx, node in enumerate(self.config.participants):
+            self.logger.info(f"Deployment starting for participant {idx}")
+            if node["deployment_args"]["additional"]:
+                self.additionals[idx] = int(node["deployment_args"]["deployment_round"])
+                self.logger.info(f"Participant {idx} is additional. Round of deployment: {int(node['deployment_args']['deployment_round'])}")
+                continue
+            
+            # deploy initial nodes
+            self.round_per_node[idx] = 0
+            self._start_node(node, network_name, base_network_name, base, self._ip_last_index)
+            self._ip_last_index += 1
+        
+        # Ordered list for additional participants deployment
+        for an, anr in self.additionals.items():
+            self.logger.info(f"Additional node: {an}:{anr}")
+             
+    def _start_node(self, node, network_name, base_network_name, base, i):
         client = docker.from_env()
 
         self.config.participants.sort(key=lambda x: x["device_args"]["idx"])
-        i = 2
         container_ids = []
         container_names = []  # Track names for metadata
-        for idx, node in enumerate(self.config.participants):
-            image = "nebula-core"
-            name = self.get_participant_container_name(node["device_args"]["idx"])
 
-            if node["device_args"]["accelerator"] == "gpu":
-                environment = {
-                    "NVIDIA_DISABLE_REQUIRE": True,
-                    "NEBULA_LOGS_DIR": "/nebula/app/logs/",
-                    "NEBULA_CONFIG_DIR": "/nebula/app/config/",
-                }
-                host_config = client.api.create_host_config(
-                    binds=[f"{self.root_path}:/nebula", "/var/run/docker.sock:/var/run/docker.sock"],
-                    privileged=True,
-                    device_requests=[docker.types.DeviceRequest(driver="nvidia", count=-1, capabilities=[["gpu"]])],
-                    extra_hosts={"host.docker.internal": "host-gateway"},
-                )
-            else:
-                environment = {"NEBULA_LOGS_DIR": "/nebula/app/logs/", "NEBULA_CONFIG_DIR": "/nebula/app/config/"}
-                host_config = client.api.create_host_config(
-                    binds=[f"{self.root_path}:/nebula", "/var/run/docker.sock:/var/run/docker.sock"],
-                    privileged=True,
-                    device_requests=[],
-                    extra_hosts={"host.docker.internal": "host-gateway"},
-                )
-
-            volumes = ["/nebula", "/var/run/docker.sock"]
-
-            start_command = "sleep 10" if node["device_args"]["start"] else "sleep 0"
-            command = [
-                "/bin/bash",
-                "-c",
-                f"{start_command} && ifconfig && echo '{base}.1 host.docker.internal' >> /etc/hosts && python /nebula/nebula/core/node.py /nebula/app/config/{self.sb.get_scenario_name()}/participant_{node['device_args']['idx']}.json",
-            ]
-
-            networking_config = client.api.create_networking_config({
-                network_name: client.api.create_endpoint_config(
-                    ipv4_address=f"{base}.{i}",
-                ),
-                base_network_name: client.api.create_endpoint_config(),
-            })
-
-            node["tracking_args"]["log_dir"] = "/nebula/app/logs"
-            node["tracking_args"]["config_dir"] = f"/nebula/app/config/{self.sb.get_scenario_name()}"
-            node["scenario_args"]["controller"] = self.controller
-            node["scenario_args"]["deployment"] = self.sb.get_deployment()
-            node["security_args"]["certfile"] = f"/nebula/app/certs/participant_{node['device_args']['idx']}_cert.pem"
-            node["security_args"]["keyfile"] = f"/nebula/app/certs/participant_{node['device_args']['idx']}_key.pem"
-            node["security_args"]["cafile"] = "/nebula/app/certs/ca_cert.pem"
-            node = json.loads(json.dumps(node).replace("192.168.50.", f"{base}."))  # TODO change this
-
-            try:
-                existing = client.containers.get(name)
-                self.logger.warning(f"Container {name} already exists. Deployment may fail or cause conflicts.")
-            except docker.errors.NotFound:
-                pass  # No conflict, safe to proceed
-
-            # Write the config file in config directory
-            with open(f"{self.config_dir}/participant_{node['device_args']['idx']}.json", "w") as f:
-                json.dump(node, f, indent=4)
-
-            try:
-                container_id = client.api.create_container(
-                    image=image,
-                    name=name,
-                    detach=True,
-                    volumes=volumes,
-                    environment=environment,
-                    command=command,
-                    host_config=host_config,
-                    networking_config=networking_config,
-                )
-            except Exception as e:
-                self.logger.exception(f"Creating container {name}: {e}")
-
-            try:
-                client.api.start(container_id)
-                container_ids.append(container_id)
-                container_names.append(name)
-            except Exception as e:
-                self.logger.exception(f"Starting participant {name} error: {e}")
-            i += 1
+        image = "nebula-core"
+        name = self.get_participant_container_name(node["device_args"]["idx"])
+        if node["device_args"]["accelerator"] == "gpu":
+            environment = {
+                "NVIDIA_DISABLE_REQUIRE": True,
+                "NEBULA_LOGS_DIR": "/nebula/app/logs/",
+                "NEBULA_CONFIG_DIR": "/nebula/app/config/",
+            }
+            host_config = client.api.create_host_config(
+                binds=[f"{self.root_path}:/nebula", "/var/run/docker.sock:/var/run/docker.sock"],
+                privileged=True,
+                device_requests=[docker.types.DeviceRequest(driver="nvidia", count=-1, capabilities=[["gpu"]])],
+                extra_hosts={"host.docker.internal": "host-gateway"},
+            )
+        else:
+            environment = {"NEBULA_LOGS_DIR": "/nebula/app/logs/", "NEBULA_CONFIG_DIR": "/nebula/app/config/"}
+            host_config = client.api.create_host_config(
+                binds=[f"{self.root_path}:/nebula", "/var/run/docker.sock:/var/run/docker.sock"],
+                privileged=True,
+                device_requests=[],
+                extra_hosts={"host.docker.internal": "host-gateway"},
+            )
+        volumes = ["/nebula", "/var/run/docker.sock"]
+        start_command = "sleep 10" if node["device_args"]["start"] else "sleep 0"
+        command = [
+            "/bin/bash",
+            "-c",
+            f"{start_command} && ifconfig && echo '{base}.1 host.docker.internal' >> /etc/hosts && python /nebula/nebula/core/node.py /nebula/app/config/{self.sb.get_scenario_name()}/participant_{node['device_args']['idx']}.json",
+        ]
+        networking_config = client.api.create_networking_config({
+            network_name: client.api.create_endpoint_config(
+                ipv4_address=f"{base}.{i}",
+            ),
+            base_network_name: client.api.create_endpoint_config(),
+        })
+        node["tracking_args"]["log_dir"] = "/nebula/app/logs"
+        node["tracking_args"]["config_dir"] = f"/nebula/app/config/{self.sb.get_scenario_name()}"
+        node["scenario_args"]["controller"] = self.url
+        node["scenario_args"]["deployment"] = self.sb.get_deployment()
+        node["security_args"]["certfile"] = f"/nebula/app/certs/participant_{node['device_args']['idx']}_cert.pem"
+        node["security_args"]["keyfile"] = f"/nebula/app/certs/participant_{node['device_args']['idx']}_key.pem"
+        node["security_args"]["cafile"] = "/nebula/app/certs/ca_cert.pem"
+        node = json.loads(json.dumps(node).replace("192.168.50.", f"{base}."))  # TODO change this
+        try:
+            existing = client.containers.get(name)
+            self.logger.warning(f"Container {name} already exists. Deployment may fail or cause conflicts.")
+        except docker.errors.NotFound:
+            pass  # No conflict, safe to proceed
+        # Write the config file in config directory
+        with open(f"{self.config_dir}/participant_{node['device_args']['idx']}.json", "w") as f:
+            json.dump(node, f, indent=4)
+        try:
+            container_id = client.api.create_container(
+                image=image,
+                name=name,
+                detach=True,
+                volumes=volumes,
+                environment=environment,
+                command=command,
+                host_config=host_config,
+                networking_config=networking_config,
+            )
+        except Exception as e:
+            self.logger.exception(f"Creating container {name}: {e}")
+        try:
+            client.api.start(container_id)
+            container_ids.append(container_id)
+            container_names.append(name)
+        except Exception as e:
+            self.logger.exception(f"Starting participant {name} error: {e}")
 
         # Write scenario-level metadata for cleanup
         scenario_metadata = {"containers": container_names, "network": network_name}

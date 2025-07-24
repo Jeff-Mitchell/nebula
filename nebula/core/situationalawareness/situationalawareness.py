@@ -183,7 +183,7 @@ class SituationalAwareness(NebulaAddon):
         model_handler = config.participant["addons"]["situational_awareness"]["sa_discovery"]["model_handler"]
         self._sad = factory_sa_discovery(
             "nebula",
-            self._config.participant["addons"]["mobility"]["additional_node"]["status"],
+            self._config.participant["deployment_args"]["additional"],
             selector,
             model_handler,
             engine=engine,

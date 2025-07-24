@@ -88,7 +88,7 @@ class CommunicationsManager:
         )
         self.receive_messages_lock = Locker(name="receive_messages_lock", async_lock=True)
 
-        self._discoverer = Discoverer(addr=self.addr, config=self.config)
+        #self._discoverer = Discoverer(addr=self.addr, config=self.config)
         # self._health = Health(addr=self.addr, config=self.config)
         self._health = None
         self._forwarder = Forwarder(config=self.config)

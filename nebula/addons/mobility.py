@@ -57,7 +57,7 @@ class Mobility:
         self._mobility_task = None  # Track the background task
 
         # Mobility configuration
-        self.mobility = self.config.participant["addons"]["mobility"]["mobility"]
+        self.mobility = self.config.participant["addons"]["mobility"]["enabled"]
         self.mobility_type = self.config.participant["addons"]["mobility"]["mobility_type"]
         self.grace_time = self.config.participant["addons"]["mobility"]["grace_time_mobility"]
         self.period = self.config.participant["addons"]["mobility"]["change_geo_interval"]
@@ -267,11 +267,11 @@ class Mobility:
 
         if latitude < -90 or latitude > 90 or longitude < -180 or longitude > 180:
             # If the new location is out of bounds, we keep the old location
-            latitude = self.config.participant["mobility_args"]["latitude"]
-            longitude = self.config.participant["mobility_args"]["longitude"]
+            latitude = self.config.participant["addons"]["mobility"]["latitude"]
+            longitude = self.config.participant["addons"]["mobility"]["longitude"]
 
-        self.config.participant["mobility_args"]["latitude"] = latitude
-        self.config.participant["mobility_args"]["longitude"] = longitude
+        self.config.participant["addons"]["mobility"]["latitude"] = latitude
+        self.config.participant["addons"]["mobility"]["longitude"] = longitude
         if self._verbose:
             logging.info(f"📍  New geo location: {latitude}, {longitude}")
         cle = ChangeLocationEvent(latitude, longitude)
@@ -301,8 +301,8 @@ class Mobility:
         """
         if self.mobility and (self.mobility_type == "topology" or self.mobility_type == "both"):
             random.seed(time.time() + self.config.participant["device_args"]["idx"])
-            latitude = float(self.config.participant["mobility_args"]["latitude"])
-            longitude = float(self.config.participant["mobility_args"]["longitude"])
+            latitude = float(self.config.participant["addons"]["mobility"]["latitude"])
+            longitude = float(self.config.participant["addons"]["mobility"]["longitude"])
             if True:
                 # Get neighbor closer to me
                 async with self._nodes_distances_lock:

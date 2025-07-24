@@ -6,9 +6,9 @@ import logging
 
 class FederationController(ABC):
     
-    def __init__(self, wa_controller_url, logger):
+    def __init__(self, hub_url, logger):
         self._logger: logging.Logger = logger
-        self._wa_url = wa_controller_url
+        self._hub_url = hub_url
         self._scenario_builder = ScenarioBuilder()
         
     @property

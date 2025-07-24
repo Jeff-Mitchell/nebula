@@ -115,7 +115,6 @@ class Engine:
         self._aggregator = create_aggregator(config=self.config, engine=self)
 
         self._secure_neighbors = []
-        self._is_malicious = self.config.participant["adversarial_args"]["attack_params"]["attacks"] != "No Attack"
 
         role = config.participant["device_args"]["role"]
         self._role_behavior: RoleBehavior = factory_role_behavior(role, self, config)
@@ -132,7 +131,6 @@ class Engine:
         msg += f"\nIID: {self.config.participant['data_args']['iid']}"
         msg += f"\nModel: {model.__class__.__name__}"
         msg += f"\nAggregation algorithm: {self._aggregator.__class__.__name__}"
-        msg += f"\nNode behavior: {'malicious' if self._is_malicious else 'benign'}"
         print_msg_box(msg=msg, indent=2, title="Scenario information")
         print_msg_box(
             msg=f"Logging type: {self._trainer.logger.__class__.__name__}",
@@ -165,7 +163,7 @@ class Engine:
         else:
             self._situational_awareness = None
 
-        if self.config.participant["addons"]["reputation"]["enabled"]:
+        if dict(self.config.participant["addons"]).get("reputation", None):
             self._reputation = Reputation(engine=self, config=self.config)
 
     @property
@@ -619,9 +617,9 @@ class Engine:
         the federated learning process starts.
         """
         await self.aggregator.init()
-        if "situational_awareness" in self.config.participant:
+        if "situational_awareness" in self.config.participant["addons"]:
             await self.sa.start()
-        if self.config.participant["addons"]["reputation"]["enabled"]:
+        if "reputation" in self.config.participant["addons"]:
             await self._reputation.start()
         await self._reporter.start()
         await self._addon_manager.deploy_additional_services()

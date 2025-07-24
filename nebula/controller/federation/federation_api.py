@@ -58,12 +58,12 @@ async def init_federation_experiment(ifr: InitFederationRequest):
     logger.info(f"Experiment type received: {experiment_type}")
     
     # Modify when deploying controllers on differents systems
-    web_app_controller_url = os.environ.get("NEBULA_CONTROLLER_PORT")
+    hub_port = os.environ.get("NEBULA_CONTROLLER_PORT")
     controller_host = os.environ.get("NEBULA_CONTROLLER_HOST")
     
-    controller_url = f"http://{controller_host}:{web_app_controller_url}"
-    logger.info(f"Docker Hub URL => {controller_url}")
-    fed_controller = federation_controller_factory(str(experiment_type), controller_url, logger)
+    hub_url = f"http://{controller_host}:{hub_port}"
+    logger.info(f"Docker Hub URL => {hub_url}")
+    fed_controller = federation_controller_factory(str(experiment_type), hub_url, logger)
     logger.info("Federation controller created.")
 
     return {"message": f"{experiment_type} controller initialized"}

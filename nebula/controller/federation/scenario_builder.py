@@ -399,7 +399,8 @@ class ScenarioBuilder():
         
                                     # General configuration
         participant_config["scenario_args"]["name"] = self._scenario_name
-        participant_config["scenario_args"]["start_time"] = datetime.now().strftime("%d/%m/%Y %H:%M:%S")                           
+        participant_config["scenario_args"]["start_time"] = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
+        participant_config["deployment_args"]["additional"] = False                           
                                     
         node_config = node #self.sd["nodes"][index]
         participant_config["network_args"]["ip"] = node_config["ip"]
@@ -415,16 +416,25 @@ class ScenarioBuilder():
         participant_config["device_args"]["proxy"] = node_config["proxy"]
         participant_config["device_args"]["malicious"] = node_config["malicious"]
         participant_config["scenario_args"]["rounds"] = int(self.sd["rounds"])
+        participant_config["scenario_args"]["random_seed"] = 42
         participant_config["data_args"]["dataset"] = self.sd["dataset"]
         participant_config["data_args"]["iid"] = self.sd["iid"]
+        participant_config["data_args"]["num_workers"] = 0
         participant_config["data_args"]["partition_selection"] = self.sd["partition_selection"]
         participant_config["data_args"]["partition_parameter"] = self.sd["partition_parameter"]
         participant_config["model_args"]["model"] = self.sd["model"]
         participant_config["training_args"]["epochs"] = int(self.sd["epochs"])
+        participant_config["training_args"]["trainer"] = "lightning"
         participant_config["device_args"]["accelerator"] = self.sd["accelerator"]
         participant_config["device_args"]["gpu_id"] = self.sd["gpu_id"]
         participant_config["device_args"]["logging"] = self.sd["logginglevel"]
         participant_config["aggregator_args"]["algorithm"] = self.sd["agg_algorithm"]
+        
+        participant_config["message_args"]= self._configure_message_args()
+        participant_config["reporter_args"]= self._configure_reporter_args()
+        participant_config["forwarder_args"]= self._configure_forwarder_args()
+        participant_config["propagator_args"]= self._configure_propagator_args()
+        participant_config["misc_args"]= self._configure_misc_args()
         
                                     # Addons configuration
         
@@ -455,7 +465,6 @@ class ScenarioBuilder():
 
         # Attacks
         try:
-            #TODO moverlo a addons-adversarial_args
             if node_config["role"] == "malicious":
                 addons_config["adversarial_args"] = self._configure_malicious_role(node_config)
         except Exception as e:
@@ -465,7 +474,7 @@ class ScenarioBuilder():
         try:
             if self.sd.get("mobility", None):
                 #participant_config["addons"].append("mobility")
-                addons_config["mobility"] = {"enabled": True}
+                addons_config["mobility"] = self._configure_mobility_args()
         except Exception as e:
             self.logger.info(f"ERROR: Cannot build mobility configuration - {e}")
         
@@ -486,6 +495,52 @@ class ScenarioBuilder():
             self.logger.info(f"ERROR: Translating into dictionary - {e}")    
                        
         return config
+    
+    def _configure_message_args(self):
+        return {
+            "max_local_messages": 10000,
+            "compression": "zlib"
+        }
+    
+    def _configure_reporter_args(self):
+        return {
+            "grace_time_reporter": 10,
+            "report_frequency": 5,
+            "report_status_data_queue": True
+        }
+    
+    def _configure_forwarder_args(self):
+        return {
+            "forwarder_interval": 1,
+            "forward_messages_interval": 0,
+            "number_forwarded_messages": 100
+        }
+    
+    def _configure_propagator_args(self):
+        return {
+            "propagate_interval": 3,
+            "propagate_model_interval": 0,
+            "propagation_early_stop": 3,
+            "history_size": 20
+        }
+    
+    def _configure_misc_args(self):
+        return {
+            "grace_time_connection": 10,
+            "grace_time_start_federation": 10
+        }
+    
+    def _configure_mobility_args(self):
+        return {
+            "enabled": True,
+            "mobility_type": self.sd["mobility_type"],
+            "topology_type": self.sd["topology"],
+            "radius_federation": self.sd["radius_federation"],
+            "scheme_mobility": self.sd["scheme_mobility"],
+            "round_frequency": self.sd["round_frequency"],
+            "grace_time_mobility": 60,
+            "change_geo_interval": 5
+        }
     
     def _configure_malicious_role(self, node_config: dict):
         return {
@@ -693,10 +748,9 @@ class ScenarioBuilder():
                 + str(self._scenario_name)
             ).encode()
         ).hexdigest()
-        participant_config["mobility_args"]["additional_node"]["status"] = True
+        participant_config["deployment_args"]["additional"] = True
         
         # used for late creation nodes
-        participant_config["mobility_args"]["late_creation"] = True
     
     """                                                     ###############################
                                                             #       TOPOLOGY MANAGER      #
