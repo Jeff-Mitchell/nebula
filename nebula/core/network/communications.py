@@ -19,7 +19,7 @@ from nebula.core.utils.locker import Locker
 if TYPE_CHECKING:
     from nebula.core.engine import Engine
 
-BLACKLIST_EXPIRATION_TIME = 60
+BLACKLIST_EXPIRATION_TIME = 300
 
 _COMPRESSED_MESSAGES = ["model", "offer_model"]
 
