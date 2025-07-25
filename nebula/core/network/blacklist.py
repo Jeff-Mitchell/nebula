@@ -7,7 +7,7 @@ from nebula.core.nebulaevents import NodeBlacklistedEvent
 from nebula.core.utils.locker import Locker
 
 BLACKLIST_EXPIRATION_TIME = 240
-RECENTLY_DISCONNECTED_EXPIRE_TIME = 300
+RECENTLY_DISCONNECTED_EXPIRE_TIME = 60
 
 
 class BlackList:

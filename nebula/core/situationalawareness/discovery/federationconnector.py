@@ -16,7 +16,7 @@ if TYPE_CHECKING:
     from nebula.core.engine import Engine
 
 OFFER_TIMEOUT = 7
-PENDING_CONFIRMATION_TTL = 300
+PENDING_CONFIRMATION_TTL = 60
 
 
 class FederationConnector(ISADiscovery):
