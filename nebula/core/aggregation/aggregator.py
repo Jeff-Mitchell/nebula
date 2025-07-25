@@ -71,7 +71,7 @@ class Aggregator(ABC):
             self._federation_nodes = federation_nodes
             self._pending_models_to_aggregate.clear()
             await self._aggregation_done_lock.acquire_async(
-                timeout=self.config.participant["aggregator_args"]["aggregation_timeout"]
+                timeout = 4000
             )
         else:
             raise Exception("It is not possible to set nodes to aggregate when the aggregation is running.")
@@ -98,7 +98,7 @@ class Aggregator(ABC):
             Exception: For any other unexpected errors during the aggregation process.
         """
         try:
-            timeout = self.config.participant["aggregator_args"]["aggregation_timeout"]
+            timeout = 4000
             logging.info(f"Aggregation timeout: {timeout} starts...")
             await self.us.notify_if_all_updates_received()
             lock_task = asyncio.create_task(self._aggregation_done_lock.acquire_async(timeout=timeout))
