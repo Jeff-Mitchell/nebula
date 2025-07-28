@@ -6,9 +6,10 @@ from nebula.utils import DockerUtils
 import docker
 from nebula.controller.federation.federation_controller import FederationController
 from typing import Dict
-from fastapi import Request
+from fastapi import Request, Response
 from nebula.config.config import Config
 from nebula.core.utils.certificate import generate_ca_certificate
+from nebula.core.utils.locker import Locker
 
 
 class DockerFederationController(FederationController):
@@ -30,6 +31,8 @@ class DockerFederationController(FederationController):
         self._network_name = ""
         self._base_network_name = ""
         self._base = ""
+        self._deployment_lock = Locker("deployment_lock", async_lock=True)
+        self._federation_round = 0
 
     """                                             ###############################
                                                     #      ENDPOINT CALLBACKS     #
@@ -134,27 +137,37 @@ class DockerFederationController(FederationController):
         config = await request.json()
         participant_idx = int(config["device_args"]["idx"])
         participant_round = int(config["federation_args"]["round"])
-        self.logger.info
+        self.logger.info(f"Update received from participant: {participant_idx}, round: {participant_round}")
+        self.logger.info(f"Update: {self.round_per_node.items()}")
         self.round_per_node[participant_idx] = participant_round
-        federation_round = min(self.round_per_node.values())
+        last_fed_round = self._federation_round
+        self._federation_round = min(self.round_per_node.values())
         
         additionals_deployables = [
             idx
             for idx, round in self.additionals.items() 
-            if federation_round >= round
+            if self._federation_round >= round
         ]
         
-        #TODO deploy additionals deployables
-        # update self.round_per_node -> add additional nodes that are going to
-        # be deployed
-        for index in additionals_deployables:
-            for idx, node in enumerate(self.config.participants):
-                if index == idx:
-                    self.logger.info(f"Deploying additional participant: {index}")
-                    self._start_node(node, self._network_name, self._base_network_name, self._base, self._ip_last_index)
-                    self._ip_last_index += 1
+        adds_deployed = set()
+        # Only verify when federation round is updated
+        if self._federation_round != last_fed_round:
+            self.logger.info(f"Federation Round updates, current value: {self._federation_round}")
+            # Ensure concurrency
+            for index in additionals_deployables:
+                if index in adds_deployed:
+                    continue
+                
+                for idx, node in enumerate(self.config.participants):
+                    if index == idx:
+                        async with self._deployment_lock:
+                            self.logger.info(f"Deploying additional participant: {index}")
+                            self._start_node(node, self._network_name, self._base_network_name, self._base, self._ip_last_index, additional=True)
+                            self._ip_last_index += 1
+                            adds_deployed.add(index)
         
-        #TODO get the others parameters
+        #TODO return the others parameters
+        return Response(content=json.dumps({"message": "Node updated successfully"}), status_code=200)
 
     """                                             ###############################
                                                     #       FUNCTIONALITIES       #
@@ -321,7 +334,7 @@ class DockerFederationController(FederationController):
                 with open(additional_participant_file) as f:
                     participant_config = json.load(f)
 
-                self.logger.info(f"Configuration | additional nodes |  participant: {self.n_nodes + i + 1}")
+                self.logger.info(f"Configuration | additional nodes |  participant: {self.n_nodes + i}")
                 self.sb.build_preload_additional_node_configuration(last_participant_index, i, participant_config)
             
                 with open(additional_participant_file, "w") as f:
@@ -375,17 +388,18 @@ class DockerFederationController(FederationController):
         self.config.participants.sort(key=lambda x: x["device_args"]["idx"])
         self._ip_last_index = 2
         for idx, node in enumerate(self.config.participants):
-            self.logger.info(f"Deployment starting for participant {idx}")
+            
             if node["deployment_args"]["additional"]:
                 self.additionals[idx] = int(node["deployment_args"]["deployment_round"])
                 self.logger.info(f"Participant {idx} is additional. Round of deployment: {int(node['deployment_args']['deployment_round'])}")
             else:
                 # deploy initial nodes
+                self.logger.info(f"Deployment starting for participant {idx}")
                 self.round_per_node[idx] = 0
                 self._start_node(node, self._network_name, self._base_network_name, self._base, self._ip_last_index)
                 self._ip_last_index += 1
-                   
-    def _start_node(self, node, network_name, base_network_name, base, i):
+                        
+    def _start_node(self, node, network_name, base_network_name, base, i, additional=False):
         client = docker.from_env()
 
         self.config.participants.sort(key=lambda x: x["device_args"]["idx"])
@@ -465,5 +479,9 @@ class DockerFederationController(FederationController):
 
         # Write scenario-level metadata for cleanup
         scenario_metadata = {"containers": container_names, "network": network_name}
-        with open(os.path.join(self.config_dir, "scenario.metadata"), "w") as f:
-            json.dump(scenario_metadata, f, indent=2)
+        if not additional:
+            with open(os.path.join(self.config_dir, "scenario.metadata"), "w") as f:
+                json.dump(scenario_metadata, f, indent=2)
+        else:
+            with open(os.path.join(self.config_dir, "scenario.metadata"), "a") as f:
+                json.dump(scenario_metadata, f, indent=2)
