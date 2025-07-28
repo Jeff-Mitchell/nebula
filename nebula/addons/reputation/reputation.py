@@ -114,7 +114,7 @@ class Reputation(NebulaAddon):
 
     def _configure_constants(self):
         """Configure system constants from config or use defaults."""
-        reputation_config = self._config.participant.get("defense_args", {}).get("reputation", {})
+        reputation_config = self._config.participant.get("addons", {}).get("reputation", {})
         constants_config = reputation_config.get("constants", {})
 
         self.REPUTATION_THRESHOLD = constants_config.get("reputation_threshold", self.REPUTATION_THRESHOLD)
@@ -168,7 +168,7 @@ class Reputation(NebulaAddon):
 
     def _load_configuration(self):
         """Load and validate reputation configuration."""
-        reputation_config = self._config.participant["defense_args"]["reputation"]
+        reputation_config = self._config.participant["addons"]["reputation"]
         self._enabled = reputation_config["enabled"]
         self._metrics = reputation_config["metrics"]
         self._initial_reputation = float(reputation_config["initial_reputation"])
@@ -1966,7 +1966,7 @@ class Reputation(NebulaAddon):
         if not (self._enabled and self._is_metric_enabled("model_similarity")):
             return
 
-        if not self._engine.config.participant["adaptive_args"]["model_similarity"]:
+        if not self._engine.config.participant["addons"]["reputation"]["adaptive_args"] and not self._engine.config.participant["addons"]["reputation"]["adaptive_args"]["model_similarity"]:
             return
 
         if nei == self._addr:

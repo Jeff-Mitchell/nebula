@@ -207,7 +207,7 @@ async def main(config: Config):
         # time = config.participant["addons"]["mobility"]["additional_node"]["time_start"]
         # logging.info(f"Waiting time to start finding federation: {time}")
         # await asyncio.sleep(int(config.participant["addons"]["mobility"]["additional_node"]["time_start"]))
-        await asyncio.sleep(120) #TODO REMOVE
+        #await asyncio.sleep(120) #TODO REMOVE
         await node._aditional_node_start()
 
     if node.cm is not None:

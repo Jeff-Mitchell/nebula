@@ -1,15 +1,14 @@
-import datetime
 import glob
 import json
 import os
 import shutil
-from nebula.utils import DockerUtils, FileUtils
+from nebula.utils import DockerUtils
 import docker
 from nebula.controller.federation.federation_controller import FederationController
 from typing import Dict
 from fastapi import Request
 from nebula.config.config import Config
-from nebula.core.utils.certificate import generate_ca_certificate, generate_certificate
+from nebula.core.utils.certificate import generate_ca_certificate
 
 
 class DockerFederationController(FederationController):
@@ -26,7 +25,7 @@ class DockerFederationController(FederationController):
         self.url = ""
         self.config = Config(entity="scenarioManagement")
         self.round_per_node = {}
-        self.additionals: dict[str, int] = {}
+        self.additionals: dict = {}
         self._ip_last_index = 0
         self._network_name = ""
         self._base_network_name = ""
@@ -133,9 +132,9 @@ class DockerFederationController(FederationController):
 
     async def update_nodes(self, scenario_name: str, request: Request):
         config = await request.json()
-        participant_idx = str(config["device_args"]["idx"])
+        participant_idx = int(config["device_args"]["idx"])
         participant_round = int(config["federation_args"]["round"])
-        
+        self.logger.info
         self.round_per_node[participant_idx] = participant_round
         federation_round = min(self.round_per_node.values())
         
@@ -148,6 +147,12 @@ class DockerFederationController(FederationController):
         #TODO deploy additionals deployables
         # update self.round_per_node -> add additional nodes that are going to
         # be deployed
+        for index in additionals_deployables:
+            for idx, node in enumerate(self.config.participants):
+                if index == idx:
+                    self.logger.info(f"Deploying additional participant: {index}")
+                    self._start_node(node, self._network_name, self._base_network_name, self._base, self._ip_last_index)
+                    self._ip_last_index += 1
         
         #TODO get the others parameters
 
@@ -361,31 +366,25 @@ class DockerFederationController(FederationController):
 
     def _start_initial_nodes(self):
         self.logger.info("Starting nodes using Docker Compose...")
-        network_name = self.get_network_name(f"{self.sb.get_scenario_name()}-net-scenario")
-        base_network_name = self.get_network_name("net-base")
+        self._network_name = self.get_network_name(f"{self.sb.get_scenario_name()}-net-scenario")
+        self._base_network_name = self.get_network_name("net-base")
 
         # Create the Docker network
-        base = DockerUtils.create_docker_network(network_name)
+        self._base = DockerUtils.create_docker_network(self._network_name)
   
         self.config.participants.sort(key=lambda x: x["device_args"]["idx"])
         self._ip_last_index = 2
-        container_ids = []
         for idx, node in enumerate(self.config.participants):
             self.logger.info(f"Deployment starting for participant {idx}")
             if node["deployment_args"]["additional"]:
                 self.additionals[idx] = int(node["deployment_args"]["deployment_round"])
                 self.logger.info(f"Participant {idx} is additional. Round of deployment: {int(node['deployment_args']['deployment_round'])}")
-                continue
-            
-            # deploy initial nodes
-            self.round_per_node[idx] = 0
-            self._start_node(node, network_name, base_network_name, base, self._ip_last_index)
-            self._ip_last_index += 1
-        
-        # Ordered list for additional participants deployment
-        for an, anr in self.additionals.items():
-            self.logger.info(f"Additional node: {an}:{anr}")
-             
+            else:
+                # deploy initial nodes
+                self.round_per_node[idx] = 0
+                self._start_node(node, self._network_name, self._base_network_name, self._base, self._ip_last_index)
+                self._ip_last_index += 1
+                   
     def _start_node(self, node, network_name, base_network_name, base, i):
         client = docker.from_env()
 

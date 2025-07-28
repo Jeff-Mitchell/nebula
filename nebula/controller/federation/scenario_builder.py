@@ -417,6 +417,7 @@ class ScenarioBuilder():
         participant_config["device_args"]["malicious"] = node_config["malicious"]
         participant_config["scenario_args"]["rounds"] = int(self.sd["rounds"])
         participant_config["scenario_args"]["random_seed"] = 42
+        participant_config["federation_args"]["round"] = 0
         participant_config["data_args"]["dataset"] = self.sd["dataset"]
         participant_config["data_args"]["iid"] = self.sd["iid"]
         participant_config["data_args"]["num_workers"] = 0
@@ -429,6 +430,7 @@ class ScenarioBuilder():
         participant_config["device_args"]["gpu_id"] = self.sd["gpu_id"]
         participant_config["device_args"]["logging"] = self.sd["logginglevel"]
         participant_config["aggregator_args"]["algorithm"] = self.sd["agg_algorithm"]
+        participant_config["aggregator_args"]["aggregation_timeout"] = 60
         
         participant_config["message_args"]= self._configure_message_args()
         participant_config["reporter_args"]= self._configure_reporter_args()
@@ -448,7 +450,7 @@ class ScenarioBuilder():
             
         # Reputation
         try:
-            if self.sd.get("reputation", None) and self.sd["reputation"]["enabled"]:
+            if self.sd.get("reputation", None) and self.sd["reputation"]["enabled"] and not node_config["role"] == "malicious":
                 #participant_config["defense_args"]["reputation"] = self._configure_reputation()
                 addons_config["reputation"] = self._configure_reputation() 
         except Exception as e:
@@ -579,7 +581,9 @@ class ScenarioBuilder():
         return trust_config
     
     def _configure_reputation(self) -> dict:
-        return self.sd.get("reputation")
+        rep = self.sd.get("reputation")
+        rep["adaptive_args"] = True
+        return rep
 
     def _configure_network_simulation(self) -> dict:
         network_parameters = {}
@@ -714,7 +718,7 @@ class ScenarioBuilder():
             participant_config["security_args"] = {}
 
             # If not, use the given coordinates in the frontend
-            participant_config["tracking_args"]["local_tracking"] = "advanced" if advanced_analytics else "basic"
+            participant_config["tracking_args"]["local_tracking"] = "default"
             participant_config["tracking_args"]["log_dir"] = log_dir
             participant_config["tracking_args"]["config_dir"] = config_dir
             # Generate node certificate
@@ -732,7 +736,6 @@ class ScenarioBuilder():
         n_nodes = len(self.sd["nodes"].keys())
         n_additionals = len(self.sd["additional_participants"])
         last_ip = participant_config["network_args"]["ip"]
-        self.logger.info(f"Valores de la ultima ip: ({last_ip})")
         participant_config["scenario_args"]["n_nodes"] = n_nodes + n_additionals  # self.n_nodes + i + 1
         participant_config["device_args"]["idx"] = last_participant_index + index
         participant_config["network_args"]["neighbors"] = ""
@@ -749,6 +752,9 @@ class ScenarioBuilder():
             ).encode()
         ).hexdigest()
         participant_config["deployment_args"]["additional"] = True
+        
+        deployment_round = self.sd["additional_participants"][index]["time_start"]
+        participant_config["deployment_args"]["deployment_round"] = deployment_round
         
         # used for late creation nodes
     
