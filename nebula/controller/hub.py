@@ -17,7 +17,7 @@ from fastapi import Body, FastAPI, Request, status, HTTPException, Path, File, U
 from fastapi.concurrency import asynccontextmanager
 
 from nebula.controller.http_helpers import remote_get, remote_post_form
-from nebula.utils import DockerUtils
+from nebula.utils import APIUtils, DockerUtils
 
 # URL for the database API
 DATABASE_API_URL = os.environ.get("NEBULA_DATABASE_API_URL", "http://nebula-database:5051")
@@ -369,12 +369,7 @@ async def stop_scenario(
 
     ScenarioManagement.cleanup_scenario_containers()
     try:
-        async with aiohttp.ClientSession() as session:
-            async with session.post(
-                f"{DATABASE_API_URL}/scenarios/stop", json={"scenario_name": scenario_name, "all": all}
-            ) as response:
-                if response.status != 200:
-                    raise HTTPException(status_code=response.status, detail=await response.text())
+        await APIUtils.post(f"{DATABASE_API_URL}/scenarios/stop", data={"scenario_name": scenario_name, "all": all})
     except Exception as e:
         logging.exception(f"Error setting scenario {scenario_name} to finished: {e}")
         raise HTTPException(status_code=500, detail="Internal server error")
@@ -396,12 +391,7 @@ async def remove_scenario(
     from nebula.controller.scenarios import ScenarioManagement
 
     try:
-        async with aiohttp.ClientSession() as session:
-            async with session.post(
-                f"{DATABASE_API_URL}/scenarios/remove", json={"scenario_name": scenario_name}
-            ) as response:
-                if response.status != 200:
-                    raise HTTPException(status_code=response.status, detail=await response.text())
+        await APIUtils.post(f"{DATABASE_API_URL}/scenarios/remove", data={"scenario_name": scenario_name})
         ScenarioManagement.remove_files_by_scenario(scenario_name)
 
     except Exception as e:
@@ -427,12 +417,7 @@ async def get_scenarios(
         dict: A list of scenarios and the currently running scenario.
     """
     try:
-        async with aiohttp.ClientSession() as session:
-            async with session.get(f"{DATABASE_API_URL}/scenarios/{user}/{role}") as response:
-                if response.status == 200:
-                    return await response.json()
-                else:
-                    raise HTTPException(status_code=response.status, detail=await response.text())
+        return await APIUtils.get(f"{DATABASE_API_URL}/scenarios/{user}/{role}")
     except Exception as e:
         logging.exception(f"Error obtaining scenarios: {e}")
         raise HTTPException(status_code=500, detail="Internal server error")
@@ -470,12 +455,7 @@ async def update_scenario(
             "status": status,
             "username": username,
         }
-        async with aiohttp.ClientSession() as session:
-            async with session.post(f"{DATABASE_API_URL}/scenarios/update", json=payload) as response:
-                if response.status == 200:
-                    return await response.json()
-                else:
-                    raise HTTPException(status_code=response.status, detail=await response.text())
+        return await APIUtils.post(f"{DATABASE_API_URL}/scenarios/update", data=payload)
     except Exception as e:
         logging.exception(f"Error updating scenario {scenario_name}: {e}")
         raise HTTPException(status_code=500, detail="Internal server error")
@@ -497,12 +477,7 @@ async def set_scenario_status_to_finished(
     """
     try:
         payload = {"scenario_name": scenario_name, "all": all}
-        async with aiohttp.ClientSession() as session:
-            async with session.post(f"{DATABASE_API_URL}/scenarios/set_status_to_finished", json=payload) as response:
-                if response.status == 200:
-                    return await response.json()
-                else:
-                    raise HTTPException(status_code=response.status, detail=await response.text())
+        return await APIUtils.post(f"{DATABASE_API_URL}/scenarios/set_status_to_finished", data=payload)
     except Exception as e:
         logging.exception(f"Error setting scenario {scenario_name} to finished: {e}")
         raise HTTPException(status_code=500, detail="Internal server error")
@@ -520,12 +495,7 @@ async def get_running_scenario_endpoint(get_all: bool = False):
         dict or list: Running scenario(s) information.
     """
     try:
-        async with aiohttp.ClientSession() as session:
-            async with session.get(f"{DATABASE_API_URL}/scenarios/running", params={"get_all": str(get_all)}) as response:
-                if response.status == 200:
-                    return await response.json()
-                else:
-                    raise HTTPException(status_code=response.status, detail=await response.text())
+        return await APIUtils.get(f"{DATABASE_API_URL}/scenarios/running", params={"get_all": str(get_all)})
     except Exception as e:
         logging.exception(f"Error obtaining running scenario: {e}")
         raise HTTPException(status_code=500, detail="Internal server error")
@@ -549,12 +519,7 @@ async def check_scenario(
         dict: Whether the scenario is allowed for the role.
     """
     try:
-        async with aiohttp.ClientSession() as session:
-            async with session.get(f"{DATABASE_API_URL}/scenarios/check/{role}/{scenario_name}") as response:
-                if response.status == 200:
-                    return await response.json()
-                else:
-                    raise HTTPException(status_code=response.status, detail=await response.text())
+        return await APIUtils.get(f"{DATABASE_API_URL}/scenarios/check/{role}/{scenario_name}")
     except Exception as e:
         logging.exception(f"Error checking scenario with role: {e}")
         raise HTTPException(status_code=500, detail="Internal server error")
@@ -576,12 +541,7 @@ async def get_scenario_by_name_endpoint(
         dict: The scenario data.
     """
     try:
-        async with aiohttp.ClientSession() as session:
-            async with session.get(f"{DATABASE_API_URL}/scenarios/{scenario_name}") as response:
-                if response.status == 200:
-                    return await response.json()
-                else:
-                    raise HTTPException(status_code=response.status, detail=await response.text())
+        return await APIUtils.get(f"{DATABASE_API_URL}/scenarios/{scenario_name}")
     except Exception as e:
         logging.exception(f"Error obtaining scenario {scenario_name}: {e}")
         raise HTTPException(status_code=500, detail="Internal server error")
@@ -603,12 +563,7 @@ async def list_nodes_by_scenario_name_endpoint(
         list: List of nodes.
     """
     try:
-        async with aiohttp.ClientSession() as session:
-            async with session.get(f"{DATABASE_API_URL}/nodes/{scenario_name}") as response:
-                if response.status == 200:
-                    return await response.json()
-                else:
-                    raise HTTPException(status_code=response.status, detail=await response.text())
+        return await APIUtils.get(f"{DATABASE_API_URL}/nodes/{scenario_name}")
     except Exception as e:
         logging.exception(f"Error obtaining nodes: {e}")
         raise HTTPException(status_code=500, detail="Internal server error")
@@ -638,10 +593,7 @@ async def update_nodes(
         config["timestamp"] = str(timestamp)
 
         # Update the node in database
-        async with aiohttp.ClientSession() as session:
-            async with session.post(f"{DATABASE_API_URL}/nodes/update", json=config) as response:
-                if response.status != 200:
-                    raise HTTPException(status_code=response.status, detail=await response.text())
+        await APIUtils.post(f"{DATABASE_API_URL}/nodes/update", data=config)
 
     except Exception as e:
         logging.exception(f"Error updating nodes: {e}")
@@ -651,14 +603,7 @@ async def update_nodes(
         f"http://{os.environ['NEBULA_ENV_TAG']}_{os.environ['NEBULA_PREFIX_TAG']}_{os.environ['NEBULA_USER_TAG']}_nebula-frontend/platform/dashboard/{scenario_name}/node/update"
     )
 
-    async with aiohttp.ClientSession() as session:
-        async with session.post(url, json=config) as response:
-            if response.status == 200:
-                return await response.json()
-            else:
-                raise HTTPException(status_code=response.status, detail="Error posting data")
-
-    return {"message": "Nodes updated successfully in the database"}
+    return await APIUtils.post(url, data=config)
 
 
 @app.post("/nodes/{scenario_name}/done")
@@ -685,14 +630,7 @@ async def node_done(
 
     data = await request.json()
 
-    async with aiohttp.ClientSession() as session:
-        async with session.post(url, json=data) as response:
-            if response.status == 200:
-                return await response.json()
-            else:
-                raise HTTPException(status_code=response.status, detail="Error posting data")
-
-    return {"message": "Nodes done"}
+    return await APIUtils.post(url, data=data)
 
 
 @app.post("/nodes/remove")
@@ -706,10 +644,7 @@ async def remove_nodes_by_scenario_name_endpoint(scenario_name: str = Body(..., 
     Returns a success message or an error if something goes wrong.
     """
     try:
-        async with aiohttp.ClientSession() as session:
-            async with session.post(f"{DATABASE_API_URL}/nodes/remove", json={"scenario_name": scenario_name}) as response:
-                if response.status != 200:
-                    raise HTTPException(status_code=response.status, detail=await response.text())
+        await APIUtils.post(f"{DATABASE_API_URL}/nodes/remove", data={"scenario_name": scenario_name})
     except Exception as e:
         logging.exception(f"Error removing nodes: {e}")
         raise HTTPException(status_code=500, detail="Internal server error")
@@ -727,12 +662,7 @@ async def get_notes_by_scenario_name(
     Endpoint to retrieve notes associated with a scenario.
     """
     try:
-        async with aiohttp.ClientSession() as session:
-            async with session.get(f"{DATABASE_API_URL}/notes/{scenario_name}") as response:
-                if response.status == 200:
-                    return await response.json()
-                else:
-                    raise HTTPException(status_code=response.status, detail=await response.text())
+        return await APIUtils.get(f"{DATABASE_API_URL}/notes/{scenario_name}")
     except Exception as e:
         logging.exception(f"Error obtaining notes for scenario {scenario_name}: {e}")
         raise HTTPException(status_code=500, detail="Internal server error")
@@ -751,12 +681,7 @@ async def update_notes_by_scenario_name(scenario_name: str = Body(..., embed=Tru
     """
     try:
         payload = {"scenario_name": scenario_name, "notes": notes}
-        async with aiohttp.ClientSession() as session:
-            async with session.post(f"{DATABASE_API_URL}/notes/update", json=payload) as response:
-                if response.status == 200:
-                    return await response.json()
-                else:
-                    raise HTTPException(status_code=response.status, detail=await response.text())
+        return await APIUtils.post(f"{DATABASE_API_URL}/notes/update", data=payload)
     except Exception as e:
         logging.exception(f"Error updating notes: {e}")
         raise HTTPException(status_code=500, detail="Internal server error")
@@ -773,10 +698,7 @@ async def remove_notes_by_scenario_name_endpoint(scenario_name: str = Body(..., 
     Returns a success message or an error if something goes wrong.
     """
     try:
-        async with aiohttp.ClientSession() as session:
-            async with session.post(f"{DATABASE_API_URL}/notes/remove", json={"scenario_name": scenario_name}) as response:
-                if response.status != 200:
-                    raise HTTPException(status_code=response.status, detail=await response.text())
+        await APIUtils.post(f"{DATABASE_API_URL}/notes/remove", data={"scenario_name": scenario_name})
     except Exception as e:
         logging.exception(f"Error removing notes: {e}")
         raise HTTPException(status_code=500, detail="Internal server error")
@@ -795,14 +717,7 @@ async def list_users_controller(all_info: bool = False):
     Returns a list of users or raises an HTTPException on error.
     """
     try:
-        async with aiohttp.ClientSession() as session:
-            async with session.get(
-                f"{DATABASE_API_URL}/user/list", params={"all_info": str(all_info)}
-            ) as response:
-                if response.status == 200:
-                    return await response.json()
-                else:
-                    raise HTTPException(status_code=response.status, detail=await response.text())
+        return await APIUtils.get(f"{DATABASE_API_URL}/user/list", params={"all_info": str(all_info)})
     except Exception as e:
         logging.exception(f"Error retrieving users: {e}")
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Error retrieving users: {e}")
@@ -823,12 +738,7 @@ async def get_user_by_scenario_name_endpoint(
     Returns user info or raises an HTTPException on error.
     """
     try:
-        async with aiohttp.ClientSession() as session:
-            async with session.get(f"{DATABASE_API_URL}/user/{scenario_name}") as response:
-                if response.status == 200:
-                    return await response.json()
-                else:
-                    raise HTTPException(status_code=response.status, detail=await response.text())
+        return await APIUtils.get(f"{DATABASE_API_URL}/user/{scenario_name}")
     except Exception as e:
         logging.exception(f"Error obtaining user for scenario {scenario_name}: {e}")
         raise HTTPException(status_code=500, detail="Internal server error")
@@ -1030,12 +940,7 @@ async def add_user_controller(user: str = Body(...), password: str = Body(...), 
     """
     try:
         payload = {"user": user, "password": password, "role": role}
-        async with aiohttp.ClientSession() as session:
-            async with session.post(f"{DATABASE_API_URL}/user/add", json=payload) as response:
-                if response.status == 200:
-                    return await response.json()
-                else:
-                    raise HTTPException(status_code=response.status, detail=await response.text())
+        return await APIUtils.post(f"{DATABASE_API_URL}/user/add", data=payload)
     except Exception as e:
         logging.exception(f"Error adding user: {e}")
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Error adding user: {e}")
@@ -1052,12 +957,7 @@ async def remove_user_controller(user: str = Body(..., embed=True)):
     Returns a success message if the user is deleted, or an HTTP error if an exception occurs.
     """
     try:
-        async with aiohttp.ClientSession() as session:
-            async with session.post(f"{DATABASE_API_URL}/user/delete", json={"user": user}) as response:
-                if response.status == 200:
-                    return await response.json()
-                else:
-                    raise HTTPException(status_code=response.status, detail=await response.text())
+        return await APIUtils.post(f"{DATABASE_API_URL}/user/delete", data={"user": user})
     except Exception as e:
         logging.exception(f"Error deleting user: {e}")
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Error deleting user: {e}")
@@ -1077,12 +977,7 @@ async def update_user_controller(user: str = Body(...), password: str = Body(...
     """
     try:
         payload = {"user": user, "password": password, "role": role}
-        async with aiohttp.ClientSession() as session:
-            async with session.post(f"{DATABASE_API_URL}/user/update", json=payload) as response:
-                if response.status == 200:
-                    return await response.json()
-                else:
-                    raise HTTPException(status_code=response.status, detail=await response.text())
+        return await APIUtils.post(f"{DATABASE_API_URL}/user/update", data=payload)
     except Exception as e:
         logging.exception(f"Error updating user: {e}")
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Error updating user: {e}")
@@ -1101,20 +996,10 @@ async def verify_user_controller(user: str = Body(...), password: str = Body(...
     """
     try:
         payload = {"user": user, "password": password}
-        async with aiohttp.ClientSession() as session:
-            async with session.post(f"{DATABASE_API_URL}/user/verify", json=payload) as response:
-                if response.status == 200:
-                    return await response.json()
-                elif response.status == 401:
-                    raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED)
-                else:
-                    raise HTTPException(status_code=response.status, detail=await response.text())
+        return await APIUtils.post(f"{DATABASE_API_URL}/user/verify", data=payload)
     except HTTPException as e:
         if e.status_code == 401:
-            raise e
-        logging.exception(f"Error verifying user: {e}")
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Error verifying user: {e}")
-    except Exception as e:
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED) from e
         logging.exception(f"Error verifying user: {e}")
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Error verifying user: {e}")
 
