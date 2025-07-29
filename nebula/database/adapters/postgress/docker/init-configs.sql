@@ -13,7 +13,7 @@ CREATE TABLE IF NOT EXISTS users (
     role TEXT
 );
 
--- 2) Nodes como JSONB
+-- 2) Nodes
 CREATE TABLE IF NOT EXISTS nodes (
   uid TEXT PRIMARY KEY,
   idx TEXT,
@@ -31,7 +31,7 @@ CREATE TABLE IF NOT EXISTS nodes (
   malicious TEXT
 );
 
--- 3) Configs como JSONB
+-- 3) Configs as JSONB
 DROP INDEX IF EXISTS idx_configs_config_gin;
 DROP TABLE IF EXISTS configs;
 CREATE TABLE configs (

@@ -1,18 +1,21 @@
 #!/bin/sh
-set -e
+set -x
 
-# 1) Run the original entrypoint and wait for it to finish initialization
-/usr/local/bin/docker-entrypoint.sh.orig "$@"
+# Start the python API in the background
+echo "🐍 Starting Nebula Database API in the background..."
+(
+  # Wait for postgres to be ready
+  until pg_isready -U "$POSTGRES_USER" -d "$POSTGRES_DB" -h localhost >/dev/null 2>&1; do
+    sleep 1
+  done
+  echo "✅ PostgreSQL is ready, starting API."
 
-# 2) Wait until PostgreSQL accepts connections to the configured database
-echo "⏳ Waiting for PostgreSQL to be ready..."
-until pg_isready -U "$POSTGRES_USER" -d "$POSTGRES_DB" >/dev/null 2>&1; do
-  sleep 1
-done
+  cd nebula
+  NEBULA_SOCK=nebula.sock
 
-# 3) Apply the SQL initialization script
-echo "🚀 Applying init-configs.sql..."
-psql -v ON_ERROR_STOP=1 \
-     -U "$POSTGRES_USER" \
-     -d "$POSTGRES_DB" \
-     -f /docker-entrypoint-initdb.d/init-configs.sql
+  uvicorn nebula.database.database_api:app --host 0.0.0.0 --port 5051 --log-level debug --proxy-headers --forwarded-allow-ips "*"
+) &
+
+# Run the original postgres entrypoint in the foreground
+# This will become the main process of the container
+exec /usr/local/bin/docker-entrypoint.sh.orig "$@"

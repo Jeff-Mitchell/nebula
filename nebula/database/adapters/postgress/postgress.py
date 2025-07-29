@@ -95,7 +95,7 @@ class PostgresDB(DatabaseAdapter):
         except Exception as e:
             logging.error(f"Failed to insert default admin user: {e}", exc_info=True)
 
-    async def list_users(self, all_info=False):
+    async def list_users(self, all_info: bool = False):
         """
         Retrieves a list of users from the users database.
         """

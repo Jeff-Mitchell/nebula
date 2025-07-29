@@ -1032,6 +1032,12 @@ class Deployer:
             "POSTGRES_USER": "nebula",
             "POSTGRES_PASSWORD": os.environ.get("POSTGRES_PASSWORD"),
             "POSTGRES_DB": "nebula",
+            "NEBULA_DATABASE_LOG": "/nebula/app/logs/database.log",
+            "DB_HOST": "localhost",
+            "DB_PORT": 5432,
+            "DB_USER": "nebula",
+            "DB_PASSWORD": os.environ.get("POSTGRES_PASSWORD"),
+            "NEBULA_ADMIN_PASSWORD": os.environ.get("NEBULA_ADMIN_PASSWORD")
         }
         host_sql_path = os.path.join(self.root_path, "nebula/database/adapters/postgress/docker/init-configs.sql")
         db_data_path = os.path.join(self.databases_dir, "postgres-data")
@@ -1039,10 +1045,11 @@ class Deployer:
 
         pg_host_config = client.api.create_host_config(
             binds=[
+                f"{self.root_path}:/nebula",
                 f"{host_sql_path}:/docker-entrypoint-initdb.d/init-configs.sql",
                 f"{db_data_path}:/var/lib/postgresql/data",
             ],
-            port_bindings={5432: 5432},
+            port_bindings={5432: 5432, 5051: 5051},
         )
         pg_networking_config = client.api.create_networking_config(
             {f"{network_name}": client.api.create_endpoint_config(ipv4_address=f"{base}.125")}
@@ -1055,6 +1062,7 @@ class Deployer:
             environment=pg_environment,
             host_config=pg_host_config,
             networking_config=pg_networking_config,
+            ports=[5432, 5051],
         )
         client.api.start(pg_container)
         Deployer._add_container_to_metadata(pg_container_name)
@@ -1117,11 +1125,7 @@ class Deployer:
             "NEBULA_CONTROLLER_PORT": self.controller_port,
             "NEBULA_CONTROLLER_HOST": self.controller_host,
             "NEBULA_FRONTEND_PORT": self.frontend_port,
-            "DB_HOST": self.get_container_name("nebula-database"),
-            "DB_PORT": 5432,
-            "DB_USER": "nebula",
-            "DB_PASSWORD": os.environ.get("POSTGRES_PASSWORD"),
-            "NEBULA_ADMIN_PASSWORD": os.environ.get("NEBULA_ADMIN_PASSWORD")
+            "NEBULA_DATABASE_API_URL": f"http://{self.get_container_name('nebula-database')}:5051"
         }
 
         volumes = ["/nebula", "/var/run/docker.sock"]

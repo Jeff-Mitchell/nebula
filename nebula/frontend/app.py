@@ -627,7 +627,7 @@ async def get_scenarios(user, role):
     return await controller_get(url)
 
 
-async def scenario_update_record(scenario_name, start_time, end_time, scenario, status, role, username):
+async def scenario_update_record(scenario_name, start_time, end_time, scenario, status, username):
     """
     Update the record of a scenario's execution status on the controller.
 
@@ -637,7 +637,6 @@ async def scenario_update_record(scenario_name, start_time, end_time, scenario, 
         end_time (str): ISO-formatted end timestamp.
         scenario (Any): Scenario payload or identifier.
         status (str): New status value (e.g., 'running', 'finished').
-        role (str): Role associated with the scenario.
         username (str): User who ran or updated the scenario.
 
     Raises:
@@ -650,7 +649,6 @@ async def scenario_update_record(scenario_name, start_time, end_time, scenario, 
         "end_time": end_time,
         "scenario": scenario,
         "status": status,
-        "role": role,
         "username": username,
     }
     await controller_post(url, data)
