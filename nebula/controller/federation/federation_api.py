@@ -10,7 +10,7 @@ from fastapi import HTTPException
 from nebula.utils import LoggerUtils
 from nebula.controller.federation.federation_controller import FederationController 
 from nebula.controller.federation.factory_federation_controller import federation_controller_factory
-from nebula.controller.federation.api_requests import InitFederationRequest, RunScenarioRequest, StopScenarioRequest
+from nebula.controller.federation.utils_requests import InitFederationRequest, RunScenarioRequest, StopScenarioRequest
 
 def require_initialized_controller(func):
     @wraps(func)
@@ -91,6 +91,18 @@ async def update_nodes(
 ):
     global fed_controller
     return await fed_controller.update_nodes(scenario_name, request)
+
+@app.post("/nodes/{scenario_name}/done")
+@require_initialized_controller
+async def update_nodes(
+    scenario_name: Annotated[
+        str,
+        Path(regex="^[a-zA-Z0-9_-]+$", min_length=1, max_length=50, description="Valid scenario name"),
+    ],
+    request: Request,
+):
+    global fed_controller
+    return await fed_controller.node_done(scenario_name, request)
 
 
 if __name__ == "__main__":

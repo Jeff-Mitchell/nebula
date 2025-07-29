@@ -30,4 +30,7 @@ class FederationController(ABC):
     @abstractmethod
     async def update_nodes(self, scenario_name: str, request: Request):
         pass
-
+    
+    abstractmethod
+    async def node_done(self, scenario_name: str, request: Request):
+        pass

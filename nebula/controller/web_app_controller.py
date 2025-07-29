@@ -25,6 +25,7 @@ from nebula.controller.database import (
 )
 from nebula.controller.http_helpers import remote_get, remote_post_form
 from nebula.utils import DockerUtils, APIUtils
+from nebula.controller.federation.utils_requests import RunScenarioRequest, InitFederationRequest, StopScenarioRequest, factory_requests_path
 
 
 # Setup controller logger
@@ -321,12 +322,12 @@ async def run_scenario(
     try:
         fed_controller_port = os.environ.get("NEBULA_FEDERATION_CONTROLLER_PORT")
         fed_controller_host = os.environ.get("NEBULA_CONTROLLER_HOST")
-        url = f"http://{fed_controller_host}:{fed_controller_port}/init"
-        url2 = f"http://{fed_controller_host}:{fed_controller_port}/scenarios/run"
-        data = {"experiment_type": "docker"}
-        data2 = {"scenario_data": scenario_data, "federation_id": "id_nebula", "user": user}
-        await APIUtils.post(url, data)
-        await APIUtils.post(url2, data2)
+        url_init_fed_controller = f"http://{fed_controller_host}:{fed_controller_port}" + factory_requests_path("init")
+        url_run_scenario = f"http://{fed_controller_host}:{fed_controller_port}" + factory_requests_path("run")
+        init_fed_req = InitFederationRequest(experiment_type="docker")
+        run_scenario_req = RunScenarioRequest(scenario_data=scenario_data, federation_id="id_nebula", user=user)
+        await APIUtils.post(url_init_fed_controller, init_fed_req.model_dump())
+        await APIUtils.post(url_run_scenario, run_scenario_req.model_dump())
     except Exception as e:
         logging.info(e)
 
@@ -389,17 +390,26 @@ async def stop_scenario(
     Note:
         This function does not currently trigger statistics generation.
     """
-    from nebula.controller.scenarios import ScenarioManagement
-
-    ScenarioManagement.cleanup_scenario_containers()
+    fed_controller_port = os.environ.get("NEBULA_FEDERATION_CONTROLLER_PORT")
+    fed_controller_host = os.environ.get("NEBULA_CONTROLLER_HOST")
+    url_stop_scenario = f"http://{fed_controller_host}:{fed_controller_port}" + factory_requests_path("stop")
+    stop_scenario_req = StopScenarioRequest(federation_id="id_nebula")
     try:
-        if all:
-            await scenario_set_all_status_to_finished()
-        else:
-            await scenario_set_status_to_finished(scenario_name)
+        await APIUtils.post(url_stop_scenario, stop_scenario_req.model_dump())
     except Exception as e:
-        logging.exception(f"Error setting scenario {scenario_name} to finished: {e}")
-        raise HTTPException(status_code=500, detail="Internal server error")
+        logging.info(f"ERROR: sending stop scenario to federation Controller: {e}")
+        
+    # from nebula.controller.scenarios import ScenarioManagement
+
+    # ScenarioManagement.cleanup_scenario_containers()
+    # try:
+    #     if all:
+    #         await scenario_set_all_status_to_finished()
+    #     else:
+    #         await scenario_set_status_to_finished(scenario_name)
+    # except Exception as e:
+    #     logging.exception(f"Error setting scenario {scenario_name} to finished: {e}")
+    #     raise HTTPException(status_code=500, detail="Internal server error")
 
 
 @app.post("/scenarios/remove")
@@ -649,20 +659,20 @@ async def update_nodes(
         timestamp = datetime.datetime.now()
         # Update the node in database
         await update_node_record(
-            str(config["device_args"]["uid"]),
-            str(config["device_args"]["idx"]),
-            str(config["network_args"]["ip"]),
-            str(config["network_args"]["port"]),
-            str(config["device_args"]["role"]),
-            config["network_args"]["neighbors"],
-            str(config["mobility_args"]["latitude"]),
-            str(config["mobility_args"]["longitude"]),
+            str(config["data"]["device_args"]["uid"]),
+            str(config["data"]["device_args"]["idx"]),
+            str(config["data"]["network_args"]["ip"]),
+            str(config["data"]["network_args"]["port"]),
+            str(config["data"]["device_args"]["role"]),
+            config["data"]["network_args"]["neighbors"],
+            str(config["data"]["mobility_args"]["latitude"]),
+            str(config["data"]["mobility_args"]["longitude"]),
             str(timestamp),
-            str(config["scenario_args"]["federation"]),
-            str(config["federation_args"]["round"]),
-            str(config["scenario_args"]["name"]),
-            str(config["tracking_args"]["run_hash"]),
-            str(config["device_args"]["malicious"]),
+            str(config["data"]["data"]["scenario_args"]["federation"]),
+            str(config["data"]["federation_args"]["round"]),
+            str(config["data"]["scenario_args"]["name"]),
+            str(config["data"]["tracking_args"]["run_hash"]),
+            str(config["data"]["device_args"]["malicious"]),
         )
     except Exception as e:
         logging.exception(f"Error updating nodes: {e}")

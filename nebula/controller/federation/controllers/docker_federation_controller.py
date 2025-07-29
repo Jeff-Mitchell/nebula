@@ -1,12 +1,14 @@
+import asyncio
 import glob
 import json
 import os
 import shutil
-from nebula.utils import DockerUtils
+from nebula.utils import DockerUtils, APIUtils
 import docker
 from nebula.controller.federation.federation_controller import FederationController
+from nebula.controller.federation.utils_requests import factory_requests_path
 from typing import Dict
-from fastapi import Request, Response
+from fastapi import Request
 from nebula.config.config import Config
 from nebula.core.utils.certificate import generate_ca_certificate
 from nebula.core.utils.locker import Locker
@@ -24,7 +26,7 @@ class DockerFederationController(FederationController):
         self.cert_dir = ""
         self.advanced_analytics = ""
         self.url = ""
-        self.config = Config(entity="scenarioManagement")
+        self.config = Config(entity="FederationController")
         self.round_per_node = {}
         self.additionals: dict = {}
         self._ip_last_index = 0
@@ -137,8 +139,8 @@ class DockerFederationController(FederationController):
         config = await request.json()
         participant_idx = int(config["device_args"]["idx"])
         participant_round = int(config["federation_args"]["round"])
-        self.logger.info(f"Update received from participant: {participant_idx}, round: {participant_round}")
-        self.logger.info(f"Update: {self.round_per_node.items()}")
+        #self.logger.info(f"Update received from participant: {participant_idx}, round: {participant_round}")
+        #self.logger.info(f"Update: {self.round_per_node.items()}")
         self.round_per_node[participant_idx] = participant_round
         last_fed_round = self._federation_round
         self._federation_round = min(self.round_per_node.values())
@@ -152,7 +154,7 @@ class DockerFederationController(FederationController):
         adds_deployed = set()
         # Only verify when federation round is updated
         if self._federation_round != last_fed_round:
-            self.logger.info(f"Federation Round updates, current value: {self._federation_round}")
+            self.logger.info(f"Federation Round updating, current value: {self._federation_round}")
             # Ensure concurrency
             for index in additionals_deployables:
                 if index in adds_deployed:
@@ -161,18 +163,39 @@ class DockerFederationController(FederationController):
                 for idx, node in enumerate(self.config.participants):
                     if index == idx:
                         async with self._deployment_lock:
-                            self.logger.info(f"Deploying additional participant: {index}")
-                            self._start_node(node, self._network_name, self._base_network_name, self._base, self._ip_last_index, additional=True)
-                            self._ip_last_index += 1
-                            adds_deployed.add(index)
+                            if index in self.additionals.keys():
+                                self.logger.info(f"Deploying additional participant: {index}")
+                                self._start_node(node, self._network_name, self._base_network_name, self._base, self._ip_last_index, additional=True)
+                                self._ip_last_index += 1
+                                self.additionals.pop(index)
+                                adds_deployed.add(index)
+                                
+        request_body = await request.json()
+        payload = {"scenario_name": scenario_name, "data": request_body}
         
-        #TODO return the others parameters
-        return Response(content=json.dumps({"message": "Node updated successfully"}), status_code=200)
+        asyncio.create_task(self._send_to_hub("update", payload, scenario_name))
+        
+        return {"message": "Node updated successfully in Federation Controller"}
+
+    async def node_done(self, scenario_name: str, request: Request):
+        request_body = await request.json()
+        payload = {"scenario_name": scenario_name, "data": request_body}
+        asyncio.create_task(self._send_to_hub("done", payload, scenario_name))
+        return {"message": "Nodes done"}
 
     """                                             ###############################
                                                     #       FUNCTIONALITIES       #
                                                     ###############################
     """
+    
+    async def _send_to_hub(self, path, payload, scenario_name=""):
+        try:
+            url_request = self._hub_url + factory_requests_path(path, scenario_name)
+            # self.logger.info(f"Seding to hub, url: {url_request}")
+            # self.logger.info(f"payload sent to hub, data: {payload}")
+            await APIUtils.post(url_request, payload)
+        except Exception as e:
+            self.logger.info(f"Failed to send update to Hub: {e}")
 
     async def _initialize_scenario(self, scenario_data):
         # Initialize Scenario builder using scenario_data from user
@@ -357,7 +380,7 @@ class DockerFederationController(FederationController):
         dataset.initialize_dataset()
         self.logger.info(f"✅  Splitting {self.sb.get_dataset_name()} dataset... Done")
 
-    def get_network_name(self, suffix: str) -> str:
+    def _get_network_name(self, suffix: str) -> str:
         """
         Generate a standardized network name using tags.
         Args:
@@ -367,7 +390,7 @@ class DockerFederationController(FederationController):
         """
         return f"{self.env_tag}_{self.prefix_tag}_{self.user_tag}_{suffix}"
     
-    def get_participant_container_name(self, idx: int) -> str:
+    def _get_participant_container_name(self, idx: int) -> str:
         """
         Generate a standardized container name for a participant using tags.
         Args:
@@ -379,8 +402,8 @@ class DockerFederationController(FederationController):
 
     def _start_initial_nodes(self):
         self.logger.info("Starting nodes using Docker Compose...")
-        self._network_name = self.get_network_name(f"{self.sb.get_scenario_name()}-net-scenario")
-        self._base_network_name = self.get_network_name("net-base")
+        self._network_name = self._get_network_name(f"{self.sb.get_scenario_name()}-net-scenario")
+        self._base_network_name = self._get_network_name("net-base")
 
         # Create the Docker network
         self._base = DockerUtils.create_docker_network(self._network_name)
@@ -407,7 +430,7 @@ class DockerFederationController(FederationController):
         container_names = []  # Track names for metadata
 
         image = "nebula-core"
-        name = self.get_participant_container_name(node["device_args"]["idx"])
+        name = self._get_participant_container_name(node["device_args"]["idx"])
         if node["device_args"]["accelerator"] == "gpu":
             environment = {
                 "NVIDIA_DISABLE_REQUIRE": True,
