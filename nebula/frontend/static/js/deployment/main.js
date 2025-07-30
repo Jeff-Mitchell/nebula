@@ -210,7 +210,7 @@ const DeploymentManager = (function() {
         datasetSelect.innerHTML = "";
 
         // Add dataset options
-        const datasets = ['MNIST', 'FashionMNIST', 'EMNIST', 'CIFAR10', 'CIFAR100'];
+        const datasets = ['MNIST', 'FashionMNIST', 'EMNIST', 'CIFAR10', 'CIFAR100', 'Edge-IIoTset'];
         datasets.forEach(dataset => {
             const option = document.createElement("option");
             option.value = dataset;
@@ -251,6 +251,8 @@ const DeploymentManager = (function() {
                 return ['CNN', 'ResNet9', 'fastermobilenet', 'simplemobilenet', 'CNNv2', 'CNNv3'];
             case 'cifar100':
                 return ['CNN'];
+            case 'edge-iiotset':
+                return ['EdgeIIoTsetMLP'];
             default:
                 return ['MLP', 'CNN'];
         }

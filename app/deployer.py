@@ -106,6 +106,8 @@ class CredentialManager:
         self.check_credential("GF_SECURITY_ADMIN_PASSWORD")
         self.check_credential("POSTGRES_PASSWORD")
         self.check_credential("NEBULA_ADMIN_PASSWORD")
+        self.check_credential("KAGGLE_USERNAME", is_password=False)
+        self.check_credential("KAGGLE_KEY")
 
 
 class NebulaEventHandler(PatternMatchingEventHandler):
@@ -1121,7 +1123,9 @@ class Deployer:
             "DB_PORT": 5432,
             "DB_USER": "nebula",
             "DB_PASSWORD": os.environ.get("POSTGRES_PASSWORD"),
-            "NEBULA_ADMIN_PASSWORD": os.environ.get("NEBULA_ADMIN_PASSWORD")
+            "NEBULA_ADMIN_PASSWORD": os.environ.get("NEBULA_ADMIN_PASSWORD"),
+            "KAGGLE_USERNAME": os.environ.get("KAGGLE_USERNAME"),
+            "KAGGLE_KEY": os.environ.get("KAGGLE_KEY"),
         }
 
         volumes = ["/nebula", "/var/run/docker.sock"]
@@ -1133,6 +1137,7 @@ class Deployer:
                 f"{self.root_path}:/nebula",
                 "/var/run/docker.sock:/var/run/docker.sock",
                 f"{self.databases_dir}:/nebula/app/databases",
+                f"{os.path.join(os.path.dirname(os.path.abspath(__file__)), 'kaggle.json')}:/.kaggle/kaggle.json"
             ],
             extra_hosts={"host.docker.internal": "host-gateway"},
             port_bindings={self.controller_port: self.controller_port},
