@@ -61,7 +61,10 @@ const HelpContent = (function() {
         <ul style="margin-bottom: 0;">
             <li>MNIST: The MNIST dataset</li>
             <li>FashionMNIST: The FashionMNIST dataset</li>
+            <li>EMNIST: The EMNIST dataset</li>
             <li>CIFAR10: The CIFAR10 dataset</li>
+            <li>CIFAR100: The CIFAR100 dataset</li>
+            <li>SVHN: The Street View House Numbers dataset</li>
         </ul>
     </div>`;
 

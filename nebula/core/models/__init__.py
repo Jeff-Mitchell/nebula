@@ -54,6 +54,18 @@ MODELS = {
     'cifar100': {
         'CNN': CIFAR100ModelCNN,
         'FedProtoResNet18': FedProtoCIFAR100ModelResNet18
+    },
+    'svhn': {
+        'CNN': CIFAR10ModelCNN,
+        'CNNv2': CIFAR10ModelCNN_V2,
+        'CNNv3': CIFAR10ModelCNN_V3,
+        'ResNet9': CIFAR10ModelResNet,
+        'simplemobilenet': SimpleMobileNetV1,
+        'fastermobilenet': FasterMobileNet,
+        'ProserProtoResNet18': ProserProtoResNet18,
+        'FedProtoCNN': FedProtoCIFAR10ModelCNN,
+        'FedProtoResNet8': FedProtoCIFAR10ModelResNet8,
+        'ProserResNet18': ProserResNet18Nebula
     }
 }
 

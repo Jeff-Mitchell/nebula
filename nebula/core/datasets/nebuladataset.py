@@ -731,12 +731,13 @@ class NebulaDataset:
         sns.set_palette("Set2")
 
         # Plot bar charts for each partition
+        targets = self._get_targets(dataset)
         partition_index = 0
         for partition_index in range(self.partitions_number):
             indices = partitions_map[partition_index]
             class_counts = [0] * self.num_classes
             for idx in indices:
-                label = dataset.targets[idx]
+                label = targets[idx]
                 class_counts[label] += 1
 
             logging_training.info(f"[{phase}] Participant {partition_index} total samples: {len(indices)}")
@@ -840,8 +841,8 @@ class NebulaDataset:
         else:
             if verbose:
                 logging.info("Extracting dataset partition targets...")
-            # For hybrid dataset scenarios
-            y_data = dataset.targets
+            # For hybrid dataset scenarios - use _get_targets for compatibility
+            y_data = self._get_targets(dataset)
             unique_labels = np.unique(y_data)
         if verbose:
             logging.info(f"Unique labels in dataset: {unique_labels}")
@@ -920,12 +921,21 @@ class NebulaDataset:
 
     @staticmethod
     def _get_targets(dataset) -> np.ndarray:
-        if isinstance(dataset.targets, np.ndarray):
-            return dataset.targets
-        elif hasattr(dataset.targets, "numpy"):
-            return dataset.targets.numpy()
+        # Handle different attribute names in torchvision datasets
+        # SVHN uses 'labels' while most others use 'targets'
+        if hasattr(dataset, 'targets'):
+            targets = dataset.targets
+        elif hasattr(dataset, 'labels'):
+            targets = dataset.labels
         else:
-            return np.asarray(dataset.targets)
+            raise AttributeError(f"Dataset {type(dataset)} has neither 'targets' nor 'labels' attribute")
+
+        if isinstance(targets, np.ndarray):
+            return targets
+        elif hasattr(targets, "numpy"):
+            return targets.numpy()
+        else:
+            return np.asarray(targets)
 
     def postprocess_partition(
         self, partition: dict[int, list[int]], y_data: np.ndarray, min_samples_per_class: int = 10
@@ -1012,7 +1022,8 @@ class NebulaDataset:
         """
         n_nets = self.partitions_number
 
-        n_train = len(dataset.targets)
+        targets = self._get_targets(dataset)
+        n_train = len(targets)
         np.random.seed(self.seed)
         idxs = np.random.permutation(n_train)
         batch_idxs = np.array_split(idxs, n_nets)
@@ -1026,7 +1037,7 @@ class NebulaDataset:
             # Print class distribution in the current partition
             class_counts = [0] * self.num_classes
             for idx in net_dataidx_map[i]:
-                label = dataset.targets[idx]
+                label = targets[idx]
                 class_counts[label] += 1
             logging.info(f"Partition {i + 1} class distribution: {class_counts}")
 
@@ -1063,12 +1074,20 @@ class NebulaDataset:
         clients_data = {i: [] for i in range(num_clients)}
 
         # Get the labels from the dataset
-        if isinstance(dataset.targets, np.ndarray):
-            labels = dataset.targets
-        elif hasattr(dataset.targets, "numpy"):  # Check if it's a tensor with .numpy() method
-            labels = dataset.targets.numpy()
+        # Handle different attribute names in torchvision datasets
+        if hasattr(dataset, 'targets'):
+            targets = dataset.targets
+        elif hasattr(dataset, 'labels'):
+            targets = dataset.labels
+        else:
+            raise AttributeError(f"Dataset {type(dataset)} has neither 'targets' nor 'labels' attribute")
+
+        if isinstance(targets, np.ndarray):
+            labels = targets
+        elif hasattr(targets, "numpy"):  # Check if it's a tensor with .numpy() method
+            labels = targets.numpy()
         else:  # If it's a list
-            labels = np.asarray(dataset.targets)
+            labels = np.asarray(targets)
 
         label_counts = np.bincount(labels)
         min_label = label_counts.argmin()
@@ -1132,7 +1151,8 @@ class NebulaDataset:
 
         # Get the labels from the dataset
         if not n_clients:
-            labels = np.array([dataset.targets[idx] for idx in range(len(dataset))])
+            targets = self._get_targets(dataset)
+            labels = np.array([targets[idx] for idx in range(len(dataset))])
         else:
             labels = np.array(self._targets_reales[dataset.real_indexes])
 
@@ -1192,12 +1212,20 @@ class NebulaDataset:
             # This creates federated data subsets with varying class distributions based on
             # a percentage of 20.
         """
-        if isinstance(dataset.targets, np.ndarray):
-            y_train = dataset.targets
-        elif hasattr(dataset.targets, "numpy"):  # Check if it's a tensor with .numpy() method
-            y_train = dataset.targets.numpy()
+        # Handle different attribute names in torchvision datasets
+        if hasattr(dataset, 'targets'):
+            targets = dataset.targets
+        elif hasattr(dataset, 'labels'):
+            targets = dataset.labels
+        else:
+            raise AttributeError(f"Dataset {type(dataset)} has neither 'targets' nor 'labels' attribute")
+
+        if isinstance(targets, np.ndarray):
+            y_train = targets
+        elif hasattr(targets, "numpy"):  # Check if it's a tensor with .numpy() method
+            y_train = targets.numpy()
         else:  # If it's a list
-            y_train = np.asarray(dataset.targets)
+            y_train = np.asarray(targets)
 
         num_classes = self.num_classes
         num_subsets = self.partitions_number if not n_clients else n_clients
@@ -1211,7 +1239,7 @@ class NebulaDataset:
 
         # Get the labels from the dataset
         if not n_clients:
-            labels = np.array([dataset.targets[idx] for idx in range(len(dataset))])
+            labels = y_train  # We already have the targets extracted above
         else:
             labels = np.array(self._targets_reales[dataset.real_indexes])
         label_counts = np.bincount(labels)
@@ -1238,7 +1266,7 @@ class NebulaDataset:
                 # Select approximately 50% of the indices
                 subset_indices[i].extend(indices[: min_count // 2])
 
-            class_counts = np.bincount(np.array([dataset.targets[idx] for idx in subset_indices[i]]))
+            class_counts = np.bincount(np.array([y_train[idx] for idx in subset_indices[i]]))
             logging.info(f"Partition {i + 1} class distribution: {class_counts.tolist()}")
 
         partitioned_datasets = {i: subset_indices[i] for i in range(num_subsets)}
@@ -1265,8 +1293,9 @@ class NebulaDataset:
         # Plot number of samples per class in the dataset
         plt.figure(figsize=(12, 8))
 
+        targets = self._get_targets(dataset)
         class_counts = [0] * num_classes
-        for target in dataset.targets:
+        for target in targets:
             class_counts[target] += 1
 
         plt.bar(range(num_classes), class_counts, tick_label=dataset.classes)
@@ -1287,7 +1316,7 @@ class NebulaDataset:
         label_distribution = [[] for _ in range(num_classes)]
         for c_id, idc in partitions_map.items():
             for idx in idc:
-                label_distribution[dataset.targets[idx]].append(c_id)
+                label_distribution[targets[idx]].append(c_id)
 
         plt.hist(
             label_distribution,
@@ -1319,7 +1348,7 @@ class NebulaDataset:
             class_counts = [0] * self.num_classes
             indices = partitions_map[i]
             for idx in indices:
-                label = dataset.targets[idx]
+                label = targets[idx]
                 class_counts[label] += 1
 
             # Normalize the point sizes for this partition, handling the case where max_samples_partition is 0
@@ -1354,6 +1383,7 @@ def factory_nebuladataset(dataset, **config) -> NebulaDataset:
     from nebula.core.datasets.emnist.emnist import EMNISTDataset
     from nebula.core.datasets.fashionmnist.fashionmnist import FashionMNISTDataset
     from nebula.core.datasets.mnist.mnist import MNISTDataset
+    from nebula.core.datasets.svhn.svhn import SVHNDataset
 
     options = {
         "MNIST": MNISTDataset,
@@ -1361,6 +1391,7 @@ def factory_nebuladataset(dataset, **config) -> NebulaDataset:
         "EMNIST": EMNISTDataset,
         "CIFAR10": CIFAR10Dataset,
         "CIFAR100": CIFAR100Dataset,
+        "SVHN": SVHNDataset,
     }
 
     cs = options.get(dataset)

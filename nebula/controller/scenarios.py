@@ -24,6 +24,7 @@ from nebula.core.datasets.cifar100.cifar100 import CIFAR100Dataset
 from nebula.core.datasets.emnist.emnist import EMNISTDataset
 from nebula.core.datasets.fashionmnist.fashionmnist import FashionMNISTDataset
 from nebula.core.datasets.mnist.mnist import MNISTDataset
+from nebula.core.datasets.svhn.svhn import SVHNDataset
 from nebula.core.utils.certificate import generate_ca_certificate, generate_certificate
 from nebula.utils import DockerUtils, FileUtils
 
@@ -1077,6 +1078,17 @@ class ScenarioManagement:
         elif dataset_name == "CIFAR100":
             dataset = CIFAR100Dataset(
                 num_classes=100,
+                partitions_number=self.n_nodes,
+                iid=self.scenario.iid,
+                partition=self.scenario.partition_selection,
+                partition_parameter=self.scenario.partition_parameter,
+                seed=42,
+                config_dir=self.config_dir,
+                remove_classes_count=self.scenario.remove_classes_count,
+            )
+        elif dataset_name == "SVHN":
+            dataset = SVHNDataset(
+                num_classes=10,
                 partitions_number=self.n_nodes,
                 iid=self.scenario.iid,
                 partition=self.scenario.partition_selection,

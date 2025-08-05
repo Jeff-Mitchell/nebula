@@ -213,7 +213,7 @@ const DeploymentManager = (function() {
         datasetSelect.innerHTML = "";
 
         // Add dataset options
-        const datasets = ['MNIST', 'FashionMNIST', 'EMNIST', 'CIFAR10', 'CIFAR100'];
+        const datasets = ['MNIST', 'FashionMNIST', 'EMNIST', 'CIFAR10', 'CIFAR100', 'SVHN'];
         datasets.forEach(dataset => {
             const option = document.createElement("option");
             option.value = dataset;
@@ -256,6 +256,8 @@ const DeploymentManager = (function() {
                 return ['CNN', 'ResNet9', 'fastermobilenet', 'simplemobilenet', 'CNNv2', 'CNNv3', 'ProserProtoResNet18', 'FedProtoCNN', 'FedProtoResNet8', 'ProserResNet18'];
             case 'cifar100':
                 return ['CNN', 'FedProtoResNet18'];
+            case 'svhn':
+                return ['CNN', 'ResNet9', 'fastermobilenet', 'simplemobilenet', 'CNNv2', 'CNNv3', 'ProserProtoResNet18', 'FedProtoCNN', 'FedProtoResNet8', 'ProserResNet18'];
             default:
                 return ['MLP', 'CNN'];
         }

@@ -26,6 +26,7 @@ from nebula.core.datasets.datamodule import DataModule
 from nebula.core.datasets.emnist.emnist import EMNISTPartitionHandler
 from nebula.core.datasets.fashionmnist.fashionmnist import FashionMNISTPartitionHandler
 from nebula.core.datasets.mnist.mnist import MNISTPartitionHandler
+from nebula.core.datasets.svhn.svhn import SVHNPartitionHandler
 from nebula.core.datasets.nebuladataset import NebulaPartition
 from nebula.core.models import MODELS
 from nebula.core.engine import Engine
@@ -115,6 +116,13 @@ async def main(config: Config):
     elif dataset_name == "CIFAR100":
         batch_size = 128
         handler = CIFAR100PartitionHandler
+        if dataset_name.lower() in MODELS and model_name in MODELS[dataset_name.lower()]:
+            model = MODELS[dataset_name.lower()][model_name]()
+        else:
+            raise ValueError(f"Model {model_name} not supported for dataset {dataset_name}")
+    elif dataset_name == "SVHN":
+        batch_size = 32
+        handler = SVHNPartitionHandler
         if dataset_name.lower() in MODELS and model_name in MODELS[dataset_name.lower()]:
             model = MODELS[dataset_name.lower()][model_name]()
         else:
