@@ -253,11 +253,11 @@ const DeploymentManager = (function() {
             case 'emnist':
                 return ['MLP', 'CNN'];
             case 'cifar10':
-                return ['CNN', 'ResNet9', 'fastermobilenet', 'simplemobilenet', 'CNNv2', 'CNNv3', 'ProserProtoResNet18', 'FedProtoCNN', 'FedProtoResNet8', 'ProserResNet18'];
+                return ['CNN', 'ResNet9', 'ResNet18', 'fastermobilenet', 'simplemobilenet', 'CNNv2', 'CNNv3', 'ProserProtoResNet18', 'ProserProtoResNet18CIFAR10', 'FedProtoCNN', 'FedProtoResNet8', 'ProserResNet18', 'ProserResNet18CIFAR10'];
             case 'cifar100':
                 return ['CNN', 'FedProtoResNet18'];
             case 'svhn':
-                return ['CNN', 'ResNet9', 'fastermobilenet', 'simplemobilenet', 'CNNv2', 'CNNv3', 'ProserProtoResNet18', 'FedProtoCNN', 'FedProtoResNet8', 'ProserResNet18'];
+                return ['CNN', 'ResNet9', 'fastermobilenet', 'simplemobilenet', 'CNNv2', 'CNNv3', 'ProserProtoResNet18', 'ProserProtoResNet9SVHN', 'FedProtoCNN', 'FedProtoResNet8', 'FedProtoResNet9SVHN', 'ProserResNet18', 'ProserResNet9SVHN'];
             default:
                 return ['MLP', 'CNN'];
         }

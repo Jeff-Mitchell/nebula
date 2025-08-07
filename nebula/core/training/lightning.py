@@ -343,8 +343,50 @@ class Lightning:
     def set_model_parameters(self, params, initialize=False):
         try:
             self.model.load_state_dict(params)
+        except RuntimeError as e:
+            # Try to handle state_dict key mismatches
+            error_msg = str(e)
+            if "Missing key(s)" in error_msg or "Unexpected key(s)" in error_msg:
+                logging.warning(f"State dict mismatch, attempting to fix keys: {e}")
+                try:
+                    # Attempt to load with strict=False to allow partial loading
+                    missing_keys, unexpected_keys = self.model.load_state_dict(params, strict=False)
+                    if missing_keys:
+                        logging.warning(f"Missing keys in state_dict: {missing_keys}")
+                    if unexpected_keys:
+                        logging.warning(f"Unexpected keys in state_dict: {unexpected_keys}")
+                    return
+                except Exception as e2:
+                    logging.error(f"Failed to load state_dict even with strict=False: {e2}")
+                    # Try removing or adding "model." prefix
+                    try:
+                        fixed_params = self._fix_state_dict_keys(params)
+                        self.model.load_state_dict(fixed_params, strict=False)
+                        logging.info("Successfully loaded state_dict after key fixing")
+                        return
+                    except Exception as e3:
+                        logging.error(f"Failed to fix state_dict keys: {e3}")
+            raise ParameterSettingError("Error setting parameters") from e
         except Exception as e:
             raise ParameterSettingError("Error setting parameters") from e
+
+    def _fix_state_dict_keys(self, state_dict):
+        """Attempt to fix state_dict key mismatches by adding/removing prefixes."""
+        model_keys = set(self.model.state_dict().keys())
+        param_keys = set(state_dict.keys())
+
+        # If model keys have "model." prefix but params don't, add it
+        if any(key.startswith("model.") for key in model_keys) and not any(key.startswith("model.") for key in param_keys):
+            logging.info("Adding 'model.' prefix to parameter keys")
+            return {"model." + k: v for k, v in state_dict.items()}
+
+        # If params have "model." prefix but model keys don't, remove it
+        if any(key.startswith("model.") for key in param_keys) and not any(key.startswith("model.") for key in model_keys):
+            logging.info("Removing 'model.' prefix from parameter keys")
+            return {k.replace("model.", "", 1): v for k, v in state_dict.items()}
+
+        # Return original if no obvious fix
+        return state_dict
 
     def get_model_parameters(self, bytes=False, initialize=False):
         if bytes:
