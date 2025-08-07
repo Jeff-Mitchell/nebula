@@ -174,7 +174,7 @@ class DockerUtils:
             for container in containers:
                 if container.name.startswith(prefix):
                     return True
-                
+
             return False
 
         except docker.errors.APIError:
@@ -259,15 +259,43 @@ class DockerUtils:
             client = docker.from_env()
 
             containers = client.containers.list(all=True)  # `all=True` to include stopped containers
+            containers_to_remove = [container for container in containers if container.name.startswith(prefix)]
+
+            if not containers_to_remove:
+                logging.info(f"No containers found with prefix: {prefix}")
+                return
+
+            logging.info(f"Found {len(containers_to_remove)} containers to remove with prefix: {prefix}")
 
             # Iterate through containers and remove those with the matching prefix
-            for container in containers:
-                if container.name.startswith(prefix):
-                    logging.info(f"Removing container: {container.name}")
-                    container.remove(force=True)  # force=True to stop and remove if running
+            for container in containers_to_remove:
+                try:
+                    logging.info(f"Removing container: {container.name} (ID: {container.id[:12]})")
+
+                    # First try to stop gracefully if running
+                    if container.status == "running":
+                        logging.info(f"Stopping running container: {container.name}")
+                        container.stop(timeout=10)
+
+                    # Then remove the container
+                    container.remove(force=True)  # force=True to handle any edge cases
                     logging.info(f"Container {container.name} removed successfully.")
 
-        except docker.errors.APIError:
-            logging.exception("Error interacting with Docker")
-        except Exception:
-            logging.exception("Unexpected error")
+                except docker.errors.NotFound:
+                    logging.warning(f"Container {container.name} not found (may have been removed already)")
+                except docker.errors.APIError as e:
+                    logging.error(f"API Error removing container {container.name}: {e}")
+                    # Try harder with subprocess as fallback
+                    try:
+                        import subprocess
+                        subprocess.run(["docker", "rm", "-f", container.name], check=False, capture_output=True)
+                        logging.info(f"Forcefully removed container {container.name} via subprocess")
+                    except Exception as sub_e:
+                        logging.error(f"Failed to remove container {container.name} even with subprocess: {sub_e}")
+                except Exception as e:
+                    logging.error(f"Unexpected error removing container {container.name}: {e}")
+
+        except docker.errors.APIError as e:
+            logging.exception(f"Error interacting with Docker API: {e}")
+        except Exception as e:
+            logging.exception(f"Unexpected error in remove_containers_by_prefix: {e}")

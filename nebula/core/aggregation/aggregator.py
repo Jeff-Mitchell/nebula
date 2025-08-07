@@ -109,36 +109,56 @@ class Aggregator(ABC):
             asyncio.CancelledError: If the aggregation lock acquisition is cancelled.
             Exception: For any other unexpected errors during the aggregation process.
         """
+        lock_acquired = False
         try:
             timeout = self.config.participant["aggregator_args"]["aggregation_timeout"]
             logging.info(f"Aggregation timeout: {timeout} starts...")
             await self.us.notify_if_all_updates_received()
+
+            # Create tasks for lock acquisition and skip event
             lock_task = asyncio.create_task(self._aggregation_done_lock.acquire_async(timeout=timeout))
             skip_task = asyncio.create_task(self._aggregation_waiting_skip.wait())
-            done, pending = await asyncio.wait(
-                [lock_task, skip_task],
-                return_when=asyncio.FIRST_COMPLETED,
-            )
-            lock_acquired = lock_task in done
-            if skip_task in done:
-                logging.info("Skipping aggregation timeout, updates received before grace time")
-                self._aggregation_waiting_skip.clear()
-                if not lock_acquired:
-                    lock_task.cancel()
+
+            try:
+                done, pending = await asyncio.wait(
+                    [lock_task, skip_task],
+                    return_when=asyncio.FIRST_COMPLETED,
+                    timeout=timeout + 5  # Extra buffer time
+                )
+
+                # Cancel pending tasks to avoid resource leaks
+                for task in pending:
+                    task.cancel()
+                    try:
+                        await task
+                    except asyncio.CancelledError:
+                        pass
+
+                lock_acquired = lock_task in done and not lock_task.cancelled()
+
+                if skip_task in done:
+                    logging.info("Skipping aggregation timeout, updates received before grace time")
+                    self._aggregation_waiting_skip.clear()
+
+            except asyncio.TimeoutError:
+                logging.warning("Aggregation wait timeout exceeded, proceeding with available updates")
+                # Cancel all tasks
+                lock_task.cancel()
+                skip_task.cancel()
                 try:
-                    await lock_task  # Clean cancel
-                except asyncio.CancelledError:
+                    await asyncio.gather(lock_task, skip_task, return_exceptions=True)
+                except Exception:
                     pass
 
-        except TimeoutError:
-            logging.exception("🔄  get_aggregation | Timeout reached for aggregation")
-        except asyncio.CancelledError:
-            logging.exception("🔄  get_aggregation | Lock acquisition was cancelled")
         except Exception as e:
-            logging.exception(f"🔄  get_aggregation | Error acquiring lock: {e}")
+            logging.exception(f"🔄  get_aggregation | Error during aggregation wait: {e}")
         finally:
-            if lock_acquired or self._aggregation_done_lock.locked():
-                await self._aggregation_done_lock.release_async()
+            # Ensure lock is properly released
+            try:
+                if lock_acquired and self._aggregation_done_lock.locked():
+                    await self._aggregation_done_lock.release_async()
+            except Exception as e:
+                logging.warning(f"Error releasing aggregation lock: {e}")
 
         await self.us.stop_notifying_updates()
         updates = await self.us.get_round_updates()

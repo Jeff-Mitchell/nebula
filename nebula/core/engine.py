@@ -94,7 +94,7 @@ class Engine:
         self.ip = config.participant["network_args"]["ip"]
         self.port = config.participant["network_args"]["port"]
         self.addr = config.participant["network_args"]["addr"]
-        
+
         self.name = config.participant["device_args"]["name"]
         self.client = docker.from_env()
 
@@ -187,7 +187,7 @@ class Engine:
     def trainer(self):
         """Trainer"""
         return self._trainer
-    
+
     @property
     def rb(self):
         """Role Behavior"""
@@ -317,7 +317,7 @@ class Engine:
 
     async def _control_leadership_transfer_callback(self, source, message):
         logging.info(f"🔧  handle_control_message | Trigger | Received leadership transfer message from {source}")
-        
+
         if await self._round_in_process_lock.locked_async():
             logging.info("Learning cycle is executing, role behavior will be modified next round")
             await self.rb.set_next_role(Role.AGGREGATOR, source_to_notificate=source)
@@ -354,7 +354,7 @@ class Engine:
             except TimeoutError:
                 logging.info("Learning cycle is locked, role behavior will be modified next round")
                 await self.rb.set_next_role(Role.TRAINER)
-        
+
 
     async def _connection_connect_callback(self, source, message):
         logging.info(f"🔗  handle_connection_message | Trigger | Received connection message from {source}")
@@ -710,10 +710,10 @@ class Engine:
                 await self.get_federation_ready_lock().acquire_async()
                 if self.config.participant["device_args"]["start"]:
                     logging.info("Propagate initial model updates.")
-                    
+
                     mpe = ModelPropagationEvent(await self.cm.get_addrs_current_connections(only_direct=True, myself=False), "initialization")
                     await EventManager.get_instance().publish_node_event(mpe)
-                    
+
                     await self.get_federation_ready_lock().release_async()
 
                 self.trainer.set_epochs(epochs)
@@ -764,7 +764,7 @@ class Engine:
             return False
         else:
             return current_round >= self.total_rounds
-        
+
     async def resolve_missing_updates(self):
         """
         Delegates the resolution strategy for missing updates to the current role behavior.
@@ -778,7 +778,7 @@ class Engine:
         """
         logging.info(f"Using Role behavior: {self.rb.get_role_name()} conflict resolve strategy")
         return await self.rb.resolve_missing_updates()
-    
+
     async def update_self_role(self):
         """
         Checks whether a role update is required and performs the transition if necessary.
@@ -806,7 +806,7 @@ class Engine:
                 logging.info(f"Sending role modification ACK to transferer: {source_to_notificate}")
                 message = self.cm.create_message("control", "leadership_transfer_ack")
                 asyncio.create_task(self.cm.send_message(source_to_notificate, message))
-             
+
     async def _learning_cycle(self):
         """
         Main asynchronous loop for executing the Federated Learning process across multiple rounds.
@@ -837,9 +837,9 @@ class Engine:
                     indent=2,
                     title="Round information",
                 )
-                
+
                 await self.update_self_role()
-                
+
                 logging.info(f"Federation nodes: {self.federation_nodes}")
                 await self.update_federation_nodes(
                     await self.cm.get_addrs_current_connections(only_direct=True, myself=True)
@@ -851,10 +851,10 @@ class Engine:
                 logging.info(f"Expected nodes: {expected_nodes}")
                 direct_connections = await self.cm.get_addrs_current_connections(only_direct=True)
                 undirected_connections = await self.cm.get_addrs_current_connections(only_undirected=True)
-                
+
                 logging.info(f"Direct connections: {direct_connections} | Undirected connections: {undirected_connections}")
                 logging.info(f"[Role {self.rb.get_role_name()}] Starting learning cycle...")
-                
+
                 await self.aggregator.update_federation_nodes(expected_nodes)
                 async with self._role_behavior_performance_lock:
                     await self.rb.extended_learning_cycle()
@@ -882,13 +882,13 @@ class Engine:
         self.trainer.on_learning_cycle_end()
 
         await self.trainer.test()
-        
+
         # Shutdown protocol
         await self._shutdown_protocol()
-            
+
     async def _shutdown_protocol(self):
         logging.info("Starting graceful shutdown process...")
-        
+
         # 1.- Publish Experiment Finish Event to the last update on modules
         logging.info("Publishing Experiment Finish Event...")
         efe = ExperimentFinishEvent()
@@ -956,26 +956,42 @@ class Engine:
 
             # Wait for tasks to complete naturally with shorter timeout
             try:
-                await asyncio.wait_for(asyncio.gather(*tasks, return_exceptions=True), timeout=3)
-            except asyncio.CancelledError:
-                logging.warning(
-                    "Timeout reached during task cleanup (CancelledError); proceeding with shutdown anyway."
-                )
-                # Do not re-raise, just continue
-            except TimeoutError:
-                logging.warning("Some tasks did not complete in time, forcing cancellation...")
+                done, pending = await asyncio.wait(tasks, timeout=3, return_when=asyncio.ALL_COMPLETED)
+                if pending:
+                    logging.warning(f"Some tasks did not complete in time: {len(pending)} pending")
+                    # Cancel remaining tasks
+                    for task in pending:
+                        if not task.done():
+                            task.cancel()
+
+                    # Wait for cancellations to take effect
+                    if pending:
+                        try:
+                            done, still_pending = await asyncio.wait(pending, timeout=2, return_when=asyncio.ALL_COMPLETED)
+                            if still_pending:
+                                logging.warning(f"Some tasks still pending after cancellation: {len(still_pending)}")
+                        except Exception as e:
+                            logging.warning(f"Error waiting for task cancellation: {e}")
+
+            except Exception as e:
+                logging.warning(f"Error during task cleanup: {e}")
+                # Force cancel all tasks if there's an error
                 for task in tasks:
                     if not task.done():
                         task.cancel()
-                # Wait a bit more for cancellations to take effect
+
+            # Additional cleanup for any remaining tasks
+            remaining_tasks = [t for t in asyncio.all_tasks() if t is not asyncio.current_task() and not t.done()]
+            if remaining_tasks:
+                logging.warning(f"Found {len(remaining_tasks)} additional tasks to clean up")
+                for task in remaining_tasks:
+                    if not task.done():
+                        task.cancel()
+
                 try:
-                    await asyncio.wait_for(asyncio.gather(*tasks, return_exceptions=True), timeout=2)
-                except asyncio.CancelledError:
-                    logging.warning(
-                        "Timeout reached during forced cancellation (CancelledError); proceeding with shutdown anyway."
-                    )
-                    # Do not re-raise, just continue
-                except TimeoutError:
+                    await asyncio.wait(remaining_tasks, timeout=1, return_when=asyncio.ALL_COMPLETED)
+                except Exception as e:
+                    logging.warning(f"Error cleaning up remaining tasks: {e}")
                     logging.warning("Some tasks still not responding to cancellation")
                     # Final aggressive cleanup - cancel all remaining tasks
                     remaining_tasks = [
@@ -1006,16 +1022,43 @@ class Engine:
             try:
                 docker_id = socket.gethostname()
                 logging.info(f"📦  Removing docker container with ID {docker_id}")
-                container = self.client.containers.get(docker_id)
-                container.remove(force=True)
-                logging.info(f"📦  Successfully removed docker container {docker_id}")
+
+                # Set a reasonable timeout for container operations
+                container_timeout = 30  # seconds
+
+                try:
+                    container = self.client.containers.get(docker_id)
+
+                    # Use asyncio timeout to avoid hanging
+                    async def remove_container():
+                        await asyncio.to_thread(container.remove, force=True)
+
+                    await asyncio.wait_for(remove_container(), timeout=container_timeout)
+                    logging.info(f"📦  Successfully removed docker container {docker_id}")
+
+                except asyncio.TimeoutError:
+                    logging.warning(f"📦  Container removal timed out after {container_timeout}s, trying subprocess")
+                    raise Exception("Container removal timeout")
+
             except Exception as e:
                 logging.exception(f"📦  Error removing Docker container {docker_id}: {e}")
                 # Try to force kill the container as last resort
                 try:
                     import subprocess
 
-                    subprocess.run(["docker", "rm", "-f", docker_id], check=False)
-                    logging.info(f"📦  Forced removal of container {docker_id} via subprocess")
+                    # Use timeout for subprocess as well
+                    result = subprocess.run(
+                        ["docker", "rm", "-f", docker_id],
+                        check=False,
+                        timeout=15,
+                        capture_output=True,
+                        text=True
+                    )
+                    if result.returncode == 0:
+                        logging.info(f"📦  Forced removal of container {docker_id} via subprocess")
+                    else:
+                        logging.warning(f"📦  Subprocess removal failed with code {result.returncode}: {result.stderr}")
+                except subprocess.TimeoutExpired:
+                    logging.error(f"📦  Subprocess removal of container {docker_id} timed out")
                 except Exception as sub_e:
                     logging.exception(f"📦  Failed to force remove container {docker_id}: {sub_e}")

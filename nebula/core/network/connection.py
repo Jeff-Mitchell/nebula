@@ -358,6 +358,11 @@ class Connection:
             logging.error("Cannot send data, writer is None")
             return
 
+        # Check if writer transport is closed
+        if self.writer.transport is None or self.writer.transport.is_closing():
+            logging.error(f"Cannot send data to {self.addr}, transport is closed")
+            return
+
         # Check if learning cycle has finished - don't send messages
         if await self.cm.learning_finished():
             logging.info(f"Not sending message to {self.addr} because learning cycle has finished")
@@ -457,6 +462,10 @@ class Connection:
             header = message_id + chunk_index.to_bytes(4, "big") + (b"\x01" if is_last_chunk else b"\x00")
             chunk_size_bytes = len(chunk).to_bytes(4, "big")
             chunk_with_header = header + chunk_size_bytes + chunk + self.EOT_CHAR
+
+            # Check if transport is still available before writing
+            if self.writer.transport is None or self.writer.transport.is_closing():
+                raise ConnectionError("Transport is closed, cannot send chunk")
 
             self.writer.write(chunk_with_header)
             await self.writer.drain()

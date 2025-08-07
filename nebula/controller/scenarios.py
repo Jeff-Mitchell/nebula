@@ -113,6 +113,7 @@ class Scenario:
         batches_per_communication=1,
         physical_ips=None,
         remove_classes_count=0,
+        aggregation_timeout=None,
     ):
         """
         Initialize a Scenario instance.
@@ -167,7 +168,8 @@ class Scenario:
             communication_mode (str): Mode of communication ("epoch" or "batch"). Defaults to "epoch".
             batches_per_communication (int): Number of batches per communication when in batch mode. Defaults to 1.
             physical_ips (list, optional): List of physical IPs for nodes. Defaults to None.
-            remove_classes_count (int): Number of classes to be remove from the clients dataset,
+            remove_classes_count (int): Number of classes to be remove from the clients dataset.
+            aggregation_timeout (int, optional): Custom aggregation timeout in seconds. Defaults to None.
         """
         self.scenario_title = scenario_title
         self.scenario_description = scenario_description
@@ -244,6 +246,7 @@ class Scenario:
         self.batches_per_communication = batches_per_communication
         self.physical_ips = physical_ips
         self.remove_classes_count = remove_classes_count
+        self.aggregation_timeout = aggregation_timeout
 
     def attack_node_assign(
         self,
@@ -560,6 +563,7 @@ class Scenario:
             "communication_mode": "epoch",
             "batches_per_communication": 1,
             "remove_classes_count": 0,
+            "aggregation_timeout": None,
         }
 
         for key, default_value in defaults.items():
@@ -706,7 +710,9 @@ class ScenarioManagement:
             participant_config["device_args"]["proxy"] = node_config["proxy"]
             participant_config["device_args"]["malicious"] = node_config["malicious"]
             participant_config["scenario_args"]["rounds"] = int(self.scenario.rounds)
-            participant_config["data_args"]["dataset"] = self.scenario.dataset
+            # Normalize dataset name to handle case inconsistencies from frontend
+            normalized_dataset = self.scenario.dataset.upper() if self.scenario.dataset else ""
+            participant_config["data_args"]["dataset"] = normalized_dataset
             participant_config["data_args"]["iid"] = self.scenario.iid
             participant_config["data_args"]["partition_selection"] = self.scenario.partition_selection
             participant_config["data_args"]["partition_parameter"] = self.scenario.partition_parameter
@@ -722,6 +728,49 @@ class ScenarioManagement:
             participant_config["device_args"]["gpu_id"] = self.scenario.gpu_id
             participant_config["device_args"]["logging"] = self.scenario.logginglevel
             participant_config["aggregator_args"]["algorithm"] = self.scenario.agg_algorithm
+
+            # Set appropriate aggregation timeout based on model complexity
+            # Reduced timeouts to prevent containers from hanging
+            model_timeout_map = {
+                # Basic models
+                "MLP": 60,
+                "CNN": 90,
+                # ResNet models
+                "ResNet9": 120,
+                "ResNet18": 180,
+                # Proser models (more processing due to algorithm)
+                "ProserCNN": 150,
+                "ProserResNet18": 240,
+                "ProserResNet18CIFAR10": 240,
+                "ProserResNet9SVHN": 180,
+                # ProserProto models (most complex)
+                "ProserProtoCNN": 180,
+                "ProserProtoResNet18": 300,
+                "ProserProtoResNet18CIFAR10": 300,
+                "ProserProtoResNet9SVHN": 240,
+                # FedProto models
+                "FedProtoCNN": 150,
+                "FedProtoResNet8": 180,
+                "FedProtoResNet9SVHN": 180,
+                "FedProtoResNet18": 240,
+                # Complex CNN variants
+                "CNNv2": 120,
+                "CNNv3": 120,
+                "simplemobilenet": 150,
+                "fastermobilenet": 150,
+            }
+
+            model_name = self.scenario.model
+            default_timeout = 60
+            suggested_timeout = model_timeout_map.get(model_name, default_timeout)
+
+            # Use the suggested timeout, but allow override if explicitly set
+            if hasattr(self.scenario, 'aggregation_timeout') and self.scenario.aggregation_timeout:
+                participant_config["aggregator_args"]["aggregation_timeout"] = self.scenario.aggregation_timeout
+            else:
+                participant_config["aggregator_args"]["aggregation_timeout"] = suggested_timeout
+
+            logging.info(f"Setting aggregation timeout for model '{model_name}': {participant_config['aggregator_args']['aggregation_timeout']} seconds")
             # To be sure that benign nodes have no attack parameters
             if node_config["role"] == "malicious":
                 participant_config["adversarial_args"]["fake_behavior"] = node_config["fake_behavior"]
@@ -1026,12 +1075,17 @@ class ScenarioManagement:
         # Splitting dataset
         dataset_name = self.scenario.dataset
         dataset = None
-        logging.info(f"Initializing dataset {dataset_name} with parameters:")
+
+        # Normalize dataset name to handle case inconsistencies from frontend
+        dataset_name_normalized = dataset_name.upper() if dataset_name else ""
+
+        logging.info(f"Initializing dataset {dataset_name_normalized} with parameters:")
         logging.info(f"  - iid: {self.scenario.iid}")
         logging.info(f"  - partition_selection: {self.scenario.partition_selection}")
         logging.info(f"  - partition_parameter: {self.scenario.partition_parameter}")
         logging.info(f"  - remove_classes_count: {self.scenario.remove_classes_count}")
-        if dataset_name == "MNIST":
+
+        if dataset_name_normalized == "MNIST":
             dataset = MNISTDataset(
                 num_classes=10,
                 partitions_number=self.n_nodes,
@@ -1042,7 +1096,7 @@ class ScenarioManagement:
                 config_dir=self.config_dir,
                 remove_classes_count=self.scenario.remove_classes_count,
             )
-        elif dataset_name == "FashionMNIST":
+        elif dataset_name_normalized == "FASHIONMNIST":
             dataset = FashionMNISTDataset(
                 num_classes=10,
                 partitions_number=self.n_nodes,
@@ -1053,7 +1107,7 @@ class ScenarioManagement:
                 config_dir=self.config_dir,
                 remove_classes_count=self.scenario.remove_classes_count,
             )
-        elif dataset_name == "EMNIST":
+        elif dataset_name_normalized == "EMNIST":
             dataset = EMNISTDataset(
                 num_classes=47,
                 partitions_number=self.n_nodes,
@@ -1064,7 +1118,7 @@ class ScenarioManagement:
                 config_dir=self.config_dir,
                 remove_classes_count=self.scenario.remove_classes_count,
             )
-        elif dataset_name == "CIFAR10":
+        elif dataset_name_normalized == "CIFAR10":
             dataset = CIFAR10Dataset(
                 num_classes=10,
                 partitions_number=self.n_nodes,
@@ -1075,7 +1129,7 @@ class ScenarioManagement:
                 config_dir=self.config_dir,
                 remove_classes_count=self.scenario.remove_classes_count,
             )
-        elif dataset_name == "CIFAR100":
+        elif dataset_name_normalized == "CIFAR100":
             dataset = CIFAR100Dataset(
                 num_classes=100,
                 partitions_number=self.n_nodes,
@@ -1086,7 +1140,7 @@ class ScenarioManagement:
                 config_dir=self.config_dir,
                 remove_classes_count=self.scenario.remove_classes_count,
             )
-        elif dataset_name == "SVHN":
+        elif dataset_name_normalized == "SVHN":
             dataset = SVHNDataset(
                 num_classes=10,
                 partitions_number=self.n_nodes,
@@ -1098,11 +1152,11 @@ class ScenarioManagement:
                 remove_classes_count=self.scenario.remove_classes_count,
             )
         else:
-            raise ValueError(f"Dataset {dataset_name} not supported")
+            raise ValueError(f"Dataset {dataset_name_normalized} not supported. Available datasets: MNIST, FASHIONMNIST, EMNIST, CIFAR10, CIFAR100, SVHN")
 
-        logging.info(f"Splitting {dataset_name} dataset...")
+        logging.info(f"Splitting {dataset_name_normalized} dataset...")
         dataset.initialize_dataset()
-        logging.info(f"Splitting {dataset_name} dataset... Done")
+        logging.info(f"Splitting {dataset_name_normalized} dataset... Done")
 
         if self.scenario.deployment in ["docker", "process", "physical"]:
             if self.scenario.deployment == "docker":
@@ -1236,6 +1290,11 @@ class ScenarioManagement:
 
         network_name = f"{os.environ.get('NEBULA_CONTROLLER_NAME')}_{str(self.user).lower()}-nebula-net-scenario"
 
+        # Clean up any existing containers with the same prefix before starting
+        container_prefix = f"{os.environ.get('NEBULA_CONTROLLER_NAME')}_{self.user}-participant"
+        logging.info(f"Cleaning up existing containers with prefix: {container_prefix}")
+        DockerUtils.remove_containers_by_prefix(container_prefix)
+
         # Create the Docker network
         base = DockerUtils.create_docker_network(network_name)
 
@@ -1298,6 +1357,7 @@ class ScenarioManagement:
             with open(f"{self.config_dir}/participant_{node['device_args']['idx']}.json", "w") as f:
                 json.dump(node, f, indent=4)
 
+            container_id = None
             try:
                 container_id = client.api.create_container(
                     image=image,
@@ -1309,14 +1369,23 @@ class ScenarioManagement:
                     host_config=host_config,
                     networking_config=networking_config,
                 )
+                logging.info(f"Successfully created container {name}")
             except Exception as e:
                 logging.exception(f"Creating container {name}: {e}")
+                continue  # Skip to next container if creation fails
 
             try:
                 client.api.start(container_id)
                 container_ids.append(container_id)
+                logging.info(f"Successfully started container {name}")
             except Exception as e:
                 logging.exception(f"Starting participant {name} error: {e}")
+                # Try to remove the created but not started container
+                try:
+                    client.api.remove_container(container_id, force=True)
+                    logging.info(f"Removed failed container {name}")
+                except Exception as cleanup_e:
+                    logging.warning(f"Could not cleanup failed container {name}: {cleanup_e}")
             i += 1
 
     def start_nodes_process(self):
