@@ -6,41 +6,64 @@
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         const btn = document.getElementById('download-metrics-btn-navbar');
-        if (btn) {
-            btn.addEventListener('click', async function(e) {
-                e.preventDefault();
-                const originalText = btn.innerHTML;
-                btn.innerHTML = '<i class="fa fa-spinner fa-spin me-2"></i>Descargando...';
-                btn.classList.add('disabled');
-                try {
-                    const response = await fetch(`/platform/api/physical/metrics/download-scenario/{{ scenario_name }}`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' }
-                    });
-                    const result = await response.json();
-                    if (response.ok) {
+        let autoDownloadInterval = null;
+        async function downloadMetrics(e, isAuto = false) {
+            if (e) e.preventDefault();
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '<i class="fa fa-spinner fa-spin me-2"></i>Descargando...';
+            btn.classList.add('disabled');
+            try {
+                const response = await fetch(`/platform/api/physical/metrics/download-scenario/{{ scenario_name }}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                const result = await response.json();
+                if (response.ok) {
+                    if (result.successful_downloads > 0) {
                         if (typeof showAlert === 'function') {
-                            showAlert('success', `¡Métricas descargadas! ${result.successful_downloads} archivos procesados.`);
+                            showAlert('success', 'New physical metrics found and downloaded.');
                         } else {
-                            alert('¡Métricas descargadas correctamente!');
+                            alert('New physical metrics found and downloaded.');
                         }
                         setTimeout(() => { window.location.reload(); }, 1200);
                     } else {
+                        // Mostrar aviso informativo si no hay archivos nuevos
                         if (typeof showAlert === 'function') {
-                            showAlert('error', `Error al descargar métricas: ${result.error || 'Error desconocido'}`);
+                            showAlert('info', 'No new physical metrics found.');
                         } else {
-                            alert(`Error al descargar métricas: ${result.error || 'Error desconocido'}`);
+                            alert('No new physical metrics found.');
                         }
                         btn.innerHTML = originalText;
                         btn.classList.remove('disabled');
                     }
-                } catch (e) {
-                    alert('Error de red al descargar métricas.');
+                } else {
+                    if (typeof showAlert === 'function') {
+                        showAlert('error', `Error downloading metrics: ${result.error || 'Unknown error'}`);
+                    } else {
+                        alert(`Error downloading metrics: ${result.error || 'Unknown error'}`);
+                    }
                     btn.innerHTML = originalText;
                     btn.classList.remove('disabled');
                 }
-            });
+            } catch (e) {
+                alert('Network error while downloading metrics.');
+                btn.innerHTML = originalText;
+                btn.classList.remove('disabled');
+            }
         }
+        if (btn) {
+            btn.addEventListener('click', downloadMetrics);
+            // Auto-descarga cada 30s solo si el botón está visible
+            autoDownloadInterval = setInterval(() => {
+                if (btn && !btn.classList.contains('disabled')) {
+                    downloadMetrics(null, true);
+                }
+            }, 30000);
+        }
+        // Limpiar el temporizador al salir de la página
+        window.addEventListener('beforeunload', function() {
+            if (autoDownloadInterval) clearInterval(autoDownloadInterval);
+        });
     });
 </script>
 {% endif %}

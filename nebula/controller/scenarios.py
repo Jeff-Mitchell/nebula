@@ -15,6 +15,8 @@ from urllib.parse import quote
 from aiohttp import FormData
 import docker
 import tensorboard_reducer as tbr
+import h5py
+import numpy as np
 
 from nebula.addons.topologymanager import TopologyManager
 from nebula.config.config import Config
@@ -109,6 +111,8 @@ class Scenario:
         sar_training,
         sar_training_policy,
         physical_ips=None,
+        use_quantization=False,
+        use_pruning=False,
     ):
         """
         Initialize a Scenario instance.
@@ -234,6 +238,8 @@ class Scenario:
         self.sar_training = sar_training
         self.sar_training_policy = sar_training_policy
         self.physical_ips = physical_ips
+        self.use_quantization = use_quantization
+        self.use_pruning = use_pruning
 
     def attack_node_assign(
         self,
@@ -697,6 +703,12 @@ class ScenarioManagement:
             participant_config["data_args"]["partition_parameter"] = self.scenario.partition_parameter
             participant_config["model_args"]["model"] = self.scenario.model
             participant_config["training_args"]["epochs"] = int(self.scenario.epochs)
+            # Añadir use_quantization solo si es un escenario physical y el atributo existe
+            if self.scenario.deployment == "physical" and hasattr(self.scenario, "use_quantization"):
+                participant_config["training_args"]["use_quantization"] = bool(self.scenario.use_quantization)
+            # Añadir use_pruning solo si es un escenario physical y el atributo existe
+            if self.scenario.deployment == "physical" and hasattr(self.scenario, "use_pruning"):
+                participant_config["training_args"]["use_pruning"] = bool(self.scenario.use_pruning)
             participant_config["device_args"]["accelerator"] = self.scenario.accelerator
             participant_config["device_args"]["gpu_id"] = self.scenario.gpu_id
             participant_config["device_args"]["logging"] = True
@@ -830,6 +842,124 @@ class ScenarioManagement:
         else:
             logging.info("Closing NEBULA nodes... Please wait")
             self.stop_participants(self.scenario_name)
+
+    def _calculate_optimal_partitions(self):
+        """
+        Calculate the optimal number of partitions for dataset splitting.
+        
+        For physical deployments with few nodes (< 4), we create more partitions
+        than nodes to avoid overloading Raspberry Pi devices with large dataset portions.
+        
+        Returns:
+            int: Optimal number of partitions for dataset splitting
+        """
+        if self.scenario.deployment == "physical" and self.n_nodes < 4:
+            # For physical deployments with less than 4 nodes, use minimum 4 partitions
+            # to prevent overloading individual devices
+            optimal_partitions = max(4, self.n_nodes)
+            logging.info(f"Physical deployment with {self.n_nodes} nodes: using {optimal_partitions} dataset partitions to prevent device overload")
+            return optimal_partitions
+        else:
+            # For other deployments or when we have enough nodes, use the actual number of nodes
+            return self.n_nodes
+
+    def _create_partition_to_node_mapping(self, num_partitions):
+        """
+        Create a mapping from partition indices to node indices.
+        
+        When there are more partitions than nodes, only the first n_nodes partitions
+        are used (one per node) to avoid overloading physical devices.
+        
+        Args:
+            num_partitions (int): Number of dataset partitions created
+            
+        Returns:
+            dict: Mapping from partition index to node index
+        """
+        if num_partitions <= self.n_nodes:
+            # Simple 1:1 mapping when partitions <= nodes
+            return {i: i for i in range(num_partitions)}
+        else:
+            # Use only the first n_nodes partitions (one per node)
+            mapping = {}
+            for partition_idx in range(self.n_nodes):
+                mapping[partition_idx] = partition_idx
+            logging.info(f"Using only first {self.n_nodes} partitions out of {num_partitions} to avoid device overload")
+            logging.info(f"Created partition-to-node mapping: {mapping}")
+            return mapping
+
+    def _save_mapped_partitions(self, dataset, partition_mapping):
+        """
+        Save dataset partitions mapped to physical nodes.
+        
+        When there are more partitions than nodes, only the first n_nodes partitions
+        are saved (one per node) to avoid overloading physical devices.
+        
+        Args:
+            dataset: The dataset object with partitions
+            partition_mapping: Dictionary mapping partition indices to node indices
+        """
+        try:
+            logging.info(f"Saving mapped partitions for physical deployment")
+            path = self.config_dir
+            
+            # Verify that train_indices_map exists
+            if dataset.train_indices_map is None:
+                raise ValueError("train_indices_map is None. Dataset partitioning may not have completed successfully.")
+            
+            # Save one partition per node (using only the first n_nodes partitions)
+            for partition_idx, node_idx in partition_mapping.items():
+                file_name = os.path.join(path, f"participant_{node_idx}_train.h5")
+                
+                # Use only the data from this specific partition
+                partition_indices = dataset.train_indices_map[partition_idx]
+                
+                logging.info(f"Saving partition {partition_idx} for node {node_idx} with {len(partition_indices)} samples")
+                
+                with h5py.File(file_name, "w") as f:
+                    train_data = [dataset.train_set[i] for i in partition_indices]
+                    dataset.save_partition(train_data, f, "train_data")
+                    f["train_data"].attrs["num_classes"] = dataset.num_classes
+                    train_targets = np.array([dataset.train_set.targets[i] for i in partition_indices])
+                    f.create_dataset("train_targets", data=train_targets, compression="gzip")
+                
+                logging.info(f"Partition {partition_idx} saved for node {node_idx}")
+            
+            logging.info("Successfully saved all mapped partition files")
+            
+        except Exception as e:
+            logging.exception(f"Error in _save_mapped_partitions: {e}")
+            raise
+
+    def _save_global_test_data(self, dataset):
+        """
+        Save global test data to a separate file for physical deployments.
+        
+        This method saves the global test dataset that is needed by all nodes
+        during physical deployment.
+        
+        Args:
+            dataset: The dataset object with test data
+        """
+        try:
+            logging.info(f"Saving global test data for physical deployment")
+            path = self.config_dir
+            
+            # Save global test data
+            file_name = os.path.join(path, "global_test.h5")
+            with h5py.File(file_name, "w") as f:
+                indices = list(range(len(dataset.test_set)))
+                test_data = [dataset.test_set[i] for i in indices]
+                dataset.save_partition(test_data, f, "test_data")
+                f["test_data"].attrs["num_classes"] = dataset.num_classes
+                test_targets = np.array(dataset.test_set.targets)
+                f.create_dataset("test_targets", data=test_targets, compression="gzip")
+            
+            logging.info(f"Global test data saved to {file_name}")
+            
+        except Exception as e:
+            logging.exception(f"Error in _save_global_test_data: {e}")
+            raise
 
     async def load_configurations_and_start_nodes(
         self, additional_participants=None, schema_additional_participants=None
@@ -1000,10 +1130,14 @@ class ScenarioManagement:
         # Splitting dataset
         dataset_name = self.scenario.dataset
         dataset = None
+        
+        # Calculate optimal number of partitions based on deployment type and node count
+        optimal_partitions = self._calculate_optimal_partitions()
+        
         if dataset_name == "MNIST":
             dataset = MNISTDataset(
                 num_classes=10,
-                partitions_number=self.n_nodes,
+                partitions_number=optimal_partitions,
                 iid=self.scenario.iid,
                 partition=self.scenario.partition_selection,
                 partition_parameter=self.scenario.partition_parameter,
@@ -1013,7 +1147,7 @@ class ScenarioManagement:
         elif dataset_name == "FashionMNIST":
             dataset = FashionMNISTDataset(
                 num_classes=10,
-                partitions_number=self.n_nodes,
+                partitions_number=optimal_partitions,
                 iid=self.scenario.iid,
                 partition=self.scenario.partition_selection,
                 partition_parameter=self.scenario.partition_parameter,
@@ -1023,7 +1157,7 @@ class ScenarioManagement:
         elif dataset_name == "EMNIST":
             dataset = EMNISTDataset(
                 num_classes=47,
-                partitions_number=self.n_nodes,
+                partitions_number=optimal_partitions,
                 iid=self.scenario.iid,
                 partition=self.scenario.partition_selection,
                 partition_parameter=self.scenario.partition_parameter,
@@ -1033,7 +1167,7 @@ class ScenarioManagement:
         elif dataset_name == "CIFAR10":
             dataset = CIFAR10Dataset(
                 num_classes=10,
-                partitions_number=self.n_nodes,
+                partitions_number=optimal_partitions,
                 iid=self.scenario.iid,
                 partition=self.scenario.partition_selection,
                 partition_parameter=self.scenario.partition_parameter,
@@ -1043,7 +1177,7 @@ class ScenarioManagement:
         elif dataset_name == "CIFAR100":
             dataset = CIFAR100Dataset(
                 num_classes=100,
-                partitions_number=self.n_nodes,
+                partitions_number=optimal_partitions,
                 iid=self.scenario.iid,
                 partition=self.scenario.partition_selection,
                 partition_parameter=self.scenario.partition_parameter,
@@ -1054,8 +1188,28 @@ class ScenarioManagement:
             raise ValueError(f"Dataset {dataset_name} not supported")
 
         logging.info(f"Splitting {dataset_name} dataset...")
+        
+        # For physical deployments with more partitions than nodes, we need to prevent automatic save_partitions()
+        if self.scenario.deployment == "physical" and optimal_partitions > self.n_nodes:
+            logging.info(f"Physical deployment: preventing automatic save_partitions() to handle custom mapping")
+            # Temporarily modify the dataset to prevent automatic save_partitions()
+            original_save_partitions = dataset.save_partitions
+            dataset.save_partitions = lambda: None  # Disable automatic save
+        
         dataset.initialize_dataset()
         logging.info(f"Splitting {dataset_name} dataset... Done")
+        
+        # For physical deployments with more partitions than nodes, create mapping and save files
+        if self.scenario.deployment == "physical" and optimal_partitions > self.n_nodes:
+            logging.info(f"Physical deployment: mapping {dataset.partitions_number} partitions to {self.n_nodes} nodes")
+            partition_mapping = self._create_partition_to_node_mapping(dataset.partitions_number)
+            self._save_mapped_partitions(dataset, partition_mapping)
+            
+            # Save global test data separately since we disabled automatic save_partitions
+            self._save_global_test_data(dataset)
+            
+            # Restore original save_partitions method
+            dataset.save_partitions = original_save_partitions
 
         if self.scenario.deployment in ["docker", "process", "physical"]:
             if self.scenario.deployment == "docker":

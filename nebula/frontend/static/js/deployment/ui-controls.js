@@ -25,6 +25,7 @@ const UIControls = (function() {
         window.HelpContent.initializePopovers();
         setupDeploymentRadios();
         setupQuantizationSwitch();
+        setupPruningSwitch();
     }
 
     function setupModeButton() {
@@ -763,6 +764,24 @@ const UIControls = (function() {
         if (quantInfoIcon) {
             new bootstrap.Tooltip(quantInfoIcon);
         }
+    }
+
+    function setupPruningSwitch() {
+        const pruningSwitchContainer = document.getElementById('pruning-switch-container');
+        const pruningSwitch = document.getElementById('pruningSwitch');
+        if (!pruningSwitchContainer || !pruningSwitch) return;
+        function togglePruningSwitch() {
+            const deploymentType = document.querySelector('input[name="deploymentRadioOptions"]:checked')?.value;
+            if (deploymentType === 'physical') {
+                pruningSwitchContainer.style.display = '';
+            } else {
+                pruningSwitchContainer.style.display = 'none';
+                pruningSwitch.checked = false;
+            }
+        }
+        const radios = document.querySelectorAll('input[name="deploymentRadioOptions"]');
+        radios.forEach(r => r.addEventListener('change', togglePruningSwitch));
+        togglePruningSwitch();
     }
 
     return {

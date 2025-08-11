@@ -2424,6 +2424,8 @@ async def download_and_extract_scenario_metrics(scenario_name: str):
     metrics_dir = Path(__file__).parent / "config" / "metrics" / "physical"
     scenario_root = metrics_dir / scenario_name
     scenario_root.mkdir(parents=True, exist_ok=True)
+    total_new_files = 0  # Contador global de archivos realmente nuevos
+    new_files_global = []  # Lista global de archivos nuevos
     for filename in scenario_metrics["files"]:
         logging.info(f"[METRICS-DEBUG] Processing file: {filename}")
         try:
@@ -2449,13 +2451,14 @@ async def download_and_extract_scenario_metrics(scenario_name: str):
                 async with session.get(download_url) as resp:
                     logging.info(f"[METRICS-DEBUG] Download endpoint response: {resp.status}")
                     if resp.status == 200:
-                        # Guardar archivo temporalmente
                         temp_file = metrics_dir / filename
                         with open(temp_file, 'wb') as f:
                             f.write(await resp.read())
-                        # Descomprimir archivo directamente en el directorio del escenario
                         import tarfile
-                        logging.info(f"[METRICS-DEBUG] Extracting {filename} to {scenario_root}/participant_{participant_idx if participant_idx is not None else 'unknown'}")
+                        # Listar archivos antes de la extracción
+                        participant_dir = scenario_root / f"participant_{participant_idx if participant_idx is not None else 'unknown'}"
+                        participant_dir.mkdir(parents=True, exist_ok=True)
+                        before_files = set(p.name for p in participant_dir.glob('*') if p.is_file())
                         try:
                             with tarfile.open(temp_file, 'r:gz') as tar:
                                 safe_extract_by_participant(tar, path=scenario_root, participant_idx=participant_idx)
@@ -2471,7 +2474,11 @@ async def download_and_extract_scenario_metrics(scenario_name: str):
                             })
                             temp_file.unlink(missing_ok=True)
                             continue
-                        # Limpiar archivo temporal
+                        # Listar archivos después de la extracción
+                        after_files = set(p.name for p in participant_dir.glob('*') if p.is_file())
+                        new_files = list(after_files - before_files)
+                        total_new_files += len(new_files)
+                        new_files_global.extend(str(participant_dir / nf) for nf in new_files)
                         temp_file.unlink()
                         logging.info(f"[METRICS-DEBUG] Downloaded and extracted to: {scenario_root}")
                         results.append({
@@ -2479,7 +2486,8 @@ async def download_and_extract_scenario_metrics(scenario_name: str):
                             "status": "success",
                             "extracted_path": str(scenario_root),
                             "participant_idx": participant_idx,
-                            "ip": ip
+                            "ip": ip,
+                            "new_files": new_files
                         })
                     else:
                         logging.info(f"[METRICS-DEBUG] Error downloading file: HTTP {resp.status}")
@@ -2499,15 +2507,16 @@ async def download_and_extract_scenario_metrics(scenario_name: str):
                 "participant_idx": None,
                 "ip": None
             })
-    successful = len([r for r in results if r["status"] == "success"])
+    successful = total_new_files
     failed = len([r for r in results if r["status"] == "error"])
-    logging.info(f"Download summary: {successful} success, {failed} failed")
+    logging.info(f"Download summary: {successful} new files, {failed} failed")
     return {
         "scenario_name": scenario_name,
         "total_files": len(scenario_metrics["files"]),
         "successful_downloads": successful,
         "failed_downloads": failed,
-        "results": results
+        "results": results,
+        "new_files": new_files_global
     }
 
 

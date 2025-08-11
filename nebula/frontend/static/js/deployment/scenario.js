@@ -60,6 +60,11 @@ const ScenarioManager = (function() {
             const quantSwitch = document.getElementById('quantizationSwitch');
             use_quantization = quantSwitch && quantSwitch.checked;
         }
+        let use_pruning = false;
+        if (deploymentType === 'physical') {
+            const pruningSwitch = document.getElementById('pruningSwitch');
+            use_pruning = pruningSwitch && pruningSwitch.checked;
+        }
 
         return {
             scenario_title: document.getElementById("scenario-title").value,
@@ -139,9 +144,8 @@ const ScenarioManager = (function() {
             accelerator: "cpu",
             gpu_id: [],
             physical_ips: physical_ips,
-            training_args: {
-                use_quantization: deploymentType === 'physical' ? use_quantization : undefined
-            }
+            use_quantization: deploymentType === 'physical' ? use_quantization : undefined,
+            use_pruning: deploymentType === 'physical' ? use_pruning : undefined
         };
     }
 
