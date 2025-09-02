@@ -5,7 +5,8 @@ import os
 import shutil
 from nebula.utils import DockerUtils, APIUtils
 import docker
-from nebula.controller.federation.federation_controller import FederationController
+from nebula.controller.federation.federation_controller import FederationController, NebulaFederation
+from nebula.controller.federation.scenario_builder import ScenarioBuilder
 from nebula.controller.federation.utils_requests import factory_requests_path
 from typing import Dict
 from fastapi import Request
@@ -13,7 +14,41 @@ from nebula.config.config import Config
 from nebula.core.utils.certificate import generate_ca_certificate
 from nebula.core.utils.locker import Locker
 
+class NebulaFederationDocker(NebulaFederation):
+    def __init__(self):
+        self.participants = []
+        self.round_per_participant = {}
+        self.additionals_participants = {}
+        self.additionals_deployables = []
+        self.config = Config(entity="FederationController")
+        self.network_name = ""
+        self.base_network_name = ""
+        self.base = ""
+        self.last_index_deployed: int = 0
+        self.federation_round: int = 0
+        self.federation_deployment_lock = Locker("federation_deployment_lock", async_lock=True)
 
+    async def get_additionals_to_be_deployed(self, config):
+        async with self.federation_deployment_lock:
+            if not self.additionals_participants:
+                return False
+            
+            participant_idx = int(config["device_args"]["idx"])
+            participant_round = int(config["federation_args"]["round"])
+            self.round_per_participant[participant_idx] = participant_round
+            self.federation_round = min(self.round_per_participant.values())
+            
+            self.additionals_deployables = [
+                idx
+                for idx, round in self.additionals_participants.items() 
+                if self.federation_round >= round
+            ]
+            
+            additionals_deployables = self.additionals_deployables.copy()
+            for idx in additionals_deployables:
+                self.additionals_participants.pop(idx)
+            return additionals_deployables
+    
 class DockerFederationController(FederationController):
     
     def __init__(self, hub_url, logger):
@@ -26,30 +61,32 @@ class DockerFederationController(FederationController):
         self.cert_dir = ""
         self.advanced_analytics = ""
         self.url = ""
-        self.config = Config(entity="FederationController")
-        self.round_per_node = {}
-        self.additionals: dict = {}
-        self._ip_last_index = 0
-        self._network_name = ""
-        self._base_network_name = ""
-        self._base = ""
-        self._deployment_lock = Locker("deployment_lock", async_lock=True)
-        self._federation_round = 0
+        self._nebula_federations_pool: dict[tuple[str,str], NebulaFederationDocker] = {}
+        self._federations_dict_lock = Locker("federations_dict_lock", async_lock=True)
+        
+    @property
+    def nfp(self):
+        """Nebula Federations Pool"""
+        return self._nebula_federations_pool
 
     """                                             ###############################
                                                     #      ENDPOINT CALLBACKS     #
                                                     ###############################
     """
 
-    async def run_scenario(self, id: str, scenario_data: Dict, user: str):
+    async def run_scenario(self, federation_id: str, scenario_data: Dict, user: str):
         #TODO maintain files on memory, not read them again
         self._user = user
-        await self._initialize_scenario(scenario_data)
-        generate_ca_certificate(dir_path=self.cert_dir)
-        await self._load_configuration_and_start_nodes()
-        self._start_initial_nodes()
-
-        return self.sb.get_scenario_name()
+        federation = await self._add_nebula_federation_to_pool(federation_id, user)
+        id = ""
+        if federation:
+            scenario_builder = ScenarioBuilder(federation_id)
+            await self._initialize_scenario(scenario_builder, scenario_data, federation)
+            generate_ca_certificate(dir_path=self.cert_dir)
+            await self._load_configuration_and_start_nodes(scenario_builder, federation)
+            self._start_initial_nodes(scenario_builder, federation)
+            id = scenario_builder.get_scenario_name()
+        return id
          
     async def stop_scenario(self, id: str):
         """
@@ -137,45 +174,36 @@ class DockerFederationController(FederationController):
 
     async def update_nodes(self, scenario_name: str, request: Request):
         config = await request.json()
-        participant_idx = int(config["device_args"]["idx"])
-        participant_round = int(config["federation_args"]["round"])
-        #self.logger.info(f"Update received from participant: {participant_idx}, round: {participant_round}")
-        #self.logger.info(f"Update: {self.round_per_node.items()}")
-        self.round_per_node[participant_idx] = participant_round
-        last_fed_round = self._federation_round
-        self._federation_round = min(self.round_per_node.values())
-        
-        additionals_deployables = [
-            idx
-            for idx, round in self.additionals.items() 
-            if self._federation_round >= round
-        ]
-        
-        adds_deployed = set()
-        # Only verify when federation round is updated
-        if self._federation_round != last_fed_round:
-            self.logger.info(f"Federation Round updating, current value: {self._federation_round}")
-            # Ensure concurrency
-            for index in additionals_deployables:
-                if index in adds_deployed:
-                    continue
-                
-                for idx, node in enumerate(self.config.participants):
-                    if index == idx:
-                        async with self._deployment_lock:
-                            if index in self.additionals.keys():
-                                self.logger.info(f"Deploying additional participant: {index}")
-                                self._start_node(node, self._network_name, self._base_network_name, self._base, self._ip_last_index, additional=True)
-                                self._ip_last_index += 1
-                                self.additionals.pop(index)
-                                adds_deployed.add(index)
-                                
-        request_body = await request.json()
-        payload = {"scenario_name": scenario_name, "data": request_body}
-        
-        asyncio.create_task(self._send_to_hub("update", payload, scenario_name))
-        
-        return {"message": "Node updated successfully in Federation Controller"}
+        fed_id = config["scenario_args"]["federation_id"]
+
+        try:
+            nebula_federation = self.nfp[fed_id]
+            last_fed_round = nebula_federation.federation_round
+            additionals = nebula_federation.get_additionals_to_be_deployed(config) # It modifies if neccesary the federation round
+            if additionals:
+                current_fed_round = nebula_federation.federation_round
+                adds_deployed = set()
+                if current_fed_round != last_fed_round:
+                    self.logger.info(f"Federation Round updating for ID: ({fed_id}), current value: {current_fed_round}")
+                    for index in additionals:
+                        if index in adds_deployed:
+                            continue
+                        
+                        for idx, node in enumerate(nebula_federation.config.participants):
+                            if index == idx:
+                                if index in additionals:
+                                    self.logger.info(f"Deploying additional participant: {index}")
+                                    self._start_node(node, nebula_federation.network_name, nebula_federation.base_network_name, nebula_federation.base, nebula_federation.last_index_deployed, nebula_federation, additional=True)
+                                    nebula_federation.last_index_deployed += 1
+                                    self.additionals.pop(index)
+                                    adds_deployed.add(index)
+            request_body = await request.json()
+            payload = {"scenario_name": scenario_name, "data": request_body}
+            asyncio.create_task(self._send_to_hub("update", payload, scenario_name))
+            return {"message": "Node updated successfully in Federation Controller"}
+        except Exception as e:
+            self.logger.info(f"ERROR: federation ID: ({fed_id}) not found on pool..")
+            return {"message": "Node updated failed in Federation Controller, ID not found.."} 
 
     async def node_done(self, scenario_name: str, request: Request):
         request_body = await request.json()
@@ -188,6 +216,28 @@ class DockerFederationController(FederationController):
                                                     ###############################
     """
     
+    async def _add_nebula_federation_to_pool(self, federation_id: str, user: str):
+        fed = None
+        async with self._federations_dict_lock:
+            if not federation_id in self.nfp:
+                fed = NebulaFederation()
+                self.nfp[federation_id] = fed
+                self.logger.info(f"SUCCESS: new ID: ({federation_id}) added to the pool")
+            else:
+               self.logger.info(f"ERROR: trying to add ({federation_id}) to federations pool..")
+        return fed 
+
+    async def _update_federation_on_pool(self, federation_id: str, user: str, nf: NebulaFederation):
+        updated = False
+        async with self._federations_dict_lock:
+            if not federation_id in self.nfp:
+                self.nfp[federation_id] = nf
+                updated = True
+                self.logger.info(f"UPDATED: federation: ({federation_id}) successfully updated")
+            else:
+               self.logger.info(f"ERROR: trying to update ({federation_id}) on federations pool..")
+        return updated 
+        
     async def _send_to_hub(self, path, payload, scenario_name=""):
         try:
             url_request = self._hub_url + factory_requests_path(path, scenario_name)
@@ -197,11 +247,11 @@ class DockerFederationController(FederationController):
         except Exception as e:
             self.logger.info(f"Failed to send update to Hub: {e}")
 
-    async def _initialize_scenario(self, scenario_data):
+    async def _initialize_scenario(self, sb: ScenarioBuilder, scenario_data, federation: NebulaFederationDocker):
         # Initialize Scenario builder using scenario_data from user
         self.logger.info("🔧  Initializing Scenario Builder using scenario data")
-        self.sb.set_scenario_data(scenario_data)
-        scenario_name = self.sb.get_scenario_name()
+        sb.set_scenario_data(scenario_data)
+        scenario_name = sb.get_scenario_name()
         
         self.root_path = os.environ.get("NEBULA_ROOT_HOST")
         self.host_platform = os.environ.get("NEBULA_HOST_PLATFORM")
@@ -209,7 +259,7 @@ class DockerFederationController(FederationController):
         self.log_dir = os.environ.get("NEBULA_LOGS_DIR")
         self.cert_dir = os.environ.get("NEBULA_CERTS_DIR")
         self.advanced_analytics = os.environ.get("NEBULA_ADVANCED_ANALYTICS", "False") == "True"
-        self.config = Config(entity="scenarioManagement")
+        #self.config = Config(entity="FederationController")
         self.env_tag = os.environ.get("NEBULA_ENV_TAG", "dev")
         self.prefix_tag = os.environ.get("NEBULA_PREFIX_TAG", "dev")
         self.user_tag = os.environ.get("NEBULA_USER_TAG", os.environ.get("USER", "unknown"))
@@ -251,11 +301,11 @@ class DockerFederationController(FederationController):
         
         # Attacks assigment and mobility
         self.logger.info("🔧  Building general configuration")
-        self.sb.build_general_configuration()
+        sb.build_general_configuration()
         self.logger.info("✅  Building general configuration done")
         
         # Create participant configs and .json
-        for index, (_, node) in enumerate(self.sb.get_federation_nodes().items()):
+        for index, (_, node) in enumerate(sb.get_federation_nodes().items()):
             self.logger.info(f"Creating .json file for participant: {index}, Configuration: {node}")
             node_config = node
             try:
@@ -266,7 +316,7 @@ class DockerFederationController(FederationController):
                  self.logger.info(f"ERROR while creating files: {e}")
                  
             try:         
-                participant_config = self.sb.build_scenario_config_for_node(index, node)
+                participant_config = sb.build_scenario_config_for_node(index, node)
                 #self.logger.info(f"dictionary: {participant_config}")
             except Exception as e:
                  self.logger.info(f"ERROR while building configuration for node: {e}")
@@ -280,7 +330,7 @@ class DockerFederationController(FederationController):
 
         self.logger.info("✅  Initializing Scenario Builder done")
                 
-    async def _load_configuration_and_start_nodes(self):
+    async def _load_configuration_and_start_nodes(self, sb: ScenarioBuilder, federation: NebulaFederationDocker):
         self.logger.info("🔧  Loading Scenario configuration...")
         # Get participants configurations
         participant_files = glob.glob(f"{self.config_dir}/participant_*.json")
@@ -288,25 +338,25 @@ class DockerFederationController(FederationController):
         if len(participant_files) == 0:
             raise ValueError("No participant files found in config folder")
 
-        self.config.set_participants_config(participant_files)
-        self.n_nodes = len(participant_files)
-        self.logger.info(f"Number of nodes: {self.n_nodes}")
+        federation.config.set_participants_config(participant_files)
+        n_nodes = len(participant_files)
+        #self.logger.info(f"Number of nodes: {n_nodes}")
         
-        self.sb.create_topology_manager(self.config)
+        sb.create_topology_manager(federation.config)
         
         # Update participants configuration
         is_start_node = False
         config_participants = []
         
-        additional_participants = self.sb.get_additional_nodes()
+        additional_participants = sb.get_additional_nodes()
         additional_nodes = len(additional_participants) if additional_participants else 0
-        self.logger.info(f"######## nodes: {self.n_nodes} + additionals: {additional_nodes} ######")
+        #self.logger.info(f"######## nodes: {n_nodes} + additionals: {additional_nodes} ######")
         
         participant_files.sort(key=lambda x: int(x.split("_")[-1].split(".")[0]))
         
         # Initial participants
         self.logger.info("🔧  Building preload configuration for initial nodes...")
-        for i in range(self.n_nodes):
+        for i in range(n_nodes):
             try:
                 with open(f"{self.config_dir}/participant_" + str(i) + ".json") as f:
                     participant_config = json.load(f)
@@ -315,7 +365,7 @@ class DockerFederationController(FederationController):
 
             self.logger.info(f"Building preload conf for participant {i}")
             try:
-                self.sb.build_preload_initial_node_configuration(i, participant_config, self.log_dir, self.config_dir, self.cert_dir, self.advanced_analytics)
+                sb.build_preload_initial_node_configuration(i, participant_config, self.log_dir, self.config_dir, self.cert_dir, self.advanced_analytics)
             except Exception as e:
                 self.logger.info(f"ERROR: cannot build preload configuration")
 
@@ -338,10 +388,10 @@ class DockerFederationController(FederationController):
 
         self.logger.info("✅  Building preload configuration for initial nodes done")
             
-        self.config.set_participants_config(participant_files)
+        federation.config.set_participants_config(participant_files)
         
         # Add role to the topology (visualization purposes)
-        self.sb.visualize_topology(config_participants, path=f"{self.config_dir}/topology.png", plot=False)
+        sb.visualize_topology(config_participants, path=f"{self.config_dir}/topology.png", plot=False)
         
         # Additional participants
         self.logger.info("🔧  Building preload configuration for additional nodes...")
@@ -357,8 +407,8 @@ class DockerFederationController(FederationController):
                 with open(additional_participant_file) as f:
                     participant_config = json.load(f)
 
-                self.logger.info(f"Configuration | additional nodes |  participant: {self.n_nodes + i}")
-                self.sb.build_preload_additional_node_configuration(last_participant_index, i, participant_config)
+                self.logger.info(f"Configuration | additional nodes |  participant: {n_nodes + i}")
+                sb.build_preload_additional_node_configuration(last_participant_index, i, participant_config)
             
                 with open(additional_participant_file, "w") as f:
                     json.dump(participant_config, f, sort_keys=False, indent=2)
@@ -366,19 +416,19 @@ class DockerFederationController(FederationController):
                 additional_participants_files.append(additional_participant_file)
 
         if additional_participants_files:
-            self.config.add_participants_config(additional_participants_files)
+            federation.config.add_participants_config(additional_participants_files)
 
         if additional_participants:
-            self.n_nodes += len(additional_participants)
+            n_nodes += len(additional_participants)
 
         self.logger.info("✅  Building preload configuration for additional nodes done")
         self.logger.info("✅  Loading Scenario configuration done")
         
         # Build dataset    
-        dataset = self.sb.configure_dataset(self.config_dir)
-        self.logger.info(f"🔧  Splitting {self.sb.get_dataset_name()} dataset...")
+        dataset = sb.configure_dataset(self.config_dir)
+        self.logger.info(f"🔧  Splitting {sb.get_dataset_name()} dataset...")
         dataset.initialize_dataset()
-        self.logger.info(f"✅  Splitting {self.sb.get_dataset_name()} dataset... Done")
+        self.logger.info(f"✅  Splitting {sb.get_dataset_name()} dataset... Done")
 
     def _get_network_name(self, suffix: str) -> str:
         """
@@ -390,7 +440,7 @@ class DockerFederationController(FederationController):
         """
         return f"{self.env_tag}_{self.prefix_tag}_{self.user_tag}_{suffix}"
     
-    def _get_participant_container_name(self, idx: int) -> str:
+    def _get_participant_container_name(self, scenario_name, idx: int) -> str:
         """
         Generate a standardized container name for a participant using tags.
         Args:
@@ -398,39 +448,39 @@ class DockerFederationController(FederationController):
         Returns:
             str: The composed container name.
         """
-        return f"{self.env_tag}_{self.prefix_tag}_{self.user_tag}_{self.sb.get_scenario_name()}_participant{idx}"
+        return f"{self.env_tag}_{self.prefix_tag}_{self.user_tag}_{scenario_name}_participant{idx}"
 
-    def _start_initial_nodes(self):
+    def _start_initial_nodes(self, sb: ScenarioBuilder, federation: NebulaFederationDocker):
         self.logger.info("Starting nodes using Docker Compose...")
-        self._network_name = self._get_network_name(f"{self.sb.get_scenario_name()}-net-scenario")
-        self._base_network_name = self._get_network_name("net-base")
+        federation.network_name = self._get_network_name(f"{sb.get_scenario_name()}-net-scenario")
+        federation.base_network_name = self._get_network_name("net-base")
 
         # Create the Docker network
-        self._base = DockerUtils.create_docker_network(self._network_name)
+        federation.base = DockerUtils.create_docker_network(federation.network_name)
   
-        self.config.participants.sort(key=lambda x: x["device_args"]["idx"])
-        self._ip_last_index = 2
+        federation.config.participants.sort(key=lambda x: x["device_args"]["idx"])
+        federation.last_index_deployed = 2
         for idx, node in enumerate(self.config.participants):
             
             if node["deployment_args"]["additional"]:
-                self.additionals[idx] = int(node["deployment_args"]["deployment_round"])
+                federation.additionals_participants[idx] = int(node["deployment_args"]["deployment_round"])
                 self.logger.info(f"Participant {idx} is additional. Round of deployment: {int(node['deployment_args']['deployment_round'])}")
             else:
                 # deploy initial nodes
                 self.logger.info(f"Deployment starting for participant {idx}")
-                self.round_per_node[idx] = 0
-                self._start_node(node, self._network_name, self._base_network_name, self._base, self._ip_last_index)
-                self._ip_last_index += 1
+                federation.round_per_participant[idx] = 0
+                self._start_node(sb, node, federation.network_name, federation.base_network_name, federation.base, federation.last_index_deployed)
+                federation.last_index_deployed += 1
                         
-    def _start_node(self, node, network_name, base_network_name, base, i, additional=False):
+    def _start_node(self, sb: ScenarioBuilder, node, network_name, base_network_name, base, i, federation: NebulaFederationDocker, additional=False):
         client = docker.from_env()
 
-        self.config.participants.sort(key=lambda x: x["device_args"]["idx"])
+        federation.config.participants.sort(key=lambda x: x["device_args"]["idx"])
         container_ids = []
         container_names = []  # Track names for metadata
 
         image = "nebula-core"
-        name = self._get_participant_container_name(node["device_args"]["idx"])
+        name = self._get_participant_container_name(sb.get_scenario_name(), node["device_args"]["idx"])
         if node["device_args"]["accelerator"] == "gpu":
             environment = {
                 "NVIDIA_DISABLE_REQUIRE": True,
@@ -456,7 +506,7 @@ class DockerFederationController(FederationController):
         command = [
             "/bin/bash",
             "-c",
-            f"{start_command} && ifconfig && echo '{base}.1 host.docker.internal' >> /etc/hosts && python /nebula/nebula/core/node.py /nebula/app/config/{self.sb.get_scenario_name()}/participant_{node['device_args']['idx']}.json",
+            f"{start_command} && ifconfig && echo '{base}.1 host.docker.internal' >> /etc/hosts && python /nebula/nebula/core/node.py /nebula/app/config/{sb.get_scenario_name()}/participant_{node['device_args']['idx']}.json",
         ]
         networking_config = client.api.create_networking_config({
             network_name: client.api.create_endpoint_config(
@@ -465,9 +515,9 @@ class DockerFederationController(FederationController):
             base_network_name: client.api.create_endpoint_config(),
         })
         node["tracking_args"]["log_dir"] = "/nebula/app/logs"
-        node["tracking_args"]["config_dir"] = f"/nebula/app/config/{self.sb.get_scenario_name()}"
+        node["tracking_args"]["config_dir"] = f"/nebula/app/config/{sb.get_scenario_name()}"
         node["scenario_args"]["controller"] = self.url
-        node["scenario_args"]["deployment"] = self.sb.get_deployment()
+        node["scenario_args"]["deployment"] = sb.get_deployment()
         node["security_args"]["certfile"] = f"/nebula/app/certs/participant_{node['device_args']['idx']}_cert.pem"
         node["security_args"]["keyfile"] = f"/nebula/app/certs/participant_{node['device_args']['idx']}_key.pem"
         node["security_args"]["cafile"] = "/nebula/app/certs/ca_cert.pem"

@@ -4,17 +4,15 @@ from typing import Dict
 from nebula.controller.federation.scenario_builder import ScenarioBuilder
 import logging 
 
+class NebulaFederation(ABC):
+    pass
+
 class FederationController(ABC):
     
     def __init__(self, hub_url, logger):
         self._logger: logging.Logger = logger
         self._hub_url = hub_url
-        self._scenario_builder = ScenarioBuilder()
-        
-    @property
-    def sb(self):
-        return self._scenario_builder
-    
+
     @property
     def logger(self):
         return self._logger 

@@ -12,6 +12,9 @@ from nebula.controller.federation.federation_controller import FederationControl
 from nebula.controller.federation.factory_federation_controller import federation_controller_factory
 from nebula.controller.federation.utils_requests import InitFederationRequest, RunScenarioRequest, StopScenarioRequest
 
+#TODO   we need all 3 controllers instanciated. When /init received we put the request on the right
+#       controller
+
 def require_initialized_controller(func):
     @wraps(func)
     async def wrapper(*args, **kwargs):
@@ -48,7 +51,6 @@ async def read_root():
     logger.info("Test curl succesfull")
     return {"message": "Welcome to the NEBULA Federation Controller API"}
 
-#TODO modificar para q reciba str en vez de dict
 @app.post("/init")
 async def init_federation_experiment(ifr: InitFederationRequest):
     global fed_controller
@@ -57,7 +59,7 @@ async def init_federation_experiment(ifr: InitFederationRequest):
     logger = logging.getLogger("Federation-Controller")
     logger.info(f"Experiment type received: {experiment_type}")
     
-    # Modify when deploying controllers on differents systems
+    #TODO Modify when deploying controllers on differents systems
     hub_port = os.environ.get("NEBULA_CONTROLLER_PORT")
     controller_host = os.environ.get("NEBULA_CONTROLLER_HOST")
     
@@ -68,6 +70,7 @@ async def init_federation_experiment(ifr: InitFederationRequest):
 
     return {"message": f"{experiment_type} controller initialized"}
 
+#ADVICE: return ID if sucess otherwise empty string
 @app.post("/scenarios/run")
 @require_initialized_controller
 async def run_scenario(run_scenario_request: RunScenarioRequest):

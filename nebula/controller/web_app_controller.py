@@ -325,7 +325,7 @@ async def run_scenario(
         url_init_fed_controller = f"http://{fed_controller_host}:{fed_controller_port}" + factory_requests_path("init")
         url_run_scenario = f"http://{fed_controller_host}:{fed_controller_port}" + factory_requests_path("run")
         init_fed_req = InitFederationRequest(experiment_type="docker")
-        run_scenario_req = RunScenarioRequest(scenario_data=scenario_data, federation_id="id_nebula", user=user)
+        run_scenario_req = RunScenarioRequest(scenario_data=scenario_data, federation_id="id_nebula", user=user) #TODO ID per experiment
         await APIUtils.post(url_init_fed_controller, init_fed_req.model_dump())
         await APIUtils.post(url_run_scenario, run_scenario_req.model_dump())
     except Exception as e:

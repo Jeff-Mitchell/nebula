@@ -9,12 +9,13 @@ from nebula.core.utils.certificate import generate_certificate
 from nebula.core.datasets.nebuladataset import NebulaDataset, factory_nebuladataset, factory_dataset_setup
 
 class ScenarioBuilder():
-    def __init__(self, ):
+    def __init__(self, federation_id):
         self._scenario_data = None
         self._config_setup = None
         self.logger = logging.getLogger("Federation-Controller")
         self._topology_manager: TopologyManager = None
         self._scenario_name = ""
+        self._federation_id = federation_id
         
     @property
     def sd(self):
@@ -400,6 +401,7 @@ class ScenarioBuilder():
                                     # General configuration
         participant_config["scenario_args"]["name"] = self._scenario_name
         participant_config["scenario_args"]["start_time"] = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
+        participant_config["scenario_args"]["federation_id"] = self._federation_id
         participant_config["deployment_args"]["additional"] = False                           
                                     
         node_config = node #self.sd["nodes"][index]
