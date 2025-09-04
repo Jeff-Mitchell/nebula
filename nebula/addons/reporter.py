@@ -171,7 +171,9 @@ class Reporter:
             - Logs exceptions if the connection attempt to the controller fails.
         """
         url = f"http://{self.config.participant['scenario_args']['controller']}/nodes/{self.config.participant['scenario_args']['name']}/done"
-        data = json.dumps({"idx": self.config.participant["device_args"]["idx"]})
+        data = json.dumps({"idx": self.config.participant["device_args"]["idx"],
+                           "deployment": self.config.participant["scenario_args"]["deployment"],
+                           "federation_id": self.config.participant["scenario_args"]["federation_id"]})
         headers = {
             "Content-Type": "application/json",
             "User-Agent": f"NEBULA Participant {self.config.participant['device_args']['idx']}",

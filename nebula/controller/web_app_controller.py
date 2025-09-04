@@ -324,9 +324,9 @@ async def run_scenario(
         fed_controller_host = os.environ.get("NEBULA_CONTROLLER_HOST")
         url_init_fed_controller = f"http://{fed_controller_host}:{fed_controller_port}" + factory_requests_path("init")
         url_run_scenario = f"http://{fed_controller_host}:{fed_controller_port}" + factory_requests_path("run")
-        init_fed_req = InitFederationRequest(experiment_type="docker")
+        #init_fed_req = InitFederationRequest(experiment_type="docker")
         run_scenario_req = RunScenarioRequest(scenario_data=scenario_data, federation_id="id_nebula", user=user) #TODO ID per experiment
-        await APIUtils.post(url_init_fed_controller, init_fed_req.model_dump())
+        #await APIUtils.post(url_init_fed_controller, init_fed_req.model_dump())
         await APIUtils.post(url_run_scenario, run_scenario_req.model_dump())
     except Exception as e:
         logging.info(e)
@@ -665,8 +665,8 @@ async def update_nodes(
             str(config["data"]["network_args"]["port"]),
             str(config["data"]["device_args"]["role"]),
             config["data"]["network_args"]["neighbors"],
-            str(config["data"]["mobility_args"]["latitude"]),
-            str(config["data"]["mobility_args"]["longitude"]),
+            str(config["data"]["addons"]["mobility"]["latitude"]),
+            str(config["data"]["addons"]["mobility"]["longitude"]),
             str(timestamp),
             str(config["data"]["data"]["scenario_args"]["federation"]),
             str(config["data"]["federation_args"]["round"]),

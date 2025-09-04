@@ -12,7 +12,7 @@ class RunScenarioRequest(BaseModel):
 class StopScenarioRequest(BaseModel):
     federation_id: str
     
-def factory_requests_path(resource: str, scenario_name: str = "") -> str:
+def factory_requests_path(resource: str, scenario_name: str = "", federation_id: str = "") -> str:
     if resource == "init":
         return "/init"
     elif resource == "run":
@@ -23,6 +23,8 @@ def factory_requests_path(resource: str, scenario_name: str = "") -> str:
         return f"/nodes/{scenario_name}/update"
     elif resource == "done":
         return f"/nodes/{scenario_name}/done"
+    elif resource == "finish":
+        return f"/scenarios/{federation_id}/finish"
     else:
         raise Exception(f"resource not found: {resource}")
     

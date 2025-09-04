@@ -12,17 +12,11 @@ from nebula.controller.federation.federation_controller import FederationControl
 from nebula.controller.federation.factory_federation_controller import federation_controller_factory
 from nebula.controller.federation.utils_requests import InitFederationRequest, RunScenarioRequest, StopScenarioRequest
 
-#TODO   we need all 3 controllers instanciated. When /init received we put the request on the right
-#       controller
+#TODO  Route the request to the right controller
+ 
+#fed_controller: FederationController = None
+fed_controllers: Dict[str, FederationController] = {}
 
-def require_initialized_controller(func):
-    @wraps(func)
-    async def wrapper(*args, **kwargs):
-        if fed_controller is None:
-            raise HTTPException(status_code=400, detail="FederationController not initialized")
-        return await func(*args, **kwargs)
-    return wrapper
-    
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     log_path = os.environ.get("NEBULA_FEDERATION_CONTROLLER_LOG")
@@ -34,10 +28,19 @@ async def lifespan(app: FastAPI):
     logger = logging.getLogger("Federation-Controller")
     logger.info("Logger initialized for Federation Controller")
 
+    # Create all controller types
+    hub_port = os.environ.get("NEBULA_CONTROLLER_PORT")
+    controller_host = os.environ.get("NEBULA_CONTROLLER_HOST")
+    hub_url = f"http://{controller_host}:{hub_port}"
+
+    #["docker", "processes", "physical"]
+    for exp_type in ["docker"]:
+        fed_controllers[exp_type] = federation_controller_factory(exp_type, hub_url, logger)
+        logger.info(f"{exp_type} Federation controller created.")
+
     yield
 
 app = FastAPI(lifespan=lifespan)
-fed_controller: FederationController = None
 
 @app.get("/")
 async def read_root():
@@ -70,21 +73,23 @@ async def init_federation_experiment(ifr: InitFederationRequest):
 
     return {"message": f"{experiment_type} controller initialized"}
 
-#ADVICE: return ID if sucess otherwise empty string
 @app.post("/scenarios/run")
-@require_initialized_controller
 async def run_scenario(run_scenario_request: RunScenarioRequest):
-    global fed_controller
-    return await fed_controller.run_scenario(run_scenario_request.federation_id, run_scenario_request.scenario_data, run_scenario_request.user)
-
+    global fed_controllers
+    experiment_type = run_scenario_request.scenario_data["deployment"]
+    controller = fed_controllers.get(experiment_type, None)
+    if controller:
+        return await controller.run_scenario(run_scenario_request.federation_id, run_scenario_request.scenario_data, run_scenario_request.user)
+    else:
+        return {"message": "Experyment type not allowed"}
+    
+#TODO need to use fedID?
 @app.post("/scenarios/stop")
-@require_initialized_controller
 async def stop_scenario(stop_scenario_request: StopScenarioRequest):
     global fed_controller
     return await fed_controller.stop_scenario(stop_scenario_request.federation_id)
 
 @app.post("/nodes/{scenario_name}/update")
-@require_initialized_controller
 async def update_nodes(
     scenario_name: Annotated[
         str,
@@ -92,11 +97,16 @@ async def update_nodes(
     ],
     request: Request,
 ):
-    global fed_controller
-    return await fed_controller.update_nodes(scenario_name, request)
+    global fed_controllers
+    config = await request.json()
+    experiment_type = config["scenario_args"]["deployment"]
+    controller = fed_controllers.get(experiment_type, None)
+    if controller:
+        return await controller.update_nodes(scenario_name, request)
+    else:
+        return {"message": "Experyment type not allowed on response for update message.."}
 
 @app.post("/nodes/{scenario_name}/done")
-@require_initialized_controller
 async def update_nodes(
     scenario_name: Annotated[
         str,
@@ -104,9 +114,14 @@ async def update_nodes(
     ],
     request: Request,
 ):
-    global fed_controller
-    return await fed_controller.node_done(scenario_name, request)
-
+    global fed_controllers
+    config = await request.json()
+    experiment_type = config["deployment"]
+    controller = fed_controllers.get(experiment_type, None)
+    if controller:
+        return await controller.node_done(scenario_name, request)
+    else:
+        return {"message": "Experyment type not allowed on responde for Node done message.."}
 
 if __name__ == "__main__":
     # Parse args from command line
@@ -116,3 +131,5 @@ if __name__ == "__main__":
     
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=args.port)
+
+    
