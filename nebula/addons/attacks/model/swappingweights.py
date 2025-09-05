@@ -43,7 +43,11 @@ class SwappingWeightsAttack(ModelAttack):
         
         super().__init__(engine, round_start, round_stop, attack_interval)
 
-        self.layer_idx = int(attack_params["layer_idx"])
+        # Handle layer_idx parameter with default value
+        self.layer_idx = int(attack_params.get("layer_idx", 0))
+        
+        # Store poisoned_node_percent if provided (for potential future use)
+        self.poisoned_node_percent = attack_params.get("poisoned_node_percent")
 
     def model_attack(self, received_weights):
         """

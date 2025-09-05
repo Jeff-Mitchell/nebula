@@ -19,16 +19,21 @@ class DelayerAttack(CommunicationAttack):
             attack_params (dict): Parameters for the attack, including the delay duration.
         """
         try:
-            self.delay = int(attack_params["delay"])
             round_start = int(attack_params["round_start_attack"])
             round_stop = int(attack_params["round_stop_attack"])
             attack_interval = int(attack_params["attack_interval"])
-            self.target_percentage = int(attack_params["target_percentage"])
-            self.selection_interval = int(attack_params["selection_interval"])
         except KeyError as e:
-            raise ValueError(f"Missing required attack parameter: {e}")
-        except ValueError:
-            raise ValueError("Invalid value in attack_params. Ensure all values are integers.")
+            raise ValueError(f"Missing required attack parameter: {e}") from e
+        except ValueError as e:
+            raise ValueError("Invalid value in attack_params. Ensure all values are integers.") from e
+        
+        # Handle optional parameters with defaults
+        self.delay = int(attack_params.get("delay", 5))
+        self.target_percentage = int(attack_params.get("target_percentage", 50))
+        self.selection_interval = int(attack_params.get("selection_interval", 1))
+        
+        # Store poisoned_node_percent if provided (for potential future use)
+        self.poisoned_node_percent = attack_params.get("poisoned_node_percent")
 
         super().__init__(
             engine,

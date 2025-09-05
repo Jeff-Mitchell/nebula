@@ -57,11 +57,30 @@ class SamplePoisoningAttack(DatasetAttack):
 
         super().__init__(engine, round_start, round_stop, attack_interval)
         self.datamodule = engine._trainer.datamodule
-        self.poisoned_percent = float(attack_params["poisoned_percent"])
-        self.poisoned_ratio = float(attack_params["poisoned_ratio"])
-        self.targeted = attack_params["targeted"]
-        self.target_label = int(attack_params["target_label"])
-        self.noise_type = attack_params["noise_type"]
+        
+        # Handle both old and new parameter names for backward compatibility
+        if "poisoned_percent" in attack_params:
+            self.poisoned_percent = float(attack_params["poisoned_percent"])
+        elif "poisoned_sample_percent" in attack_params:
+            # Convert percentage to ratio (80.0 -> 0.8)
+            self.poisoned_percent = float(attack_params["poisoned_sample_percent"]) / 100.0
+        else:
+            raise ValueError("Missing required parameter: either 'poisoned_percent' or 'poisoned_sample_percent' must be provided")
+        
+        if "poisoned_ratio" in attack_params:
+            self.poisoned_ratio = float(attack_params["poisoned_ratio"])
+        elif "poisoned_noise_percent" in attack_params:
+            # Convert percentage to ratio (80.0 -> 0.8)
+            self.poisoned_ratio = float(attack_params["poisoned_noise_percent"]) / 100.0
+        else:
+            raise ValueError("Missing required parameter: either 'poisoned_ratio' or 'poisoned_noise_percent' must be provided")
+        
+        self.targeted = attack_params.get("targeted", False)
+        self.target_label = int(attack_params.get("target_label", 3))
+        self.noise_type = attack_params.get("noise_type", "salt")
+        
+        # Store poisoned_node_percent if provided (for potential future use)
+        self.poisoned_node_percent = attack_params.get("poisoned_node_percent")
 
     def apply_noise(self, t, noise_type, poisoned_ratio):
         """

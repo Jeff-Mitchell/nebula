@@ -36,6 +36,9 @@ class GLLNeuronInversionAttack(ModelAttack):
             raise ValueError("Invalid value in attack_params. Ensure all values are integers.")
         
         super().__init__(engine, round_start, round_stop, attack_interval)
+        
+        # Store poisoned_node_percent if provided (for potential future use)
+        self.poisoned_node_percent = attack_params.get("poisoned_node_percent")
 
     def model_attack(self, received_weights):
         """

@@ -1,7 +1,5 @@
-import asyncio
 import logging
 from functools import wraps
-import time
 
 from nebula.addons.attacks.communications.communicationattack import CommunicationAttack
 
@@ -23,13 +21,18 @@ class FloodingAttack(CommunicationAttack):
             round_start = int(attack_params["round_start_attack"])
             round_stop = int(attack_params["round_stop_attack"])
             attack_interval = int(attack_params["attack_interval"])
-            self.flooding_factor = int(attack_params["flooding_factor"])
-            self.target_percentage = int(attack_params["target_percentage"])
-            self.selection_interval = int(attack_params["selection_interval"])
         except KeyError as e:
-            raise ValueError(f"Missing required attack parameter: {e}")
-        except ValueError:
-            raise ValueError("Invalid value in attack_params. Ensure all values are integers.")
+            raise ValueError(f"Missing required attack parameter: {e}") from e
+        except ValueError as e:
+            raise ValueError("Invalid value in attack_params. Ensure all values are integers.") from e
+
+        # Handle optional parameters with defaults
+        self.flooding_factor = int(attack_params.get("flooding_factor", 3))
+        self.target_percentage = int(attack_params.get("target_percentage", 50))
+        self.selection_interval = int(attack_params.get("selection_interval", 1))
+
+        # Store poisoned_node_percent if provided (for potential future use)
+        self.poisoned_node_percent = attack_params.get("poisoned_node_percent")
 
         self.verbose = False
 

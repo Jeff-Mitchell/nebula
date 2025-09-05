@@ -43,10 +43,22 @@ class LabelFlippingAttack(DatasetAttack):
 
         super().__init__(engine, round_start, round_stop, attack_interval)
         self.datamodule = engine._trainer.datamodule
-        self.poisoned_percent = float(attack_params["poisoned_percent"])
-        self.targeted = attack_params["targeted"]
-        self.target_label = int(attack_params["target_label"])
-        self.target_changed_label = int(attack_params["target_changed_label"])
+        
+        # Handle both old and new parameter names for backward compatibility
+        if "poisoned_percent" in attack_params:
+            self.poisoned_percent = float(attack_params["poisoned_percent"])
+        elif "poisoned_sample_percent" in attack_params:
+            # Convert percentage to ratio (80.0 -> 0.8)
+            self.poisoned_percent = float(attack_params["poisoned_sample_percent"]) / 100.0
+        else:
+            raise ValueError("Missing required parameter: either 'poisoned_percent' or 'poisoned_sample_percent' must be provided")
+        
+        self.targeted = attack_params.get("targeted", False)
+        self.target_label = int(attack_params.get("target_label", 4))
+        self.target_changed_label = int(attack_params.get("target_changed_label", 7))
+        
+        # Store poisoned_node_percent if provided (for potential future use)
+        self.poisoned_node_percent = attack_params.get("poisoned_node_percent")
 
     def labelFlipping(
         self,

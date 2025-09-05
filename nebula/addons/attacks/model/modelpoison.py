@@ -29,7 +29,9 @@ class ModelPoisonAttack(ModelAttack):
     Args:
         engine (object): The training engine object that manages the aggregator.
         attack_params (dict): Parameters for the attack, including:
-            - poisoned_ratio (float): The ratio of model weights to be poisoned.
+            - poisoned_ratio (float): The ratio of model weights to be poisoned (0-1).
+            - poisoned_noise_percent (float): Alternative to poisoned_ratio, percentage of noise (0-100).
+            - poisoned_node_percent (float, optional): Percentage of nodes to poison (for future use).
             - noise_type (str): The type of noise to introduce during the attack.
     """
 
@@ -46,14 +48,25 @@ class ModelPoisonAttack(ModelAttack):
             round_stop = int(attack_params["round_stop_attack"])
             attack_interval = int(attack_params["attack_interval"])
         except KeyError as e:
-            raise ValueError(f"Missing required attack parameter: {e}")
-        except ValueError:
-            raise ValueError("Invalid value in attack_params. Ensure all values are integers.")
-        
+            raise ValueError(f"Missing required attack parameter: {e}") from e
+        except ValueError as e:
+            raise ValueError("Invalid value in attack_params. Ensure all values are integers.") from e
+
         super().__init__(engine, round_start, round_stop, attack_interval)
 
-        self.poisoned_ratio = float(attack_params["poisoned_ratio"])
+        # Handle both old and new parameter names for backward compatibility
+        if "poisoned_ratio" in attack_params:
+            self.poisoned_ratio = float(attack_params["poisoned_ratio"])
+        elif "poisoned_noise_percent" in attack_params:
+            # Convert percentage to ratio (80.0 -> 0.8)
+            self.poisoned_ratio = float(attack_params["poisoned_noise_percent"]) / 100.0
+        else:
+            raise ValueError("Missing required parameter: either 'poisoned_ratio' or 'poisoned_noise_percent' must be provided")
+
         self.noise_type = attack_params["noise_type"].lower()
+
+        # Store poisoned_node_percent if provided (for potential future use)
+        self.poisoned_node_percent = attack_params.get("poisoned_node_percent")
 
     def modelPoison(self, model: OrderedDict, poisoned_ratio, noise_type="gaussian"):
         """
