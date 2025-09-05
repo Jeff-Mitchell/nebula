@@ -19,7 +19,7 @@ set -euo pipefail
 ###############################################################################
 # USER CONFIGURATION
 ###############################################################################
-AUTH_KEY="tskey-auth-kf3L72Dp1811CNTRL-9rrM3YSsHfJpciQxoHveeJrn54QUBABP"  # ← EDIT
+AUTH_KEY="tskey-auth-kNHaCNu3Ja11CNTRL-HNnPQkBhvxKzo8gepABXyKeGqbiS1Cqw"  # ← EDIT
 REPO_URL="https://github.com/CyberDataLab/nebula.git"
 REPO_BRANCH="physical-deployment"
 PY_VERSION="3.11.7"               # exact CPython build to install with `uv`
