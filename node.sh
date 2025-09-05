@@ -20,7 +20,7 @@ set -euo pipefail
 ###############################################################################
 # USER CONFIGURATION
 ###############################################################################
-AUTH_KEY="tskey-auth-k71dvSPiCy11CNTRL-K1npdQGATxi2RPn1VLWswiQPr13amAqd"  # ← EDIT
+AUTH_KEY="tskey-auth-kf3L72Dp1811CNTRL-9rrM3YSsHfJpciQxoHveeJrn54QUBABP"  # ← EDIT
 REPO_URL="https://github.com/CyberDataLab/nebula.git"
 REPO_BRANCH="physical-deployment"
 APP_PORT=8000                     # Gunicorn listen port
