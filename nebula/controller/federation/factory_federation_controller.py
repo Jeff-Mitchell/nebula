@@ -9,7 +9,7 @@ def federation_controller_factory(mode: str, wa_controller_url: str, logger) -> 
         return DockerFederationController(wa_controller_url, logger)
     elif mode == "physical":
         return PhysicalFederationController(wa_controller_url, logger)
-    elif mode == "processes":
+    elif mode == "process":
         return ProcessesFederationController(wa_controller_url, logger)
     else:
         raise ValueError("Unknown federation mode")

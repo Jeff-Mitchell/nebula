@@ -18,11 +18,11 @@ class FederationController(ABC):
         return self._logger 
 
     @abstractmethod
-    async def run_scenario(self,  id: str, scenario_data: Dict, user: str):
+    async def run_scenario(self,  federation_id: str, scenario_data: Dict, user: str):
         pass
 
     @abstractmethod
-    async def stop_scenario(self, id: str):
+    async def stop_scenario(self, federation_id: str):
         pass
 
     @abstractmethod

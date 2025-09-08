@@ -10,6 +10,7 @@ class RunScenarioRequest(BaseModel):
     federation_id: str
     
 class StopScenarioRequest(BaseModel):
+    experiment_type: str
     federation_id: str
     
 def factory_requests_path(resource: str, scenario_name: str = "", federation_id: str = "") -> str:

@@ -34,7 +34,7 @@ async def lifespan(app: FastAPI):
     hub_url = f"http://{controller_host}:{hub_port}"
 
     #["docker", "processes", "physical"]
-    for exp_type in ["docker"]:
+    for exp_type in ["docker", "process"]:
         fed_controllers[exp_type] = federation_controller_factory(exp_type, hub_url, logger)
         logger.info(f"{exp_type} Federation controller created.")
 
@@ -54,29 +54,31 @@ async def read_root():
     logger.info("Test curl succesfull")
     return {"message": "Welcome to the NEBULA Federation Controller API"}
 
-@app.post("/init")
-async def init_federation_experiment(ifr: InitFederationRequest):
-    global fed_controller
+# @app.post("/init")
+# async def init_federation_experiment(ifr: InitFederationRequest):
+#     global fed_controller
 
-    experiment_type = ifr.experiment_type
-    logger = logging.getLogger("Federation-Controller")
-    logger.info(f"Experiment type received: {experiment_type}")
+#     experiment_type = ifr.experiment_type
+#     logger = logging.getLogger("Federation-Controller")
+#     logger.info(f"Experiment type received: {experiment_type}")
     
-    #TODO Modify when deploying controllers on differents systems
-    hub_port = os.environ.get("NEBULA_CONTROLLER_PORT")
-    controller_host = os.environ.get("NEBULA_CONTROLLER_HOST")
+#     #TODO Modify when deploying controllers on differents systems
+#     hub_port = os.environ.get("NEBULA_CONTROLLER_PORT")
+#     controller_host = os.environ.get("NEBULA_CONTROLLER_HOST")
     
-    hub_url = f"http://{controller_host}:{hub_port}"
-    logger.info(f"Docker Hub URL => {hub_url}")
-    fed_controller = federation_controller_factory(str(experiment_type), hub_url, logger)
-    logger.info("Federation controller created.")
+#     hub_url = f"http://{controller_host}:{hub_port}"
+#     logger.info(f"Docker Hub URL => {hub_url}")
+#     fed_controller = federation_controller_factory(str(experiment_type), hub_url, logger)
+#     logger.info("Federation controller created.")
 
-    return {"message": f"{experiment_type} controller initialized"}
+#     return {"message": f"{experiment_type} controller initialized"}
 
 @app.post("/scenarios/run")
 async def run_scenario(run_scenario_request: RunScenarioRequest):
     global fed_controllers
     experiment_type = run_scenario_request.scenario_data["deployment"]
+    logger = logging.getLogger("Federation-Controller")
+    logger.info(f"[API]: run experiment request for deployment type: {experiment_type}")
     controller = fed_controllers.get(experiment_type, None)
     if controller:
         return await controller.run_scenario(run_scenario_request.federation_id, run_scenario_request.scenario_data, run_scenario_request.user)
@@ -86,8 +88,15 @@ async def run_scenario(run_scenario_request: RunScenarioRequest):
 #TODO need to use fedID?
 @app.post("/scenarios/stop")
 async def stop_scenario(stop_scenario_request: StopScenarioRequest):
-    global fed_controller
-    return await fed_controller.stop_scenario(stop_scenario_request.federation_id)
+    global fed_controllers
+    experiment_type = stop_scenario_request.experiment_type
+    controller = fed_controllers.get(experiment_type, None)
+    logger = logging.getLogger("Federation-Controller")
+    logger.info(f"[API]: stop experiment request for federation ID: {stop_scenario_request.federation_id}")
+    if controller:
+        return await controller.stop_scenario(stop_scenario_request.federation_id)
+    else:
+        return {"message": "Experyment type not allowed"}
 
 @app.post("/nodes/{scenario_name}/update")
 async def update_nodes(
