@@ -14,7 +14,6 @@ from nebula.config.config import Config
 from nebula.core.utils.certificate import generate_ca_certificate
 from nebula.core.utils.locker import Locker
 
-#TODO save participants when deployed
 class NebulaFederationProcesses():
     def __init__(self):
         self.scenario_name = ""
@@ -63,7 +62,6 @@ class NebulaFederationProcesses():
 class ProcessesFederationController(FederationController):
     def __init__(self, hub_url, logger):
         super().__init__(hub_url, logger)
-        self._user = ""
         self.root_path = ""
         self.host_platform = ""
         self.config_dir = ""
@@ -87,7 +85,6 @@ class ProcessesFederationController(FederationController):
 
     async def run_scenario(self, federation_id: str, scenario_data: Dict, user: str):
         #TODO maintain files on memory, not read them again
-        self._user = user
         federation = await self._add_nebula_federation_to_pool(federation_id, user)
         id = ""
         if federation:
@@ -186,6 +183,7 @@ class ProcessesFederationController(FederationController):
                             if index == idx:
                                 if index in additionals:
                                     self.logger.info(f"Deploying additional participant: {index}")
+                                    #TODO additionals not working
                                     self._start_node(node, nebula_federation.network_name, nebula_federation.base_network_name, nebula_federation.base, nebula_federation.last_index_deployed, nebula_federation, additional=True)
                                     nebula_federation.last_index_deployed += 1
                                     additionals.remove(index)
@@ -261,7 +259,7 @@ class ProcessesFederationController(FederationController):
         self.log_dir = os.environ.get("NEBULA_LOGS_DIR")
         self.cert_dir = os.environ.get("NEBULA_CERTS_DIR")
         self.advanced_analytics = os.environ.get("NEBULA_ADVANCED_ANALYTICS", "False") == "True"
-        self.config = Config(entity="scenarioManagement")
+        # self.config = Config(entity="scenarioManagement")
         self.env_tag = os.environ.get("NEBULA_ENV_TAG", "dev")
         self.prefix_tag = os.environ.get("NEBULA_PREFIX_TAG", "dev")
         self.user_tag = os.environ.get("NEBULA_USER_TAG", os.environ.get("USER", "unknown"))
@@ -340,11 +338,11 @@ class ProcessesFederationController(FederationController):
         if len(participant_files) == 0:
             raise ValueError("No participant files found in config folder")
 
-        self.config.set_participants_config(participant_files)
-        self.n_nodes = len(participant_files)
-        self.logger.info(f"Number of nodes: {self.n_nodes}")
+        federation.config.set_participants_config(participant_files)
+        n_nodes = len(participant_files)
+        self.logger.info(f"Number of nodes: {n_nodes}")
         
-        sb.create_topology_manager(self.config)
+        sb.create_topology_manager(federation.config)
         
         # Update participants configuration
         is_start_node = False
@@ -352,13 +350,12 @@ class ProcessesFederationController(FederationController):
         
         additional_participants = sb.get_additional_nodes()
         additional_nodes = len(additional_participants) if additional_participants else 0
-        self.logger.info(f"######## nodes: {self.n_nodes} + additionals: {additional_nodes} ######")
         
         participant_files.sort(key=lambda x: int(x.split("_")[-1].split(".")[0]))
         
         # Initial participants
         self.logger.info("🔧  Building preload configuration for initial nodes...")
-        for i in range(self.n_nodes):
+        for i in range(n_nodes):
             try:
                 with open(f"{self.config_dir}/participant_" + str(i) + ".json") as f:
                     participant_config = json.load(f)
@@ -390,7 +387,7 @@ class ProcessesFederationController(FederationController):
 
         self.logger.info("✅  Building preload configuration for initial nodes done")
             
-        self.config.set_participants_config(participant_files)
+        federation.config.set_participants_config(participant_files)
         
         # Add role to the topology (visualization purposes)
         sb.visualize_topology(config_participants, path=f"{self.config_dir}/topology.png", plot=False)
@@ -409,7 +406,7 @@ class ProcessesFederationController(FederationController):
                 with open(additional_participant_file) as f:
                     participant_config = json.load(f)
 
-                self.logger.info(f"Configuration | additional nodes |  participant: {self.n_nodes + i}")
+                self.logger.info(f"Configuration | additional nodes |  participant: {n_nodes + i}")
                 sb.build_preload_additional_node_configuration(last_participant_index, i, participant_config)
             
                 with open(additional_participant_file, "w") as f:
@@ -418,10 +415,10 @@ class ProcessesFederationController(FederationController):
                 additional_participants_files.append(additional_participant_file)
 
         if additional_participants_files:
-            self.config.add_participants_config(additional_participants_files)
+            federation.config.add_participants_config(additional_participants_files)
 
         if additional_participants:
-            self.n_nodes += len(additional_participants)
+            n_nodes += len(additional_participants)
 
         self.logger.info("✅  Building preload configuration for additional nodes done")
         self.logger.info("✅  Loading Scenario configuration done")
@@ -434,11 +431,17 @@ class ProcessesFederationController(FederationController):
 
     def _start_initial_nodes(self, sb: ScenarioBuilder, federation: NebulaFederationProcesses):
         self.logger.info("Starting nodes as processes...")
-
+        self.logger.info(f"Number of participants: {len(federation.config.participants)}")
         federation.config.participants.sort(key=lambda x: x["device_args"]["idx"])
         federation.last_index_deployed = 2
-        for idx, node in enumerate(federation.config.participants):
-            
+        
+        commands = ""
+        commands = self._build_initial_commands()
+        if not commands:
+            self.logger.info("ERROR: Cannot create commands file, abort..")
+            return
+        
+        for idx, node in enumerate(federation.config.participants):    
             if node["deployment_args"]["additional"]:
                 federation.additionals_participants[idx] = int(node["deployment_args"]["deployment_round"])
                 federation.participants_alive += 1
@@ -446,35 +449,68 @@ class ProcessesFederationController(FederationController):
             else:
                 # deploy initial nodes
                 self.logger.info(f"Deployment starting for participant {idx}")
-                self.logger.info(f"Deployment starting for participant {idx}")
                 federation.round_per_participant[idx] = 0
-                deployed_successfully = self._start_node(sb, node, federation.network_name, federation.base_network_name, federation.base, federation.last_index_deployed, federation)
-                if deployed_successfully:
+                node_command = self._start_node(sb, node, federation.network_name, federation.base_network_name, federation.base, federation.last_index_deployed, federation)
+                commands += node_command
+                if node_command:
                     federation.last_index_deployed += 1
                     federation.participants_alive += 1
-                        
+                    
+        if federation.config.participants and commands:
+            self._write_commands_on_file(commands)
+        else:
+            self.logger.info("ERROR: No commands on a proccesses deployment..")
+                      
     def _start_node(self, sb: ScenarioBuilder, node, network_name, base_network_name, base, i, federation: NebulaFederationProcesses, additional=False):
         self.processes_root_path = os.path.join(os.path.dirname(__file__), "..", "..")
-        
-
+        node_idx = node['device_args']['idx']
         # Include additional config to the participants
-        for idx, node in enumerate(self.config.participants):
-            node["tracking_args"]["log_dir"] = os.path.join(self.root_path, "app", "logs")
-            node["tracking_args"]["config_dir"] = os.path.join(self.root_path, "app", "config", sb.get_scenario_name())
-            node["scenario_args"]["controller"] = self.url
-            node["scenario_args"]["deployment"] = sb.get_deployment()
-            node["security_args"]["certfile"] = os.path.join(
-                self.root_path, "app", "certs", f"participant_{node['device_args']['idx']}_cert.pem"
-            )
-            node["security_args"]["keyfile"] = os.path.join(
-                self.root_path, "app", "certs", f"participant_{node['device_args']['idx']}_key.pem"
-            )
-            node["security_args"]["cafile"] = os.path.join(self.root_path, "app", "certs", "ca_cert.pem")
+        node["tracking_args"]["log_dir"] = os.path.join(self.root_path, "app", "logs")
+        node["tracking_args"]["config_dir"] = os.path.join(self.root_path, "app", "config", sb.get_scenario_name())
+        node["scenario_args"]["controller"] = self.url
+        node["scenario_args"]["deployment"] = sb.get_deployment()
+        node["security_args"]["certfile"] = os.path.join(
+            self.root_path, "app", "certs", f"participant_{node['device_args']['idx']}_cert.pem"
+        )
+        node["security_args"]["keyfile"] = os.path.join(
+            self.root_path, "app", "certs", f"participant_{node['device_args']['idx']}_key.pem"
+        )
+        node["security_args"]["cafile"] = os.path.join(self.root_path, "app", "certs", "ca_cert.pem")
+        # Write the config file in config directory
+        with open(f"{self.config_dir}/participant_{node['device_args']['idx']}.json", "w") as f:
+            json.dump(node, f, indent=4)
 
-            # Write the config file in config directory
-            with open(f"{self.config_dir}/participant_{node['device_args']['idx']}.json", "w") as f:
-                json.dump(node, f, indent=4)
-
+        self.logger.info(f"Configuration file created successfully: {node_idx}")
+        commands = ""
+        try:
+            if self.host_platform == "windows":
+                if node["device_args"]["start"]:
+                    commands += "Start-Sleep -Seconds 10\n"
+                else:
+                    commands += "Start-Sleep -Seconds 2\n"
+                commands += f'Write-Host "Running node {node["device_args"]["idx"]}..."\n'
+                commands += f'$OUT_FILE = "{self.root_path}\\app\\logs\\{sb.get_scenario_name()}\\participant_{node["device_args"]["idx"]}.out"\n'
+                commands += f'$ERROR_FILE = "{self.root_path}\\app\\logs\\{sb.get_scenario_name()}\\participant_{node["device_args"]["idx"]}.err"\n'
+                # Use Start-Process for executing Python in background and capture PID
+                commands += f"""$process = Start-Process -FilePath "python" -ArgumentList "{self.root_path}\\nebula\\core\\node.py {self.root_path}\\app\\config\\{sb.get_scenario_name()}\\participant_{node["device_args"]["idx"]}.json" -PassThru -NoNewWindow -RedirectStandardOutput $OUT_FILE -RedirectStandardError $ERROR_FILE
+                Add-Content -Path $PID_FILE -Value $process.Id
+                """
+            else:
+                if node["device_args"]["start"]:
+                    commands += "sleep 10\n"
+                else:
+                    commands += "sleep 2\n"
+                commands += f'echo "Running node {node["device_args"]["idx"]}..."\n'
+                commands += f"OUT_FILE={self.root_path}/app/logs/{sb.get_scenario_name()}/participant_{node['device_args']['idx']}.out\n"
+                commands += f"python {self.root_path}/nebula/core/node.py {self.root_path}/app/config/{sb.get_scenario_name()}/participant_{node['device_args']['idx']}.json &\n"
+                commands += "echo $! >> $PID_FILE\n\n"
+        except Exception as e:
+            raise Exception(f"Error starting nodes as processes: {e}")
+        
+        return commands
+       
+    def _build_initial_commands(self):
+        commands = ""
         try:
             if self.host_platform == "windows":
                 commands = """
@@ -483,53 +519,25 @@ class ProcessesFederationController(FederationController):
                 New-Item -Path $PID_FILE -Force -ItemType File
 
                 """
-                sorted_participants = sorted(
-                    self.config.participants,
-                    key=lambda node: node["device_args"]["idx"],
-                    reverse=True,
-                )
-                for node in sorted_participants:
-                    if node["device_args"]["start"]:
-                        commands += "Start-Sleep -Seconds 10\n"
-                    else:
-                        commands += "Start-Sleep -Seconds 2\n"
-
-                    commands += f'Write-Host "Running node {node["device_args"]["idx"]}..."\n'
-                    commands += f'$OUT_FILE = "{self.root_path}\\app\\logs\\{sb.get_scenario_name()}\\participant_{node["device_args"]["idx"]}.out"\n'
-                    commands += f'$ERROR_FILE = "{self.root_path}\\app\\logs\\{sb.get_scenario_name()}\\participant_{node["device_args"]["idx"]}.err"\n'
-
-                    # Use Start-Process for executing Python in background and capture PID
-                    commands += f"""$process = Start-Process -FilePath "python" -ArgumentList "{self.root_path}\\nebula\\core\\node.py {self.root_path}\\app\\config\\{sb.get_scenario_name()}\\participant_{node["device_args"]["idx"]}.json" -PassThru -NoNewWindow -RedirectStandardOutput $OUT_FILE -RedirectStandardError $ERROR_FILE
-                Add-Content -Path $PID_FILE -Value $process.Id
-                """
-
+            else:
+                commands = '#!/bin/bash\n\nPID_FILE="$(dirname "$0")/current_scenario_pids.txt"\n\n> $PID_FILE\n\n'
+        except Exception as e:
+            raise Exception(f"Error starting nodes as processes: {e}")
+        return commands       
+        
+    def _write_commands_on_file(self, commands: str):
+        try:
+            if self.host_platform == "windows":
                 commands += 'Write-Host "All nodes started. PIDs stored in $PID_FILE"\n'
-
                 with open(f"{self.config_dir}/current_scenario_commands.ps1", "w") as f:
+                    #self.logger.info(f"Process commands: {commands}")
                     f.write(commands)
                 os.chmod(f"{self.config_dir}/current_scenario_commands.ps1", 0o755)
             else:
-                commands = '#!/bin/bash\n\nPID_FILE="$(dirname "$0")/current_scenario_pids.txt"\n\n> $PID_FILE\n\n'
-                sorted_participants = sorted(
-                    self.config.participants,
-                    key=lambda node: node["device_args"]["idx"],
-                    reverse=True,
-                )
-                for node in sorted_participants:
-                    if node["device_args"]["start"]:
-                        commands += "sleep 10\n"
-                    else:
-                        commands += "sleep 2\n"
-                    commands += f'echo "Running node {node["device_args"]["idx"]}..."\n'
-                    commands += f"OUT_FILE={self.root_path}/app/logs/{sb.get_scenario_name()}/participant_{node['device_args']['idx']}.out\n"
-                    commands += f"python {self.root_path}/nebula/core/node.py {self.root_path}/app/config/{sb.get_scenario_name()}/participant_{node['device_args']['idx']}.json &\n"
-                    commands += "echo $! >> $PID_FILE\n\n"
-
                 commands += 'echo "All nodes started. PIDs stored in $PID_FILE"\n'
-
                 with open(f"{self.config_dir}/current_scenario_commands.sh", "w") as f:
+                    #self.logger.info(f"Process commands: {commands}")
                     f.write(commands)
                 os.chmod(f"{self.config_dir}/current_scenario_commands.sh", 0o755)
-
         except Exception as e:
             raise Exception(f"Error starting nodes as processes: {e}")

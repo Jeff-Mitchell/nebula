@@ -59,13 +59,10 @@ class NebulaFederationDocker():
         else: 
             return False 
 
-        
-    
 class DockerFederationController(FederationController):
     
     def __init__(self, hub_url, logger):
         super().__init__(hub_url, logger)
-        self._user = ""
         self.root_path = ""
         self.host_platform = ""
         self.config_dir = ""
@@ -88,7 +85,6 @@ class DockerFederationController(FederationController):
 
     async def run_scenario(self, federation_id: str, scenario_data: Dict, user: str):
         #TODO maintain files on memory, not read them again
-        self._user = user
         federation = await self._add_nebula_federation_to_pool(federation_id, user)
         id = ""
         if federation:
@@ -134,7 +130,7 @@ class DockerFederationController(FederationController):
                 break
 
         if not config_dir:
-            self.logger.warning("No valid config directory found, skipping cleanup")
+            self.logger.info("No valid config directory found, skipping cleanup")
             return
 
         scenario_dirs = []
@@ -173,7 +169,7 @@ class DockerFederationController(FederationController):
                     container.remove(force=True)
                     self.logger.info(f"Removed scenario container {name}")
                 except Exception as e:
-                    self.logger.warning(f"Could not remove scenario container {name}: {e}")
+                    self.logger.info(f"Could not remove scenario container {name}: {e}")
 
             # Remove network, but first forcibly remove any containers still attached
             network_name = meta.get("network")
@@ -187,17 +183,17 @@ class DockerFederationController(FederationController):
                             c.remove(force=True)
                             self.logger.info(f"Force-removed container {c.name} attached to {network_name}")
                         except Exception as e:
-                            self.logger.warning(f"Could not force-remove container {container_id}: {e}")
+                            self.logger.info(f"Could not force-remove container {container_id}: {e}")
                     network.remove()
                     self.logger.info(f"Removed scenario network {network_name}")
                 except Exception as e:
-                    self.logger.warning(f"Could not remove scenario network {network_name}: {e}")
+                    self.logger.info(f"Could not remove scenario network {network_name}: {e}")
 
             # Remove metadata file
             try:
                 os.remove(metadata_path)
             except Exception as e:
-                self.logger.warning(f"Could not remove scenario.metadata: {e}")
+                self.logger.info(f"Could not remove scenario.metadata: {e}")
                 
             if scenario_dir == federation_scenario_name:
                 break
@@ -226,17 +222,20 @@ class DockerFederationController(FederationController):
                             if index == idx:
                                 if index in additionals:
                                     self.logger.info(f"Deploying additional participant: {index}")
-                                    self._start_node(node, nebula_federation.network_name, nebula_federation.base_network_name, nebula_federation.base, nebula_federation.last_index_deployed, nebula_federation)
+                                    deployed_successfully = self._start_node(node, nebula_federation.network_name, nebula_federation.base_network_name, nebula_federation.base, nebula_federation.last_index_deployed, nebula_federation)
+                                    if deployed_successfully:
+                                        self.logger.info(f"Deployment successfully for additional participant: {index}")
+                                        nebula_federation.participants_alive += 1
                                     nebula_federation.last_index_deployed += 1
-                                    additionals.remove(index)
+                                    #additionals.remove(index)
                                     adds_deployed.add(index)
             request_body = await request.json()
             payload = {"scenario_name": scenario_name, "data": request_body}
             asyncio.create_task(self._send_to_hub("update", payload, scenario_name))
             return {"message": "Node updated successfully in Federation Controller"}
         except Exception as e:
-            self.logger.info(f"ERROR: federation ID: ({fed_id}) not found on pool..")
-            return {"message": "Node updated failed in Federation Controller, ID not found.."} 
+            self.logger.info(f"ERROR: federation ID: ({fed_id}), {e}")
+            return {"message": "Node updated failed in Federation Controller"} 
 
     async def node_done(self, scenario_name: str, request: Request):
         request_body = await request.json()
@@ -581,7 +580,7 @@ class DockerFederationController(FederationController):
         node = json.loads(json.dumps(node).replace("192.168.50.", f"{base}."))  # TODO change this
         try:
             existing = client.containers.get(name)
-            self.logger.warning(f"Container {name} already exists. Deployment may fail or cause conflicts.")
+            self.logger.info(f"Container {name} already exists. Deployment may fail or cause conflicts.")
             success = False
         except docker.errors.NotFound:
             pass  # No conflict, safe to proceed
@@ -601,7 +600,7 @@ class DockerFederationController(FederationController):
             )
         except Exception as e:
             success = False
-            self.logger.exception(f"Creating container {name}: {e}")
+            self.logger.info(f"Creating container {name}: {e}")
         try:
             client.api.start(container_id)
             container_ids.append(container_id)
@@ -609,7 +608,7 @@ class DockerFederationController(FederationController):
             self.logger.info(f"Adding name: {name} for metadata")
         except Exception as e:
             success = False
-            self.logger.exception(f"Starting participant {name} error: {e}")
+            self.logger.info(f"Starting participant {name} error: {e}")
             
         # Write scenario-level metadata for cleanup
         scenario_metadata = {"containers": container_names, "network": network_name}
