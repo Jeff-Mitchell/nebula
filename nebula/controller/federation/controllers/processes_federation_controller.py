@@ -134,7 +134,7 @@ class ProcessesFederationController(FederationController):
                 nebula_base_dir = os.path.abspath(os.path.join(current_dir, "..", ".."))
                 nebula_config_dir = os.path.join(nebula_base_dir, "app", "config")
                 self.logger.info(f"NEBULA_CONFIG_DIR not found. Using default path: {nebula_config_dir}")
-            if id:
+            if federation_id:
                 if os.environ.get("NEBULA_HOST_PLATFORM") == "windows":
                     scenario_commands_file = os.path.join(
                         nebula_config_dir, federation_name, "current_scenario_commands.ps1"

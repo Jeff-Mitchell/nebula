@@ -25,7 +25,7 @@ from nebula.controller.database import (
 )
 from nebula.controller.http_helpers import remote_get, remote_post_form
 from nebula.utils import DockerUtils, APIUtils
-from nebula.controller.federation.utils_requests import RunScenarioRequest, InitFederationRequest, StopScenarioRequest, factory_requests_path
+from nebula.controller.federation.utils_requests import RunScenarioRequest, StopScenarioRequest, factory_requests_path
 
 
 # Setup controller logger
@@ -107,6 +107,7 @@ def configure_logger(controller_log):
         handler.setFormatter(logging.Formatter("[%(asctime)s] [%(name)s] [%(levelname)s] %(message)s"))
         logger.addHandler(handler)
 
+id_counter = 1
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -317,7 +318,7 @@ async def run_scenario(
     """
 
     import subprocess
-
+    global id_counter
     from nebula.controller.scenarios import ScenarioManagement
     try:
         fed_controller_port = os.environ.get("NEBULA_FEDERATION_CONTROLLER_PORT")
@@ -325,7 +326,8 @@ async def run_scenario(
         url_init_fed_controller = f"http://{fed_controller_host}:{fed_controller_port}" + factory_requests_path("init")
         url_run_scenario = f"http://{fed_controller_host}:{fed_controller_port}" + factory_requests_path("run")
         #init_fed_req = InitFederationRequest(experiment_type="docker")
-        run_scenario_req = RunScenarioRequest(scenario_data=scenario_data, federation_id="id_nebula", user=user) #TODO ID per experiment
+        run_scenario_req = RunScenarioRequest(scenario_data=scenario_data, federation_id=f"id_nebula_{id_counter}", user=user) #TODO ID per experiment
+        id_counter += 1
         #await APIUtils.post(url_init_fed_controller, init_fed_req.model_dump())
         await APIUtils.post(url_run_scenario, run_scenario_req.model_dump())
     except Exception as e:

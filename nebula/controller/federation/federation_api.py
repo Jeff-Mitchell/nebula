@@ -10,7 +10,7 @@ from fastapi import HTTPException
 from nebula.utils import LoggerUtils
 from nebula.controller.federation.federation_controller import FederationController 
 from nebula.controller.federation.factory_federation_controller import federation_controller_factory
-from nebula.controller.federation.utils_requests import InitFederationRequest, RunScenarioRequest, StopScenarioRequest
+from nebula.controller.federation.utils_requests import RunScenarioRequest, StopScenarioRequest
 
 #TODO  Route the request to the right controller
  
@@ -53,25 +53,6 @@ async def read_root():
     logger = logging.getLogger("Federation-Controller")
     logger.info("Test curl succesfull")
     return {"message": "Welcome to the NEBULA Federation Controller API"}
-
-# @app.post("/init")
-# async def init_federation_experiment(ifr: InitFederationRequest):
-#     global fed_controller
-
-#     experiment_type = ifr.experiment_type
-#     logger = logging.getLogger("Federation-Controller")
-#     logger.info(f"Experiment type received: {experiment_type}")
-    
-#     #TODO Modify when deploying controllers on differents systems
-#     hub_port = os.environ.get("NEBULA_CONTROLLER_PORT")
-#     controller_host = os.environ.get("NEBULA_CONTROLLER_HOST")
-    
-#     hub_url = f"http://{controller_host}:{hub_port}"
-#     logger.info(f"Docker Hub URL => {hub_url}")
-#     fed_controller = federation_controller_factory(str(experiment_type), hub_url, logger)
-#     logger.info("Federation controller created.")
-
-#     return {"message": f"{experiment_type} controller initialized"}
 
 @app.post("/scenarios/run")
 async def run_scenario(run_scenario_request: RunScenarioRequest):

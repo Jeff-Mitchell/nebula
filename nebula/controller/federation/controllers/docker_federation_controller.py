@@ -222,10 +222,9 @@ class DockerFederationController(FederationController):
                             if index == idx:
                                 if index in additionals:
                                     self.logger.info(f"Deploying additional participant: {index}")
-                                    deployed_successfully = self._start_node(node, nebula_federation.network_name, nebula_federation.base_network_name, nebula_federation.base, nebula_federation.last_index_deployed, nebula_federation)
+                                    deployed_successfully = self._start_node(nebula_federation.scenario_name, node, nebula_federation.network_name, nebula_federation.base_network_name, nebula_federation.base, nebula_federation.last_index_deployed, nebula_federation)
                                     if deployed_successfully:
                                         self.logger.info(f"Deployment successfully for additional participant: {index}")
-                                        nebula_federation.participants_alive += 1
                                     nebula_federation.last_index_deployed += 1
                                     #additionals.remove(index)
                                     adds_deployed.add(index)
@@ -522,12 +521,12 @@ class DockerFederationController(FederationController):
                 # deploy initial nodes
                 self.logger.info(f"Deployment starting for participant {idx}")
                 federation.round_per_participant[idx] = 0
-                deployed_successfully = self._start_node(sb, node, federation.network_name, federation.base_network_name, federation.base, federation.last_index_deployed, federation)
+                deployed_successfully = self._start_node(sb.get_scenario_name(), node, federation.network_name, federation.base_network_name, federation.base, federation.last_index_deployed, federation)
                 if deployed_successfully:
                     federation.last_index_deployed += 1
                     federation.participants_alive += 1
                         
-    def _start_node(self, sb: ScenarioBuilder, node, network_name, base_network_name, base, i, federation: NebulaFederationDocker):
+    def _start_node(self, scenario_name, node, network_name, base_network_name, base, i, federation: NebulaFederationDocker):
         success = True
         client = docker.from_env()
 
@@ -536,7 +535,7 @@ class DockerFederationController(FederationController):
         container_names = []  # Track names for metadata
 
         image = "nebula-core"
-        name = self._get_participant_container_name(sb.get_scenario_name(), node["device_args"]["idx"])
+        name = self._get_participant_container_name(scenario_name, node["device_args"]["idx"])
         if node["device_args"]["accelerator"] == "gpu":
             environment = {
                 "NVIDIA_DISABLE_REQUIRE": True,
@@ -562,7 +561,7 @@ class DockerFederationController(FederationController):
         command = [
             "/bin/bash",
             "-c",
-            f"{start_command} && ifconfig && echo '{base}.1 host.docker.internal' >> /etc/hosts && python /nebula/nebula/core/node.py /nebula/app/config/{sb.get_scenario_name()}/participant_{node['device_args']['idx']}.json",
+            f"{start_command} && ifconfig && echo '{base}.1 host.docker.internal' >> /etc/hosts && python /nebula/nebula/core/node.py /nebula/app/config/{scenario_name}/participant_{node['device_args']['idx']}.json",
         ]
         networking_config = client.api.create_networking_config({
             network_name: client.api.create_endpoint_config(
@@ -571,9 +570,9 @@ class DockerFederationController(FederationController):
             base_network_name: client.api.create_endpoint_config(),
         })
         node["tracking_args"]["log_dir"] = "/nebula/app/logs"
-        node["tracking_args"]["config_dir"] = f"/nebula/app/config/{sb.get_scenario_name()}"
+        node["tracking_args"]["config_dir"] = f"/nebula/app/config/{scenario_name}"
         node["scenario_args"]["controller"] = self.url
-        node["scenario_args"]["deployment"] = sb.get_deployment()
+        node["scenario_args"]["deployment"] = "docker"
         node["security_args"]["certfile"] = f"/nebula/app/certs/participant_{node['device_args']['idx']}_cert.pem"
         node["security_args"]["keyfile"] = f"/nebula/app/certs/participant_{node['device_args']['idx']}_key.pem"
         node["security_args"]["cafile"] = "/nebula/app/certs/ca_cert.pem"
