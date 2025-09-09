@@ -22,16 +22,14 @@ import logging
 
 from nebula.config.config import TRAINING_LOGGER
 from nebula.core.utils.deterministic import enable_deterministic
+from nebula.core.datasets.datasetutils import (
+    wait_for_file,
+    safe_index_array,
+    to_numpy,
+    extract_arrays,
+)
 
 logging_training = logging.getLogger(TRAINING_LOGGER)
-
-
-def wait_for_file(file_path):
-    """Wait until the given file exists, polling every 'interval' seconds."""
-    while not os.path.exists(file_path):
-        logging_training.info(f"Waiting for file: {file_path}")
-        time.sleep(1)
-    return
 
 
 class NebulaPartitionHandler(Dataset, ABC):
@@ -63,8 +61,14 @@ class NebulaPartitionHandler(Dataset, ABC):
 
     def load_data(self):
         if self.empty:
-            logging_training.info(
-                f"[NebulaPartitionHandler] No data loaded for {self.prefix} partition. Empty dataset."
+            # Initialize as an empty dataset; it will be populated later via set_data().
+            # This avoids confusing INFO logs and ensures len(self) is well-defined.
+            self.data = []
+            self.targets = []
+            self.num_classes = 0
+            self.length = 0
+            logging_training.debug(
+                f"[NebulaPartitionHandler] Initializing empty dataset for prefix '{self.prefix}'. Will be populated via set_data()."
             )
             return
         with h5py.File(self.file_path, "r") as f:
@@ -156,8 +160,13 @@ class NebulaPartitionHandler(Dataset, ABC):
             elif typ == "pickle_bytes":
                 logging_training.info(f"Loading compressed pickled bytes object from {name}")
                 return pickle.loads(item[()])
+            elif typ is None:
+                # Plain HDF5 dataset with raw arrays (expected when saving in 'arrays' mode)
+                return item[()]
             else:
-                logging_training.warning(f"[NebulaPartitionHandler] Unknown type encountered: {typ} for item {name}")
+                logging_training.warning(
+                    f"[NebulaPartitionHandler] Unknown dataset type attr '{typ}' for item {name}; loading as raw array"
+                )
                 return item[()]
         else:
             logging_training.warning(f"[NebulaPartitionHandler] Unknown item encountered: {item} for item {name}")
@@ -313,6 +322,7 @@ class NebulaDataset:
         npartitions_parameter=[0.1],
         seed=42,
         config_dir=None,
+        partition_storage_mode: str | None = None,
     ):
         self.num_classes = num_classes
         self.partitions_number = partitions_number
@@ -328,6 +338,16 @@ class NebulaDataset:
         self._npartitions = npartitions
         self._npartitions_parameter = npartitions_parameter
         self._targets_reales = None
+
+        # Default to 'pickle' to preserve legacy behavior unless explicitly overridden
+        mode = (partition_storage_mode or "pickle").lower()
+        if mode not in ("arrays", "pickle"):
+            logging.warning(
+                f"Unknown partition storage mode '{mode}', defaulting to 'pickle'"
+            )
+            mode = "pickle"
+        self.partition_storage_mode = mode
+        logging.info(f"Partition storage mode: {self.partition_storage_mode}")
 
         logging.info(
             f"Dataset {self.__class__.__name__} initialized | Partitions: {self.partitions_number} | IID: {self.iid} | Partition: {self.partition} | Partition parameter: {self.partition_parameter}"
@@ -480,23 +500,68 @@ class NebulaDataset:
             # Save global test data
             file_name = os.path.join(path, "global_test.h5")
             with h5py.File(file_name, "w") as f:
-                indices = list(range(len(self.test_set)))
-                test_data = [self.test_set[i] for i in indices]
-                self.save_partition(test_data, f, "test_data")
-                f["test_data"].attrs["num_classes"] = self.num_classes
-                test_targets = np.array(self.test_set.targets)
-                f.create_dataset("test_targets", data=test_targets, compression="gzip")
+                indices = np.arange(len(self.test_set))
+                if self.partition_storage_mode == "arrays":
+                    data_np, targets_np = extract_arrays(self.test_set, indices)
+                    if data_np is not None and targets_np is not None:
+                        dset = f.create_dataset("test_data", data=data_np, compression="gzip")
+                        dset.attrs["num_classes"] = self.num_classes
+                        f.create_dataset("test_targets", data=targets_np, compression="gzip")
+                    else:
+                        logging.warning(
+                            "partition_storage_mode='arrays' requested but array conversion failed; falling back to pickle for test data"
+                        )
+                        test_data = [self.test_set[i] for i in indices.tolist()]
+                        self.save_partition(test_data, f, "test_data")
+                        f["test_data"].attrs["num_classes"] = self.num_classes
+                        test_targets = to_numpy(getattr(self.test_set, "targets", None))
+                        if test_targets is None:
+                            test_targets = np.array([self.test_set[i][1] for i in indices.tolist()])
+                        f.create_dataset("test_targets", data=test_targets, compression="gzip")
+                else:
+                    test_data = [self.test_set[i] for i in indices.tolist()]
+                    self.save_partition(test_data, f, "test_data")
+                    f["test_data"].attrs["num_classes"] = self.num_classes
+                    test_targets = to_numpy(getattr(self.test_set, "targets", None))
+                    if test_targets is None:
+                        test_targets = np.array([self.test_set[i][1] for i in indices.tolist()])
+                    f.create_dataset("test_targets", data=test_targets, compression="gzip")
 
             for participant in range(self.partitions_number):
                 file_name = os.path.join(path, f"participant_{participant}_train.h5")
                 with h5py.File(file_name, "w") as f:
                     logging.info(f"Saving training data for participant {participant} in {file_name}")
-                    indices = self.train_indices_map[participant]
-                    train_data = [self.train_set[i] for i in indices]
-                    self.save_partition(train_data, f, "train_data")
-                    f["train_data"].attrs["num_classes"] = self.num_classes
-                    train_targets = np.array([self.train_set.targets[i] for i in indices])
-                    f.create_dataset("train_targets", data=train_targets, compression="gzip")
+                    indices = np.array(self.train_indices_map[participant])
+
+                    if self.partition_storage_mode == "arrays":
+                        data_np, targets_np = extract_arrays(self.train_set, indices)
+                        if data_np is not None and targets_np is not None:
+                            dset = f.create_dataset("train_data", data=data_np, compression="gzip")
+                            dset.attrs["num_classes"] = self.num_classes
+                            f.create_dataset("train_targets", data=targets_np, compression="gzip")
+                        else:
+                            logging.warning(
+                                f"partition_storage_mode='arrays' requested but array conversion failed; falling back to pickle for participant {participant}"
+                            )
+                            train_data = [self.train_set[i] for i in indices.tolist()]
+                            self.save_partition(train_data, f, "train_data")
+                            f["train_data"].attrs["num_classes"] = self.num_classes
+                            train_targets_arr = getattr(self.train_set, "targets", None)
+                            if train_targets_arr is not None:
+                                train_targets = safe_index_array(train_targets_arr, indices)
+                            else:
+                                train_targets = np.array([self.train_set[i][1] for i in indices.tolist()])
+                            f.create_dataset("train_targets", data=train_targets, compression="gzip")
+                    else:
+                        train_data = [self.train_set[i] for i in indices.tolist()]
+                        self.save_partition(train_data, f, "train_data")
+                        f["train_data"].attrs["num_classes"] = self.num_classes
+                        train_targets_arr = getattr(self.train_set, "targets", None)
+                        if train_targets_arr is not None:
+                            train_targets = safe_index_array(train_targets_arr, indices)
+                        else:
+                            train_targets = np.array([self.train_set[i][1] for i in indices.tolist()])
+                        f.create_dataset("train_targets", data=train_targets, compression="gzip")
                     logging.info(f"Partition saved for participant {participant}.")
 
             logging.info("Successfully saved all partition files.")

@@ -29,6 +29,50 @@ class EdgeIIoTsetPartitionHandler(NebulaPartitionHandler):
 
         return data, target
 
+    def get_feature_dim(self) -> int | None:
+        """Infer and return the feature dimensionality for Edge-IIoTset.
+
+        Tries in this order:
+        - If `self.data` has shape and is 2D, return second dimension.
+        - Otherwise, fetch one sample and infer from its flattened size or length.
+        Returns None if it cannot be inferred.
+        """
+        d = getattr(self, "data", None)
+        try:
+            if d is not None and hasattr(d, "shape") and len(d.shape) >= 2:
+                return int(d.shape[1])
+        except Exception:
+            pass
+
+        try:
+            sample = self[0][0]
+            if hasattr(sample, "numel"):
+                return int(sample.numel())
+            return int(len(sample))
+        except Exception:
+            return None
+
+    def get_num_classes(self) -> int | None:
+        """Return number of classes stored in the partition if available.
+
+        Falls back to computing it from targets when attribute is missing.
+        """
+        try:
+            if getattr(self, "num_classes", None):
+                return int(self.num_classes)
+        except Exception:
+            pass
+
+        try:
+            import numpy as np
+
+            t = getattr(self, "targets", None)
+            if t is None:
+                return None
+            return int(len(np.unique(t)))
+        except Exception:
+            return None
+
 
 class EdgeIIoTsetDataset(NebulaDataset):
     def __init__(
@@ -53,6 +97,8 @@ class EdgeIIoTsetDataset(NebulaDataset):
             partition_parameter=partition_parameter,
             seed=seed,
             config_dir=config_dir,
+            # Use array storage for Edge-IIoT to keep numeric features compact
+            partition_storage_mode="arrays",
         )
         self.train_set = None
         self.test_set = None
