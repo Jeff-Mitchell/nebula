@@ -498,6 +498,48 @@ async def get_least_memory_gpu():
     return await controller_get(url)
 
 
+@app.post("/platform/api/datasets/edge-iiotset/download", response_class=JSONResponse)
+async def api_download_edge_iiotset_dataset(request: Request, session: dict = Depends(get_session)):
+    """
+    Trigger dataset download for Edge-IIoTset via the controller.
+
+    Returns JSON with status and message. Requires a logged-in session.
+    """
+    if "user" not in session:
+        raise HTTPException(status_code=401, detail="Unauthorized")
+
+    url = f"http://{settings.controller_host}:{settings.controller_port}/datasets/edge-iiotset/download"
+
+    async def _background_download():
+        try:
+            result = await controller_post(url)
+            logging.info(f"[Edge-IIoTset] Controller download response (bg): {result}")
+        except Exception as e:
+            logging.exception(f"[Edge-IIoTset] Controller download failed (bg): {e}")
+
+    # Fire-and-forget to avoid browser timeouts; status will be checked via polling
+    try:
+        asyncio.create_task(_background_download())
+    except Exception as e:
+        logging.exception(f"[Edge-IIoTset] Failed to schedule background download: {e}")
+        raise HTTPException(status_code=500, detail="Failed to start download")
+
+    return JSONResponse({"status": "started", "message": "Download started"})
+
+
+@app.get("/platform/api/datasets/edge-iiotset/status", response_class=JSONResponse)
+async def api_status_edge_iiotset_dataset(session: dict = Depends(get_session)):
+    """
+    Proxy to controller for checking if Edge-IIoTset dataset is already present.
+    """
+    if "user" not in session:
+        raise HTTPException(status_code=401, detail="Unauthorized")
+    url = f"http://{settings.controller_host}:{settings.controller_port}/datasets/edge-iiotset/status"
+    result = await controller_get(url)
+    logging.info(f"[Edge-IIoTset] Controller status response: {result}")
+    return JSONResponse(result)
+
+
 # ─────────────────────────────────────────────
 # VPN helpers
 # ─────────────────────────────────────────────

@@ -240,6 +240,169 @@ async def get_least_memory_gpu():
     }
 
 
+# ──────────────────────────────────────────────────────────────
+# Datasets · Edge-IIoTset download
+# ──────────────────────────────────────────────────────────────
+@app.post("/datasets/edge-iiotset/download")
+async def download_edge_iiotset_dataset(request: Request):
+    """
+    Download the Edge-IIoTset dataset into the dataset data directory used by Nebula.
+
+    Behavior:
+    - If any CSV is already present in the data directory, returns status already_present.
+    - Otherwise attempts to download
+    - Supports CSV direct download or ZIP files (extracts CSV files into data dir).
+
+    Returns JSON with 'status' and 'message'.
+    """
+    import zipfile
+    import aiohttp
+
+    # Resolve Edge-IIoT data directory
+    try:
+        import nebula.core.datasets.edgeiiot.edgeiiot as edge_mod
+        data_dir = os.path.join(os.path.dirname(os.path.abspath(edge_mod.__file__)), "data")
+    except Exception:
+        # Fallback relative path
+        data_dir = os.path.join(os.path.dirname(__file__), "..", "core", "datasets", "edgeiiot", "data")
+        data_dir = os.path.abspath(data_dir)
+
+    os.makedirs(data_dir, exist_ok=True)
+
+    # If a CSV already exists, assume dataset is present
+    existing_csvs = [f for f in os.listdir(data_dir) if f.lower().endswith('.csv')]
+    if existing_csvs:
+        return {"status": "already_present", "message": "Edge-IIoTset dataset already present"}
+
+    # Candidate URL: request-provided or env var or Kaggle API default
+    url = (
+        "https://www.kaggle.com/api/v1/datasets/download/"
+        "mohamedamineferrag/edgeiiotset-cyber-security-dataset-of-iot-iiot"
+    )
+
+    tmp_path = os.path.join(data_dir, "edgeiiot_download.tmp")
+    try:
+        downloaded = False
+
+        # Prefer curl if available (handles -L redirects well for Kaggle URL)
+        import shutil, asyncio
+        if shutil.which("curl") is not None:
+            try:
+                cmd = [
+                    "curl", "-fL", "--retry", "3", "--retry-delay", "2",
+                    "-o", tmp_path, url,
+                ]
+                proc = await asyncio.create_subprocess_exec(
+                    *cmd,
+                    stdout=asyncio.subprocess.PIPE,
+                    stderr=asyncio.subprocess.PIPE,
+                )
+                out, err = await proc.communicate()
+                if proc.returncode == 0 and os.path.exists(tmp_path) and os.path.getsize(tmp_path) > 0:
+                    downloaded = True
+                else:
+                    logging.warning(f"curl download failed (code {proc.returncode}): {err.decode(errors='ignore')}")
+            except Exception as e:
+                logging.warning(f"curl not usable for download, falling back to HTTP client: {e}")
+
+        if not downloaded:
+            # Fallback to aiohttp streaming download
+            timeout = aiohttp.ClientTimeout(total=60 * 30)  # up to 30 minutes
+            headers = {"User-Agent": "nebula-edgeiiot-downloader/1.0"}
+            async with aiohttp.ClientSession(timeout=timeout) as session:
+                async with session.get(url, headers=headers, allow_redirects=True) as resp:
+                    if resp.status != 200:
+                        raise HTTPException(status_code=resp.status, detail=f"Failed to download: HTTP {resp.status}")
+                    # Stream to tmp file
+                    with open(tmp_path, "wb") as f:
+                        async for chunk in resp.content.iter_chunked(1024 * 1024):
+                            if chunk:
+                                f.write(chunk)
+
+        # Determine if ZIP or CSV
+        with zipfile.ZipFile(tmp_path, 'r') as zf:
+            # Extract everything, then pick the required CSV
+            zf.extractall(data_dir)
+        os.remove(tmp_path)
+
+        # Locate the specific CSV inside "Selected dataset for ML and DL/DNN-EdgeIIoT-dataset.csv"
+        wanted_name = "DNN-EdgeIIoT-dataset.csv"
+        wanted_path = None
+        for root, _, files in os.walk(data_dir):
+            if wanted_name in files:
+                wanted_path = os.path.join(root, wanted_name)
+                break
+
+        # Fallback: pick the first CSV found
+        if not wanted_path:
+            for root, _, files in os.walk(data_dir):
+                for f in files:
+                    if f.lower().endswith('.csv'):
+                        wanted_path = os.path.join(root, f)
+                        break
+                if wanted_path:
+                    break
+
+        if not wanted_path:
+            raise HTTPException(status_code=500, detail="CSV not found after extraction")
+
+        # Move and rename to data_dir/Edge-IIoTset-dataset.csv
+        final_csv = os.path.join(data_dir, "Edge-IIoTset-dataset.csv")
+        if os.path.abspath(wanted_path) != os.path.abspath(final_csv):
+            os.replace(wanted_path, final_csv)
+
+        # Cleanup: remove everything in data_dir except the final CSV
+        for entry in os.listdir(data_dir):
+            full = os.path.join(data_dir, entry)
+            if os.path.abspath(full) == os.path.abspath(final_csv):
+                continue
+            try:
+                if os.path.isdir(full):
+                    shutil.rmtree(full, ignore_errors=True)
+                else:
+                    os.remove(full)
+            except Exception:
+                pass
+
+        return {"status": "downloaded", "message": "Edge-IIoTset dataset downloaded"}
+
+    except HTTPException:
+        # Re-raise FastAPI HTTPException
+        raise
+    except Exception as e:
+        # Cleanup tmp on error
+        try:
+            if os.path.exists(tmp_path):
+                os.remove(tmp_path)
+        except Exception:
+            pass
+        logging.exception(f"Error downloading Edge-IIoTset: {e}")
+        raise HTTPException(status_code=500, detail="Error downloading Edge-IIoTset dataset")
+
+
+@app.get("/datasets/edge-iiotset/status")
+async def status_edge_iiotset_dataset():
+    """
+    Return whether the Edge-IIoTset dataset is already present in the data directory.
+    """
+    try:
+        import nebula.core.datasets.edgeiiot.edgeiiot as edge_mod
+        data_dir = os.path.join(os.path.dirname(os.path.abspath(edge_mod.__file__)), "data")
+    except Exception:
+        data_dir = os.path.join(os.path.dirname(__file__), "..", "core", "datasets", "edgeiiot", "data")
+        data_dir = os.path.abspath(data_dir)
+
+    present = False
+    try:
+        if os.path.isdir(data_dir):
+            existing_csvs = [f for f in os.listdir(data_dir) if f.lower().endswith('.csv')]
+            present = len(existing_csvs) > 0
+    except Exception:
+        present = False
+
+    return {"present": present}
+
+
 @app.get("/available_gpus/")
 async def get_available_gpu():
     """

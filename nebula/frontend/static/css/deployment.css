@@ -235,3 +235,15 @@ button[title]:hover::after {
     background:#e9ecef;
     cursor:not-allowed;
 }
+
+/* Edge-IIoTset download progress (ensure visible even with theme overrides) */
+#edge-dataset-download-progress {
+    background-color: #eee !important;
+    border-radius: 4px;
+    overflow: hidden;
+}
+#edge-dataset-download-progress-bar {
+    height: 100% !important;
+    min-height: 8px;
+    background-color: #5bc0de !important; /* info blue default */
+}

@@ -396,14 +396,22 @@
                     <h5 class="step-number">Dataset <i class="fa fa-database"></i>
                     </h5>
                     <h5 class="step-title">Federated dataset</h5>
-                    <div class="form-check form-check-inline">
+                    <div class="form-check form-check-inline" style="display: flex; align-items: center; gap: 10px;">
                         <select class="form-control" id="datasetSelect" name="dataset"
                             style="display: inline; width: 50%">
                         </select>
+                        <button id="download-edge-dataset-btn" type="button" class="btn btn-dark btn-sm" style="display: none;" title="Download Edge-IIoTset dataset">
+                            <i class="fa fa-download" aria-hidden="true"></i>
+                            <span style="margin-left: 6px;">Download dataset</span>
+                        </button>
                         <small id="datasetHelp" class="form-text text-muted">
                             <i id="datasetHelpIcon" class="fa fa-info-circle" style="cursor: pointer;"></i>
                         </small>
                     </div>
+                    <div id="edge-dataset-download-progress" class="progress" style="display: none; height: 18px; margin-top: 8px; width: 50%;">
+                        <div id="edge-dataset-download-progress-bar" class="progress-bar" role="progressbar" style="width: 0%;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
+                    </div>
+                    <small id="edge-dataset-download-status" class="form-text text-muted" style="display: none;">Preparing download…</small>
                     <h5 class="step-title">Dataset type</h5>
                     <div class="form-check form-check-inline">
                         <select class="form-control" id="iidSelect" name="iid" style="display: inline; width: 50%">

@@ -7,6 +7,7 @@ import ReputationManager from './reputation.js';
 import SaManager from './situational-awareness.js';
 import GraphSettings from './graph-settings.js';
 import Utils from './utils.js';
+import DatasetManager from './dataset.js';
 import TrustworthinessManager from './trustworthiness.js';
 
 const DeploymentManager = (function() {
@@ -44,6 +45,7 @@ const DeploymentManager = (function() {
         window.GraphSettings = GraphSettings;
         window.DeploymentManager = DeploymentManager;
         window.Utils = Utils;
+        window.DatasetManager = DatasetManager;
     }
 
     function getGraphWidth() {
@@ -57,7 +59,6 @@ const DeploymentManager = (function() {
     function initializeEventListeners() {
         window.addEventListener("resize", handleResize);
         window.addEventListener("click", handleOutsideClick);
-        setupDatasetListeners();
         //setupInputValidation();
     }
 
@@ -114,19 +115,10 @@ const DeploymentManager = (function() {
         return true;
     }
 
-    function setupDatasetListeners() {
-        const datasetSelect = document.getElementById("datasetSelect");
-        if (datasetSelect) {
-            datasetSelect.addEventListener("change", () => {
-                // Update model options based on selected dataset
-                updateModelOptions(datasetSelect.value);
-            });
-        }
-    }
 
     function initializeSelectElements() {
-        // Initialize dataset options
-        populateDatasetOptions();
+        // Initialize dataset controls
+        DatasetManager.initialize();
 
         // Initialize topology options
         const topologySelect = document.getElementById("predefined-topology-select");
@@ -202,61 +194,6 @@ const DeploymentManager = (function() {
         }
     }
 
-    function populateDatasetOptions() {
-        const datasetSelect = document.getElementById("datasetSelect");
-        if (!datasetSelect) return;
-
-        // Clear existing options
-        datasetSelect.innerHTML = "";
-
-        // Add dataset options
-        const datasets = ['MNIST', 'FashionMNIST', 'EMNIST', 'CIFAR10', 'CIFAR100', 'Edge-IIoTset'];
-        datasets.forEach(dataset => {
-            const option = document.createElement("option");
-            option.value = dataset;
-            option.textContent = dataset;
-            datasetSelect.appendChild(option);
-        });
-
-        // Set default value and trigger change event
-        datasetSelect.value = 'MNIST';
-        datasetSelect.dispatchEvent(new Event('change'));
-    }
-
-    function updateModelOptions(dataset) {
-        const modelSelect = document.getElementById("modelSelect");
-        if (!modelSelect) return;
-
-        // Clear existing options
-        modelSelect.innerHTML = "";
-
-        // Add appropriate models based on dataset
-        const models = getModelsForDataset(dataset);
-        models.forEach(model => {
-            const option = document.createElement("option");
-            option.value = model;
-            option.textContent = model;
-            modelSelect.appendChild(option);
-        });
-    }
-
-    function getModelsForDataset(dataset) {
-        // Return appropriate models based on dataset
-        switch(dataset.toLowerCase()) {
-            case 'mnist':
-            case 'fashionmnist':
-            case 'emnist':
-                return ['MLP', 'CNN'];
-            case 'cifar10':
-                return ['CNN', 'ResNet9', 'fastermobilenet', 'simplemobilenet', 'CNNv2', 'CNNv3'];
-            case 'cifar100':
-                return ['CNN'];
-            case 'edge-iiotset':
-                return ['EdgeIIoTsetMLP'];
-            default:
-                return ['MLP', 'CNN'];
-        }
-    }
 
     function setupInputValidation() {
         const numericInputs = document.querySelectorAll('input[type="number"]');
