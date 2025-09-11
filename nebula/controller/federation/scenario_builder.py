@@ -865,7 +865,7 @@ class ScenarioBuilder():
     def visualize_topology(self, config_participants, path, plot):
         try:
             self.tm.update_nodes(config_participants)
-            self.tm.draw_graph(path, plot)
+            self.tm.draw_graph(path=path, plot=plot)
         except Exception as e:
             self.logger.info(f"ERROR: cannot visualize topology - {e}")    
 
