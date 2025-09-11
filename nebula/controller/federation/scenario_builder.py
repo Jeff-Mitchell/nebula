@@ -445,7 +445,6 @@ class ScenarioBuilder():
         # Trustworthiness
         try:
             if self.sd.get("with_trustworthiness", None):
-                #participant_config["trust_args"] = 
                 addons_config["trustworthiness"] = self._configure_trustworthiness()
         except Exception as e:
             self.logger.info(f"ERROR: Cannot build trustworthiness configuration - {e}")
@@ -453,7 +452,6 @@ class ScenarioBuilder():
         # Reputation
         try:
             if self.sd.get("reputation", None) and self.sd["reputation"]["enabled"] and not node_config["role"] == "malicious":
-                #participant_config["defense_args"]["reputation"] = self._configure_reputation()
                 addons_config["reputation"] = self._configure_reputation() 
         except Exception as e:
             self.logger.info(f"ERROR: Cannot build reputation configuration - {e}")
@@ -462,7 +460,6 @@ class ScenarioBuilder():
         try:
             network_args: dict = (self.sd.get("network_args"), None)
             if network_args and isinstance(network_args, dict) and network_args.get("enabled", None):
-                #participant_config["network_args"]["network_simulation"] =  self._configure_network_simulation()
                 addons_config["network_simulation"] = self._configure_network_simulation()
         except Exception as e:
             self.logger.info(f"ERROR: Cannot build network simulation configuration - {e}")
@@ -477,7 +474,6 @@ class ScenarioBuilder():
         # Mobility
         try:
             if self.sd.get("mobility", None):
-                #participant_config["addons"].append("mobility")
                 addons_config["mobility"] = self._configure_mobility_args()
         except Exception as e:
             self.logger.info(f"ERROR: Cannot build mobility configuration - {e}")
@@ -485,7 +481,6 @@ class ScenarioBuilder():
         # Situational awareness module
         try:
             if self._situational_awareness_needed():
-                #participant_config["situational_awareness"] = self._configure_situational_awareness(index)
                 addons_config["situational_awareness"] =  self._configure_situational_awareness(index)
         except Exception as e:
             self.logger.info(f"ERROR: Cannot build situational awareness configuration - {e}")

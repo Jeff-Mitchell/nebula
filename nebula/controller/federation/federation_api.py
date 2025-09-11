@@ -12,9 +12,6 @@ from nebula.controller.federation.federation_controller import FederationControl
 from nebula.controller.federation.factory_federation_controller import federation_controller_factory
 from nebula.controller.federation.utils_requests import RunScenarioRequest, StopScenarioRequest
 
-#TODO  Route the request to the right controller
- 
-#fed_controller: FederationController = None
 fed_controllers: Dict[str, FederationController] = {}
 
 @asynccontextmanager
@@ -66,7 +63,6 @@ async def run_scenario(run_scenario_request: RunScenarioRequest):
     else:
         return {"message": "Experyment type not allowed"}
     
-#TODO need to use fedID?
 @app.post("/scenarios/stop")
 async def stop_scenario(stop_scenario_request: StopScenarioRequest):
     global fed_controllers
