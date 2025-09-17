@@ -18,6 +18,23 @@ from fastapi.concurrency import asynccontextmanager
 
 from nebula.controller.http_helpers import remote_get, remote_post_form
 from nebula.utils import APIUtils, DockerUtils
+from nebula.database.utils_requests import (
+    NodesUpdateRequest,
+    factory_requests_path,
+    ScenarioUpdateRequest,
+    ScenarioStopRequest,
+    ScenarioRemoveRequest,
+    ScenarioFinishRequest,
+    NotesUpdateRequest,
+    NotesRemoveRequest,
+    NodesRemoveRequest,
+    UserAddRequest,
+    UserDeleteRequest,
+    UserUpdateRequest,
+    UserVerifyRequest,
+    Routes,
+    RunScenarioRequest,
+)
 
 # URL for the database API
 DATABASE_API_URL = os.environ.get("NEBULA_DATABASE_API_URL", "http://nebula-database:5051")
@@ -124,7 +141,7 @@ app = FastAPI(lifespan=lifespan)
 
 
 # Define endpoints outside the Controller class
-@app.get("/")
+@app.get(Routes.INIT)
 async def read_root():
     """
     Root endpoint of the NEBULA Controller API.
@@ -135,7 +152,7 @@ async def read_root():
     return {"message": "Welcome to the NEBULA Controller API"}
 
 
-@app.get("/status")
+@app.get(Routes.STATUS)
 async def get_status():
     """
     Check the status of the NEBULA Controller API.
@@ -146,7 +163,7 @@ async def get_status():
     return {"status": "NEBULA Controller API is running"}
 
 
-@app.get("/resources")
+@app.get(Routes.RESOURCES)
 async def get_resources():
     """
     Get system resource usage including RAM and GPU memory usage.
@@ -188,7 +205,7 @@ async def get_resources():
     }
 
 
-@app.get("/least_memory_gpu")
+@app.get(Routes.LEAST_MEMORY_GPU)
 async def get_least_memory_gpu():
     """
     Identify the GPU with the highest memory usage above a threshold (50%).
@@ -230,7 +247,7 @@ async def get_least_memory_gpu():
     }
 
 
-@app.get("/available_gpus/")
+@app.get(Routes.AVAILABLE_GPUS)
 async def get_available_gpu():
     """
     Get the list of GPUs with memory usage below 5%.
@@ -289,10 +306,8 @@ def validate_physical_fields(data: dict):
         raise HTTPException(status_code=400, detail=str(e))
 
 
-@app.post("/scenarios/run")
-async def run_scenario(
-    scenario_data: dict = Body(..., embed=True), role: str = Body(..., embed=True), user: str = Body(..., embed=True)
-):
+@app.post(Routes.RUN)
+async def run_scenario(run_scenario_request: RunScenarioRequest):
     """
     Launches a new scenario based on the provided configuration.
 
@@ -308,6 +323,10 @@ async def run_scenario(
     import subprocess
 
     from nebula.controller.scenarios import ScenarioManagement
+
+    # Unpack request data (role is intentionally ignored for now)
+    scenario_data = run_scenario_request.scenario_data
+    user = run_scenario_request.user
 
     validate_physical_fields(scenario_data)
 
@@ -340,7 +359,7 @@ async def run_scenario(
     return scenarioManagement.scenario_name
 
 
-@app.post("/scenarios/stop")
+@app.post(Routes.STOP)
 async def stop_scenario(
     scenario_name: str = Body(..., embed=True),
     all: bool = Body(False, embed=True),
@@ -369,13 +388,15 @@ async def stop_scenario(
 
     ScenarioManagement.cleanup_scenario_containers()
     try:
-        await APIUtils.post(f"{DATABASE_API_URL}/scenarios/stop", data={"scenario_name": scenario_name, "all": all})
+        path = factory_requests_path("stop")
+        payload = ScenarioStopRequest(scenario_name=scenario_name, all=all).dict()
+        await APIUtils.post(f"{DATABASE_API_URL}{path}", data=payload)
     except Exception as e:
         logging.exception(f"Error setting scenario {scenario_name} to finished: {e}")
         raise HTTPException(status_code=500, detail="Internal server error")
 
 
-@app.post("/scenarios/remove")
+@app.post(Routes.REMOVE)
 async def remove_scenario(
     scenario_name: str = Body(..., embed=True),
 ):
@@ -391,7 +412,9 @@ async def remove_scenario(
     from nebula.controller.scenarios import ScenarioManagement
 
     try:
-        await APIUtils.post(f"{DATABASE_API_URL}/scenarios/remove", data={"scenario_name": scenario_name})
+        path = factory_requests_path("remove")
+        payload = ScenarioRemoveRequest(scenario_name=scenario_name).dict()
+        await APIUtils.post(f"{DATABASE_API_URL}{path}", data=payload)
         ScenarioManagement.remove_files_by_scenario(scenario_name)
 
     except Exception as e:
@@ -401,7 +424,7 @@ async def remove_scenario(
     return {"message": f"Scenario {scenario_name} removed successfully"}
 
 
-@app.get("/scenarios/{user}/{role}")
+@app.get(Routes.GET_SCENARIOS_BY_USER)
 async def get_scenarios(
     user: Annotated[str, Path(regex="^[a-zA-Z0-9_-]+$", min_length=1, max_length=50, description="Valid username")],
     role: Annotated[str, Path(regex="^[a-zA-Z0-9_-]+$", min_length=1, max_length=50, description="Valid role")],
@@ -417,13 +440,14 @@ async def get_scenarios(
         dict: A list of scenarios and the currently running scenario.
     """
     try:
-        return await APIUtils.get(f"{DATABASE_API_URL}/scenarios/{user}/{role}")
+        path = factory_requests_path("get_scenarios_by_user", user=user, role=role)
+        return await APIUtils.get(f"{DATABASE_API_URL}{path}")
     except Exception as e:
         logging.exception(f"Error obtaining scenarios: {e}")
         raise HTTPException(status_code=500, detail="Internal server error")
 
 
-@app.post("/scenarios/update")
+@app.post(Routes.UPDATE)
 async def update_scenario(
     scenario_name: str = Body(..., embed=True),
     start_time: str = Body(..., embed=True),
@@ -447,21 +471,22 @@ async def update_scenario(
         dict: A message confirming the update.
     """
     try:
-        payload = {
-            "scenario_name": scenario_name,
-            "start_time": start_time,
-            "end_time": end_time,
-            "scenario": scenario,
-            "status": status,
-            "username": username,
-        }
-        return await APIUtils.post(f"{DATABASE_API_URL}/scenarios/update", data=payload)
+        payload = ScenarioUpdateRequest(
+            scenario_name=scenario_name,
+            start_time=start_time,
+            end_time=end_time,
+            scenario=scenario,
+            status=status,
+            username=username,
+        ).dict()
+        path = factory_requests_path("update")
+        return await APIUtils.post(f"{DATABASE_API_URL}{path}", data=payload)
     except Exception as e:
         logging.exception(f"Error updating scenario {scenario_name}: {e}")
         raise HTTPException(status_code=500, detail="Internal server error")
 
 
-@app.post("/scenarios/set_status_to_finished")
+@app.post(Routes.FINISH)
 async def set_scenario_status_to_finished(
     scenario_name: str = Body(..., embed=True), all: bool = Body(False, embed=True)
 ):
@@ -476,14 +501,15 @@ async def set_scenario_status_to_finished(
         dict: A message confirming the operation.
     """
     try:
-        payload = {"scenario_name": scenario_name, "all": all}
-        return await APIUtils.post(f"{DATABASE_API_URL}/scenarios/set_status_to_finished", data=payload)
+        payload = ScenarioFinishRequest(scenario_name=scenario_name, all=all).dict()
+        path = factory_requests_path("finish")
+        return await APIUtils.post(f"{DATABASE_API_URL}{path}", data=payload)
     except Exception as e:
         logging.exception(f"Error setting scenario {scenario_name} to finished: {e}")
         raise HTTPException(status_code=500, detail="Internal server error")
 
 
-@app.get("/scenarios/running")
+@app.get(Routes.RUNNING)
 async def get_running_scenario_endpoint(get_all: bool = False):
     """
     Retrieves the currently running scenario(s).
@@ -495,13 +521,14 @@ async def get_running_scenario_endpoint(get_all: bool = False):
         dict or list: Running scenario(s) information.
     """
     try:
-        return await APIUtils.get(f"{DATABASE_API_URL}/scenarios/running", params={"get_all": str(get_all)})
+        path = factory_requests_path("running")
+        return await APIUtils.get(f"{DATABASE_API_URL}{path}", params={"get_all": str(get_all)})
     except Exception as e:
         logging.exception(f"Error obtaining running scenario: {e}")
         raise HTTPException(status_code=500, detail="Internal server error")
 
 
-@app.get("/scenarios/check/{role}/{scenario_name}")
+@app.get(Routes.CHECK_SCENARIO)
 async def check_scenario(
     role: Annotated[str, Path(regex="^[a-zA-Z0-9_-]+$", min_length=1, max_length=50, description="Valid role")],
     scenario_name: Annotated[
@@ -519,13 +546,14 @@ async def check_scenario(
         dict: Whether the scenario is allowed for the role.
     """
     try:
-        return await APIUtils.get(f"{DATABASE_API_URL}/scenarios/check/{role}/{scenario_name}")
+        path = factory_requests_path("check_scenario", role=role, scenario_name=scenario_name)
+        return await APIUtils.get(f"{DATABASE_API_URL}{path}")
     except Exception as e:
         logging.exception(f"Error checking scenario with role: {e}")
         raise HTTPException(status_code=500, detail="Internal server error")
 
 
-@app.get("/scenarios/{scenario_name}")
+@app.get(Routes.GET_SCENARIOS_BY_SCENARIO_NAME)
 async def get_scenario_by_name_endpoint(
     scenario_name: Annotated[
         str, Path(regex="^[a-zA-Z0-9_-]+$", min_length=1, max_length=50, description="Valid scenario name")
@@ -541,13 +569,14 @@ async def get_scenario_by_name_endpoint(
         dict: The scenario data.
     """
     try:
-        return await APIUtils.get(f"{DATABASE_API_URL}/scenarios/{scenario_name}")
+        path = factory_requests_path("get_scenarios_by_scenario_name", scenario_name=scenario_name)
+        return await APIUtils.get(f"{DATABASE_API_URL}{path}")
     except Exception as e:
         logging.exception(f"Error obtaining scenario {scenario_name}: {e}")
         raise HTTPException(status_code=500, detail="Internal server error")
 
 
-@app.get("/nodes/{scenario_name}")
+@app.get(Routes.NODES_BY_SCENARIO_NAME)
 async def list_nodes_by_scenario_name_endpoint(
     scenario_name: Annotated[
         str, Path(regex="^[a-zA-Z0-9_-]+$", min_length=1, max_length=50, description="Valid scenario name")
@@ -563,13 +592,14 @@ async def list_nodes_by_scenario_name_endpoint(
         list: List of nodes.
     """
     try:
-        return await APIUtils.get(f"{DATABASE_API_URL}/nodes/{scenario_name}")
+        path = factory_requests_path("get_nodes_by_scenario_name", scenario_name=scenario_name)
+        return await APIUtils.get(f"{DATABASE_API_URL}{path}")
     except Exception as e:
         logging.exception(f"Error obtaining nodes: {e}")
         raise HTTPException(status_code=500, detail="Internal server error")
 
 
-@app.post("/nodes/{scenario_name}/update")
+@app.post(Routes.NODES_UPDATE_BY_SCENARIO)
 async def update_nodes(
     scenario_name: Annotated[
         str,
@@ -588,12 +618,18 @@ async def update_nodes(
         dict: Confirmation or response from the frontend.
     """
     try:
-        config = await request.json()
-        timestamp = datetime.datetime.now()
-        config["timestamp"] = str(timestamp)
+        config:dict = await request.json()
+        config["timestamp"] = str(datetime.datetime.now())
 
-        # Update the node in database
-        await APIUtils.post(f"{DATABASE_API_URL}/nodes/update", data=config)
+        mobility_args = config.get("mobility_args", None)
+        if not mobility_args:
+            config["mobility_args"] = {"38.0235", "-1.1744"}
+        # Validate and normalize payload
+        validated = NodesUpdateRequest(**config)
+
+        # Update the node in database with validated data
+        path = factory_requests_path("update_nodes")
+        await APIUtils.post(f"{DATABASE_API_URL}{path}", data=validated.dict())
 
     except Exception as e:
         logging.exception(f"Error updating nodes: {e}")
@@ -606,7 +642,7 @@ async def update_nodes(
     return await APIUtils.post(url, data=config)
 
 
-@app.post("/nodes/{scenario_name}/done")
+@app.post(Routes.NODES_DONE_BY_SCENARIO)
 async def node_done(
     scenario_name: Annotated[
         str,
@@ -633,7 +669,7 @@ async def node_done(
     return await APIUtils.post(url, data=data)
 
 
-@app.post("/nodes/remove")
+@app.post(Routes.NODES_REMOVE)
 async def remove_nodes_by_scenario_name_endpoint(scenario_name: str = Body(..., embed=True)):
     """
     Endpoint to remove all nodes associated with a scenario.
@@ -644,7 +680,9 @@ async def remove_nodes_by_scenario_name_endpoint(scenario_name: str = Body(..., 
     Returns a success message or an error if something goes wrong.
     """
     try:
-        await APIUtils.post(f"{DATABASE_API_URL}/nodes/remove", data={"scenario_name": scenario_name})
+        path = factory_requests_path("remove_nodes")
+        payload = NodesRemoveRequest(scenario_name=scenario_name).dict()
+        await APIUtils.post(f"{DATABASE_API_URL}{path}", data=payload)
     except Exception as e:
         logging.exception(f"Error removing nodes: {e}")
         raise HTTPException(status_code=500, detail="Internal server error")
@@ -652,7 +690,7 @@ async def remove_nodes_by_scenario_name_endpoint(scenario_name: str = Body(..., 
     return {"message": f"Nodes for scenario {scenario_name} removed successfully"}
 
 
-@app.get("/notes/{scenario_name}")
+@app.get(Routes.NOTES_BY_SCENARIO_NAME)
 async def get_notes_by_scenario_name(
     scenario_name: Annotated[
         str, Path(regex="^[a-zA-Z0-9_-]+$", min_length=1, max_length=50, description="Valid scenario name")
@@ -662,13 +700,14 @@ async def get_notes_by_scenario_name(
     Endpoint to retrieve notes associated with a scenario.
     """
     try:
-        return await APIUtils.get(f"{DATABASE_API_URL}/notes/{scenario_name}")
+        path = factory_requests_path("get_notes_by_scenario_name", scenario_name=scenario_name)
+        return await APIUtils.get(f"{DATABASE_API_URL}{path}")
     except Exception as e:
         logging.exception(f"Error obtaining notes for scenario {scenario_name}: {e}")
         raise HTTPException(status_code=500, detail="Internal server error")
 
 
-@app.post("/notes/update")
+@app.post(Routes.NOTES_UPDATE)
 async def update_notes_by_scenario_name(scenario_name: str = Body(..., embed=True), notes: str = Body(..., embed=True)):
     """
     Endpoint to update notes for a given scenario.
@@ -680,14 +719,15 @@ async def update_notes_by_scenario_name(scenario_name: str = Body(..., embed=Tru
     Returns a success message or an error if something goes wrong.
     """
     try:
-        payload = {"scenario_name": scenario_name, "notes": notes}
-        return await APIUtils.post(f"{DATABASE_API_URL}/notes/update", data=payload)
+        payload = NotesUpdateRequest(scenario_name=scenario_name, notes=notes).dict()
+        path = factory_requests_path("update_notes")
+        return await APIUtils.post(f"{DATABASE_API_URL}{path}", data=payload)
     except Exception as e:
         logging.exception(f"Error updating notes: {e}")
         raise HTTPException(status_code=500, detail="Internal server error")
 
 
-@app.post("/notes/remove")
+@app.post(Routes.NOTES_REMOVE)
 async def remove_notes_by_scenario_name_endpoint(scenario_name: str = Body(..., embed=True)):
     """
     Endpoint to remove notes associated with a scenario.
@@ -698,7 +738,9 @@ async def remove_notes_by_scenario_name_endpoint(scenario_name: str = Body(..., 
     Returns a success message or an error if something goes wrong.
     """
     try:
-        await APIUtils.post(f"{DATABASE_API_URL}/notes/remove", data={"scenario_name": scenario_name})
+        path = factory_requests_path("remove_notes")
+        payload = NotesRemoveRequest(scenario_name=scenario_name).dict()
+        await APIUtils.post(f"{DATABASE_API_URL}{path}", data=payload)
     except Exception as e:
         logging.exception(f"Error removing notes: {e}")
         raise HTTPException(status_code=500, detail="Internal server error")
@@ -706,7 +748,7 @@ async def remove_notes_by_scenario_name_endpoint(scenario_name: str = Body(..., 
     return {"message": f"Notes for scenario {scenario_name} removed successfully"}
 
 
-@app.get("/user/list")
+@app.get(Routes.USER_LIST)
 async def list_users_controller(all_info: bool = False):
     """
     Endpoint to list all users in the database.
@@ -717,13 +759,14 @@ async def list_users_controller(all_info: bool = False):
     Returns a list of users or raises an HTTPException on error.
     """
     try:
-        return await APIUtils.get(f"{DATABASE_API_URL}/user/list", params={"all_info": str(all_info)})
+        path = factory_requests_path("list_users")
+        return await APIUtils.get(f"{DATABASE_API_URL}{path}", params={"all_info": str(all_info)})
     except Exception as e:
         logging.exception(f"Error retrieving users: {e}")
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Error retrieving users: {e}")
 
 
-@app.get("/user/{scenario_name}")
+@app.get(Routes.USER_BY_SCENARIO_NAME)
 async def get_user_by_scenario_name_endpoint(
     scenario_name: Annotated[
         str, Path(regex="^[a-zA-Z0-9_-]+$", min_length=1, max_length=50, description="Valid scenario name")
@@ -738,13 +781,14 @@ async def get_user_by_scenario_name_endpoint(
     Returns user info or raises an HTTPException on error.
     """
     try:
-        return await APIUtils.get(f"{DATABASE_API_URL}/user/{scenario_name}")
+        path = factory_requests_path("get_user_by_scenario_name", scenario_name=scenario_name)
+        return await APIUtils.get(f"{DATABASE_API_URL}{path}")
     except Exception as e:
         logging.exception(f"Error obtaining user for scenario {scenario_name}: {e}")
         raise HTTPException(status_code=500, detail="Internal server error")
 
 
-@app.get("/discover-vpn")
+@app.get(Routes.DISCOVER_VPN)
 async def discover_vpn():
     """
     Calls the Tailscale CLI to fetch the current status in JSON format,
@@ -785,7 +829,7 @@ async def discover_vpn():
         raise HTTPException(status_code=500, detail="No devices discovered")
 
 
-@app.get("/physical/run/{ip}", tags=["physical"])
+@app.get(Routes.PHYSICAL_RUN, tags=["physical"])
 async def physical_run(ip: str):
     status, data = await remote_get(ip, "/run/")
 
@@ -796,7 +840,7 @@ async def physical_run(ip: str):
     raise HTTPException(status_code=status, detail=data)
 
 
-@app.get("/physical/stop/{ip}", tags=["physical"])
+@app.get(Routes.PHYSICAL_STOP, tags=["physical"])
 async def physical_stop(ip: str):
     status, data = await remote_get(ip, "/stop/")
     if status == 200:
@@ -806,7 +850,7 @@ async def physical_stop(ip: str):
     raise HTTPException(status_code=status, detail=data)
 
 
-@app.put("/physical/setup/{ip}", tags=["physical"],
+@app.put(Routes.PHYSICAL_SETUP, tags=["physical"],
          status_code=status.HTTP_201_CREATED)
 async def physical_setup(
     ip: str,
@@ -839,7 +883,7 @@ async def physical_setup(
 # ──────────────────────────────────────────────────────────────
 # Physical · single-node state
 # ──────────────────────────────────────────────────────────────
-@app.get("/physical/state/{ip}", tags=["physical"])
+@app.get(Routes.PHYSICAL_STATE, tags=["physical"])
 async def get_physical_node_state(ip: str):
     """
     Query a single Raspberry Pi (or other node) for its training state.
@@ -876,7 +920,7 @@ async def get_physical_node_state(ip: str):
 # ──────────────────────────────────────────────────────────────
 # Physical · aggregate state for an entire scenario
 # ──────────────────────────────────────────────────────────────
-@app.get("/physical/scenario-state/{scenario_name}", tags=["physical"])
+@app.get(Routes.PHYSICAL_SCENARIO_STATE, tags=["physical"])
 async def get_physical_scenario_state(scenario_name: str):
     """
     Check the training state of *every* physical node assigned to a scenario.
@@ -926,7 +970,7 @@ async def get_physical_scenario_state(scenario_name: str):
     }
 
 
-@app.post("/user/add")
+@app.post(Routes.USER_ADD)
 async def add_user_controller(user: str = Body(...), password: str = Body(...), role: str = Body(...)):
     """
     Endpoint to add a new user to the database.
@@ -939,14 +983,15 @@ async def add_user_controller(user: str = Body(...), password: str = Body(...), 
     Returns a success message or an error if the user could not be added.
     """
     try:
-        payload = {"user": user, "password": password, "role": role}
-        return await APIUtils.post(f"{DATABASE_API_URL}/user/add", data=payload)
+        payload = UserAddRequest(user=user, password=password, role=role).dict()
+        path = factory_requests_path("add_user")
+        return await APIUtils.post(f"{DATABASE_API_URL}{path}", data=payload)
     except Exception as e:
         logging.exception(f"Error adding user: {e}")
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Error adding user: {e}")
 
 
-@app.post("/user/delete")
+@app.post(Routes.USER_DELETE)
 async def remove_user_controller(user: str = Body(..., embed=True)):
     """
     Controller endpoint that inserts a new user into the database.
@@ -957,13 +1002,15 @@ async def remove_user_controller(user: str = Body(..., embed=True)):
     Returns a success message if the user is deleted, or an HTTP error if an exception occurs.
     """
     try:
-        return await APIUtils.post(f"{DATABASE_API_URL}/user/delete", data={"user": user})
+        path = factory_requests_path("delete_user")
+        payload = UserDeleteRequest(user=user).dict()
+        return await APIUtils.post(f"{DATABASE_API_URL}{path}", data=payload)
     except Exception as e:
         logging.exception(f"Error deleting user: {e}")
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Error deleting user: {e}")
 
 
-@app.post("/user/update")
+@app.post(Routes.USER_UPDATE)
 async def update_user_controller(user: str = Body(...), password: str = Body(...), role: str = Body(...)):
     """
     Controller endpoint that modifies a user of the database.
@@ -976,14 +1023,15 @@ async def update_user_controller(user: str = Body(...), password: str = Body(...
     Returns a success message if the user is updated, or an HTTP error if an exception occurs.
     """
     try:
-        payload = {"user": user, "password": password, "role": role}
-        return await APIUtils.post(f"{DATABASE_API_URL}/user/update", data=payload)
+        payload = UserUpdateRequest(user=user, password=password, role=role).dict()
+        path = factory_requests_path("update_user")
+        return await APIUtils.post(f"{DATABASE_API_URL}{path}", data=payload)
     except Exception as e:
         logging.exception(f"Error updating user: {e}")
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Error updating user: {e}")
 
 
-@app.post("/user/verify")
+@app.post(Routes.USER_VERIFY)
 async def verify_user_controller(user: str = Body(...), password: str = Body(...)):
     """
     Endpoint to verify user credentials.
@@ -995,8 +1043,9 @@ async def verify_user_controller(user: str = Body(...), password: str = Body(...
     Returns the user role on success or raises an error on failure.
     """
     try:
-        payload = {"user": user, "password": password}
-        return await APIUtils.post(f"{DATABASE_API_URL}/user/verify", data=payload)
+        payload = UserVerifyRequest(user=user, password=password).dict()
+        path = factory_requests_path("verify_user")
+        return await APIUtils.post(f"{DATABASE_API_URL}{path}", data=payload)
     except HTTPException as e:
         if e.status_code == 401:
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED) from e

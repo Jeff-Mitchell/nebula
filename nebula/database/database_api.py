@@ -11,6 +11,7 @@ from fastapi import Body, FastAPI, HTTPException, Path, status
 from fastapi.concurrency import asynccontextmanager
 
 from nebula.database.database_adapter_factory import factory_database_adapter
+from nebula.database.utils_requests import Routes
 
 # Get a database instance
 db = factory_database_adapter("PostgresDB")
@@ -67,13 +68,13 @@ async def lifespan(app: FastAPI):
 app = FastAPI(lifespan=lifespan)
 
 
-@app.get("/")
+@app.get(Routes.INIT)
 async def read_root():
     return {"message": "Welcome to the NEBULA Database API"}
 
 
 # Scenarios
-@app.post("/scenarios/update")
+@app.post(Routes.UPDATE)
 async def update_scenario(
     scenario_name: str = Body(..., embed=True),
     start_time: str = Body(..., embed=True),
@@ -90,7 +91,7 @@ async def update_scenario(
         raise HTTPException(status_code=500, detail="Internal server error")
 
 
-@app.post("/scenarios/stop")
+@app.post(Routes.STOP)
 async def stop_scenario(
     scenario_name: str = Body(..., embed=True),
     all: bool = Body(False, embed=True),
@@ -106,7 +107,7 @@ async def stop_scenario(
         raise HTTPException(status_code=500, detail="Internal server error")
 
 
-@app.post("/scenarios/remove")
+@app.post(Routes.REMOVE)
 async def remove_scenario(
     scenario_name: str = Body(..., embed=True),
 ):
@@ -118,7 +119,7 @@ async def remove_scenario(
         raise HTTPException(status_code=500, detail="Internal server error")
 
 
-@app.get("/scenarios/{user}/{role}")
+@app.get(Routes.GET_SCENARIOS_BY_USER)
 async def get_scenarios(
     user: Annotated[str, Path(pattern="^[a-zA-Z0-9_-]+$", min_length=1, max_length=50)],
     role: Annotated[str, Path(pattern="^[a-zA-Z0-9_-]+$", min_length=1, max_length=50)],
@@ -135,7 +136,7 @@ async def get_scenarios(
         raise HTTPException(status_code=500, detail="Internal server error")
 
 
-@app.post("/scenarios/set_status_to_finished")
+@app.post(Routes.FINISH)
 async def set_scenario_status_to_finished(
     scenario_name: str = Body(..., embed=True), all: bool = Body(False, embed=True)
 ):
@@ -150,7 +151,7 @@ async def set_scenario_status_to_finished(
         raise HTTPException(status_code=500, detail="Internal server error")
 
 
-@app.get("/scenarios/running")
+@app.get(Routes.RUNNING)
 async def get_running_scenario_endpoint(get_all: bool = False):
     try:
         return await db.get_running_scenario(get_all=get_all)
@@ -159,7 +160,7 @@ async def get_running_scenario_endpoint(get_all: bool = False):
         raise HTTPException(status_code=500, detail="Internal server error")
 
 
-@app.get("/scenarios/check/{role}/{scenario_name}")
+@app.get(Routes.CHECK_SCENARIO)
 async def check_scenario(
     role: Annotated[str, Path(pattern="^[a-zA-Z0-9_-]+$", min_length=1, max_length=50)],
     scenario_name: Annotated[str, Path(pattern="^[a-zA-Z0-9_-]+$", min_length=1, max_length=50)],
@@ -172,7 +173,7 @@ async def check_scenario(
         raise HTTPException(status_code=500, detail="Internal server error")
 
 
-@app.get("/scenarios/{scenario_name}")
+@app.get(Routes.GET_SCENARIOS_BY_SCENARIO_NAME)
 async def get_scenario_by_name_endpoint(
     scenario_name: Annotated[str, Path(pattern="^[a-zA-Z0-9_-]+$", min_length=1, max_length=50)],
 ):
@@ -185,7 +186,7 @@ async def get_scenario_by_name_endpoint(
 
 
 # Nodes
-@app.get("/nodes/{scenario_name}")
+@app.get(Routes.NODES_BY_SCENARIO_NAME)
 async def list_nodes_by_scenario_name_endpoint(
     scenario_name: Annotated[str, Path(pattern="^[a-zA-Z0-9_-]+$", min_length=1, max_length=50)],
 ):
@@ -197,7 +198,7 @@ async def list_nodes_by_scenario_name_endpoint(
         raise HTTPException(status_code=500, detail="Internal server error")
 
 
-@app.post("/nodes/update")
+@app.post(Routes.NODES_UPDATE)
 async def update_node_record(data: dict):
     try:
         await db.update_node_record(
@@ -222,7 +223,7 @@ async def update_node_record(data: dict):
         raise HTTPException(status_code=500, detail="Internal server error")
 
 
-@app.post("/nodes/remove")
+@app.post(Routes.NODES_REMOVE)
 async def remove_nodes_by_scenario_name_endpoint(scenario_name: str = Body(..., embed=True)):
     try:
         await db.remove_nodes_by_scenario_name(scenario_name)
@@ -233,7 +234,7 @@ async def remove_nodes_by_scenario_name_endpoint(scenario_name: str = Body(..., 
 
 
 # Notes
-@app.get("/notes/{scenario_name}")
+@app.get(Routes.NOTES_BY_SCENARIO_NAME)
 async def get_notes_by_scenario_name(
     scenario_name: Annotated[str, Path(pattern="^[a-zA-Z0-9_-]+$", min_length=1, max_length=50)],
 ):
@@ -247,7 +248,7 @@ async def get_notes_by_scenario_name(
         raise HTTPException(status_code=500, detail="Internal server error")
 
 
-@app.post("/notes/update")
+@app.post(Routes.NOTES_UPDATE)
 async def update_notes_by_scenario_name(scenario_name: str = Body(..., embed=True), notes: str = Body(..., embed=True)):
     try:
         await db.save_notes(scenario_name, notes)
@@ -257,7 +258,7 @@ async def update_notes_by_scenario_name(scenario_name: str = Body(..., embed=Tru
         raise HTTPException(status_code=500, detail="Internal server error")
 
 
-@app.post("/notes/remove")
+@app.post(Routes.NOTES_REMOVE)
 async def remove_notes_by_scenario_name_endpoint(scenario_name: str = Body(..., embed=True)):
     try:
         await db.remove_note(scenario_name)
@@ -268,7 +269,7 @@ async def remove_notes_by_scenario_name_endpoint(scenario_name: str = Body(..., 
 
 
 # Users
-@app.get("/user/list")
+@app.get(Routes.USER_LIST)
 async def list_users_controller(all_info: bool = False):
     try:
         user_list = await db.list_users(all_info)
@@ -280,7 +281,7 @@ async def list_users_controller(all_info: bool = False):
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Error retrieving users: {e}")
 
 
-@app.get("/user/{scenario_name}")
+@app.get(Routes.USER_BY_SCENARIO_NAME)
 async def get_user_by_scenario_name_endpoint(
     scenario_name: Annotated[str, Path(pattern="^[a-zA-Z0-9_-]+$", min_length=1, max_length=50)],
 ):
@@ -292,7 +293,7 @@ async def get_user_by_scenario_name_endpoint(
         raise HTTPException(status_code=500, detail="Internal server error")
 
 
-@app.post("/user/add")
+@app.post(Routes.USER_ADD)
 async def add_user_controller(user: str = Body(...), password: str = Body(...), role: str = Body(...)):
     try:
         await db.add_user(user, password, role)
@@ -302,7 +303,7 @@ async def add_user_controller(user: str = Body(...), password: str = Body(...), 
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Error adding user: {e}")
 
 
-@app.post("/user/delete")
+@app.post(Routes.USER_DELETE)
 async def remove_user_controller(user: str = Body(..., embed=True)):
     try:
         await db.delete_user_from_db(user)
@@ -312,7 +313,7 @@ async def remove_user_controller(user: str = Body(..., embed=True)):
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Error deleting user: {e}")
 
 
-@app.post("/user/update")
+@app.post(Routes.USER_UPDATE)
 async def update_user_controller(user: str = Body(...), password: str = Body(...), role: str = Body(...)):
     try:
         await db.update_user(user, password, role)
@@ -322,7 +323,7 @@ async def update_user_controller(user: str = Body(...), password: str = Body(...
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Error updating user: {e}")
 
 
-@app.post("/user/verify")
+@app.post(Routes.USER_VERIFY)
 async def verify_user_controller(user: str = Body(...), password: str = Body(...)):
     try:
         user_submitted = user.upper()
