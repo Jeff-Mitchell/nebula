@@ -31,7 +31,7 @@ const DatasetManager = (function() {
         if (!datasetSelect) return;
 
         datasetSelect.innerHTML = "";
-        const datasets = ['MNIST', 'FashionMNIST', 'EMNIST', 'CIFAR10', 'CIFAR100', 'Edge-IIoTset'];
+        const datasets = ['MNIST', 'FashionMNIST', 'EMNIST', 'CIFAR10', 'CIFAR100', 'Edge-IIoTset', 'Edge-IIoTset-binary'];
         datasets.forEach(dataset => {
             const option = document.createElement("option");
             option.value = dataset;
@@ -67,6 +67,8 @@ const DatasetManager = (function() {
                 return ['CNN'];
             case 'edge-iiotset':
                 return ['EdgeIIoTsetMLP'];
+            case 'edge-iiotset-binary':
+                return ['EdgeIIoTsetMLP'];
             default:
                 return ['MLP', 'CNN'];
         }
@@ -77,7 +79,7 @@ const DatasetManager = (function() {
         const progress = document.getElementById('edge-dataset-download-progress');
         const status = document.getElementById('edge-dataset-download-status');
         if (!btn) return;
-        const isEdgeDataset = (selectedDataset === 'Edge-IIoTset');
+        const isEdgeDataset = (selectedDataset === 'Edge-IIoTset' || selectedDataset === 'Edge-IIoTset-binary');
 
         if (!isEdgeDataset) {
             btn.style.display = 'none';

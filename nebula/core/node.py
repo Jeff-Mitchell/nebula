@@ -27,6 +27,7 @@ from nebula.core.datasets.emnist.emnist import EMNISTPartitionHandler
 from nebula.core.datasets.fashionmnist.fashionmnist import FashionMNISTPartitionHandler
 from nebula.core.datasets.mnist.mnist import MNISTPartitionHandler
 from nebula.core.datasets.edgeiiot.edgeiiot import EdgeIIoTsetPartitionHandler
+from nebula.core.datasets.edgeiiot.edgeiiot_binary import EdgeIIoTsetBinaryPartitionHandler
 from nebula.core.datasets.nebuladataset import NebulaPartition
 from nebula.core.models.cifar10.cnn import CIFAR10ModelCNN
 from nebula.core.models.cifar10.cnnV2 import CIFAR10ModelCNN_V2
@@ -148,6 +149,13 @@ async def main(config: Config):
     elif dataset_name == "Edge-IIoTset":
         batch_size = 32
         handler = EdgeIIoTsetPartitionHandler
+        if model_name == "EdgeIIoTsetMLP":
+            model = EdgeIIoTsetMLP()
+        else:
+            raise ValueError(f"Model {model_name} not supported for dataset {dataset_name}")
+    elif dataset_name == "Edge-IIoTset-binary":
+        batch_size = 32
+        handler = EdgeIIoTsetBinaryPartitionHandler
         if model_name == "EdgeIIoTsetMLP":
             model = EdgeIIoTsetMLP()
         else:

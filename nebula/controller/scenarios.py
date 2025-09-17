@@ -22,6 +22,7 @@ from nebula.controller.http_helpers import remote_get, remote_post_form
 from nebula.core.datasets.cifar10.cifar10 import CIFAR10Dataset
 from nebula.core.datasets.cifar100.cifar100 import CIFAR100Dataset
 from nebula.core.datasets.edgeiiot.edgeiiot import EdgeIIoTsetDataset
+from nebula.core.datasets.edgeiiot.edgeiiot_binary import EdgeIIoTsetBinaryDataset
 from nebula.core.datasets.emnist.emnist import EMNISTDataset
 from nebula.core.datasets.fashionmnist.fashionmnist import FashionMNISTDataset
 from nebula.core.datasets.mnist.mnist import MNISTDataset
@@ -1087,6 +1088,16 @@ class ScenarioManagement:
         elif dataset_name == "Edge-IIoTset":
             dataset = EdgeIIoTsetDataset(
                 num_classes=15,
+                partitions_number=self.n_nodes,
+                iid=self.scenario.iid,
+                partition=self.scenario.partition_selection,
+                partition_parameter=self.scenario.partition_parameter,
+                seed=42,
+                config_dir=self.config_dir,
+            )
+        elif dataset_name == "Edge-IIoTset-binary":
+            dataset = EdgeIIoTsetBinaryDataset(
+                num_classes=2,
                 partitions_number=self.n_nodes,
                 iid=self.scenario.iid,
                 partition=self.scenario.partition_selection,
