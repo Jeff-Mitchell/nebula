@@ -54,7 +54,7 @@ class Reporter:
         self.frequency = self.config.participant["reporter_args"]["report_frequency"]
         self.grace_time = self.config.participant["reporter_args"]["grace_time_reporter"]
         self.data_queue = asyncio.Queue()
-        self.url = f"http://{self.config.participant['scenario_args']['controller']}/nodes/{self.config.participant['scenario_args']['name']}/update"
+        self.url = f"http://{self.config.participant['scenario_args']['controller']}/nodes/{self.config.participant["scenario_args"]["federation_id"]}/update"
         self.counter = 0
 
         self.first_net_metrics = True
@@ -170,7 +170,7 @@ class Reporter:
               might be temporarily overloaded.
             - Logs exceptions if the connection attempt to the controller fails.
         """
-        url = f"http://{self.config.participant['scenario_args']['controller']}/nodes/{self.config.participant['scenario_args']['name']}/done"
+        url = f"http://{self.config.participant['scenario_args']['controller']}/nodes/{self.config.participant["scenario_args"]["federation_id"]}/done"
         data = json.dumps({"idx": self.config.participant["device_args"]["idx"],
                            "deployment": self.config.participant["scenario_args"]["deployment"],
                            "federation_id": self.config.participant["scenario_args"]["federation_id"]})

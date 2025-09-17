@@ -10,7 +10,7 @@ from fastapi import HTTPException
 from nebula.utils import LoggerUtils
 from nebula.controller.federation.federation_controller import FederationController 
 from nebula.controller.federation.factory_federation_controller import federation_controller_factory
-from nebula.controller.federation.utils_requests import RunScenarioRequest, StopScenarioRequest
+from nebula.controller.federation.utils_requests import RunScenarioRequest, StopScenarioRequest, Routes
 
 fed_controllers: Dict[str, FederationController] = {}
 
@@ -51,7 +51,7 @@ async def read_root():
     logger.info("Test curl succesfull")
     return {"message": "Welcome to the NEBULA Federation Controller API"}
 
-@app.post("/scenarios/run")
+@app.post(Routes.RUN)
 async def run_scenario(run_scenario_request: RunScenarioRequest):
     global fed_controllers
     experiment_type = run_scenario_request.scenario_data["deployment"]
@@ -63,7 +63,7 @@ async def run_scenario(run_scenario_request: RunScenarioRequest):
     else:
         return {"message": "Experyment type not allowed"}
     
-@app.post("/scenarios/stop")
+@app.post(Routes.STOP)
 async def stop_scenario(stop_scenario_request: StopScenarioRequest):
     global fed_controllers
     experiment_type = stop_scenario_request.experiment_type
@@ -75,7 +75,7 @@ async def stop_scenario(stop_scenario_request: StopScenarioRequest):
     else:
         return {"message": "Experyment type not allowed"}
 
-@app.post("/nodes/{scenario_name}/update")
+@app.post(Routes.UPDATE)
 async def update_nodes(
     scenario_name: Annotated[
         str,
@@ -92,7 +92,7 @@ async def update_nodes(
     else:
         return {"message": "Experyment type not allowed on response for update message.."}
 
-@app.post("/nodes/{scenario_name}/done")
+@app.post(Routes.DONE)
 async def update_nodes(
     scenario_name: Annotated[
         str,

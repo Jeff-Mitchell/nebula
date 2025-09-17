@@ -190,7 +190,7 @@ class ProcessesFederationController(FederationController):
                                     adds_deployed.add(index)
             request_body = await request.json()
             payload = {"scenario_name": scenario_name, "data": request_body}
-            asyncio.create_task(self._send_to_hub("update", payload, scenario_name))
+            asyncio.create_task(self._send_to_hub("update", payload, fed_id))
             return {"message": "Node updated successfully in Federation Controller"}
         except Exception as e:
             self.logger.info(f"ERROR: federation ID: ({fed_id}) not found on pool..")
@@ -206,10 +206,10 @@ class ProcessesFederationController(FederationController):
             payload = {"federation_id": federation_id, "scenario_name": scenario_name, "data": request_body}
             self.logger.info(f"All nodes have finished on federation ID: ({federation_id}), reporting to hub..")
             await self._remove_nebula_federation_from_pool(federation_id)
-            asyncio.create_task(self._send_to_hub("finish", payload, scenario_name))
+            asyncio.create_task(self._send_to_hub("finish", payload, federation_id))
 
         payload = {"scenario_name": scenario_name, "data": request_body}
-        asyncio.create_task(self._send_to_hub("done", payload, scenario_name))
+        asyncio.create_task(self._send_to_hub("done", payload, federation_id))
         return {"message": "Nodes done received successfully"}
 
     """                                             ###############################
