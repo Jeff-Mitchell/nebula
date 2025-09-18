@@ -10,7 +10,7 @@ from fastapi import HTTPException
 from nebula.utils import LoggerUtils
 from nebula.controller.federation.federation_controller import FederationController 
 from nebula.controller.federation.factory_federation_controller import federation_controller_factory
-from nebula.controller.federation.utils_requests import RunScenarioRequest, StopScenarioRequest, Routes
+from nebula.controller.federation.utils_requests import RunScenarioRequest, StopScenarioRequest, NodeUpdateRequest, NodeDoneRequest, Routes
 
 fed_controllers: Dict[str, FederationController] = {}
 
@@ -61,7 +61,7 @@ async def run_scenario(run_scenario_request: RunScenarioRequest):
     if controller:
         return await controller.run_scenario(run_scenario_request.federation_id, run_scenario_request.scenario_data, run_scenario_request.user)
     else:
-        return {"message": "Experyment type not allowed"}
+        return {"message": "Experiment type not allowed"}
     
 @app.post(Routes.STOP)
 async def stop_scenario(stop_scenario_request: StopScenarioRequest):
@@ -73,35 +73,33 @@ async def stop_scenario(stop_scenario_request: StopScenarioRequest):
     if controller:
         return await controller.stop_scenario(stop_scenario_request.federation_id)
     else:
-        return {"message": "Experyment type not allowed"}
+        return {"message": "Experiment type not allowed"}
 
 @app.post(Routes.UPDATE)
 async def update_nodes(
     federation_id: str,
-    request: Request,
+    node_update_request: NodeUpdateRequest,
 ):
     global fed_controllers
-    config = await request.json()
-    experiment_type = config["scenario_args"]["deployment"]
+    experiment_type = node_update_request.config["scenario_args"]["deployment"]
     controller = fed_controllers.get(experiment_type, None)
     if controller:
-        return await controller.update_nodes(federation_id, request)
+        return await controller.update_nodes(federation_id, node_update_request)
     else:
-        return {"message": "Experyment type not allowed on response for update message.."}
+        return {"message": "Experiment type not allowed on response for update message.."}
 
 @app.post(Routes.DONE)
-async def update_nodes(
+async def node_done(
     federation_id: str,
-    request: Request,
+    node_done_request: NodeDoneRequest,
 ):
     global fed_controllers
-    config = await request.json()
-    experiment_type = config["deployment"]
+    experiment_type = node_done_request.deployment
     controller = fed_controllers.get(experiment_type, None)
     if controller:
-        return await controller.node_done(federation_id, request)
+        return await controller.node_done(federation_id, node_done_request)
     else:
-        return {"message": "Experyment type not allowed on responde for Node done message.."}
+        return {"message": "Experiment type not allowed on responde for Node done message.."}
 
 if __name__ == "__main__":
     # Parse args from command line

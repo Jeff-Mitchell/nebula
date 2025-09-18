@@ -10,6 +10,15 @@ class StopScenarioRequest(BaseModel):
     experiment_type: str
     federation_id: str
     
+class NodeUpdateRequest(BaseModel):
+    config: Dict[str, Any] = {}    
+    
+class NodeDoneRequest(BaseModel):
+    idx: int
+    deployment: str
+    name: str
+    federation_id: str
+    
 class Routes:
     INIT = "/init"
     RUN = "/scenarios/run"

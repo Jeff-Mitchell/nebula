@@ -8,6 +8,7 @@ import docker
 from nebula.controller.federation.federation_controller import FederationController
 from nebula.controller.federation.scenario_builder import ScenarioBuilder
 from nebula.controller.federation.utils_requests import factory_requests_path
+from nebula.controller.federation.utils_requests import NodeUpdateRequest, NodeDoneRequest
 from typing import Dict
 from fastapi import Request
 from nebula.config.config import Config
@@ -161,8 +162,8 @@ class ProcessesFederationController(FederationController):
             self.logger.exception(f"Error while removing current_scenario_commands.sh file: {e}")
         return False
 
-    async def update_nodes(self, federation_id: str, request: Request):
-        config = await request.json()
+    async def update_nodes(self, federation_id: str, node_update_request: NodeUpdateRequest):
+        config = node_update_request.config
         fed_id = config["scenario_args"]["federation_id"]
         scenario_name = config["scenario_args"]["name"]
 
@@ -189,27 +190,24 @@ class ProcessesFederationController(FederationController):
                                     nebula_federation.last_index_deployed += 1
                                     additionals.remove(index)
                                     adds_deployed.add(index)
-            request_body = await request.json()
-            payload = {"scenario_name": scenario_name, "data": request_body}
+            payload = node_update_request.model_dump()
             asyncio.create_task(self._send_to_hub("update", payload, federation_id=fed_id))
             return {"message": "Node updated successfully in Federation Controller"}
         except Exception as e:
             self.logger.info(f"ERROR: federation ID: ({fed_id}) not found on pool..")
             return {"message": "Node updated failed in Federation Controller, ID not found.."}
 
-    async def node_done(self, federation_id: str, request: Request):
-        request_body = await request.json()
-        scenario_name = request_body["scenario_args"]["name"]
+    async def node_done(self, federation_id: str, node_done_request: NodeDoneRequest):
         nebula_federation = self.nfp[federation_id]
         self.logger.info(f"Node-Done received from node on federation ID: ({federation_id})")
 
         if await nebula_federation.is_experiment_finish():
-            payload = {"federation_id": federation_id, "scenario_name": scenario_name, "data": request_body}
+            payload = node_done_request.model_dump()
             self.logger.info(f"All nodes have finished on federation ID: ({federation_id}), reporting to hub..")
             await self._remove_nebula_federation_from_pool(federation_id)
             asyncio.create_task(self._send_to_hub("finish", payload, federation_id=federation_id))
 
-        payload = {"scenario_name": scenario_name, "data": request_body}
+        payload = node_done_request.model_dump()
         asyncio.create_task(self._send_to_hub("done", payload, federation_id=federation_id))
         return {"message": "Nodes done received successfully"}
 
