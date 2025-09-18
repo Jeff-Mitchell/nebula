@@ -197,7 +197,24 @@ class PostgresDB(DatabaseAdapter):
                 else:
                     command = f"SELECT * FROM nodes ORDER BY {sort_by};"
                     result = await conn.fetch(command)
-                return result
+
+                # Convert to list of dicts and expose latitude/longitude from extras for compatibility
+                rows = []
+                for record in result:
+                    row = dict(record)
+                    extras = row.get("extras")
+                    if isinstance(extras, str):
+                        try:
+                            extras = json.loads(extras)
+                        except json.JSONDecodeError:
+                            extras = None
+                    if isinstance(extras, dict):
+                        if "latitude" in extras and "latitude" not in row:
+                            row["latitude"] = extras.get("latitude")
+                        if "longitude" in extras and "longitude" not in row:
+                            row["longitude"] = extras.get("longitude")
+                    rows.append(row)
+                return rows
         except asyncpg.PostgresError as e:
             logging.error(f"Error occurred while listing nodes: {e}")
             return None
@@ -211,15 +228,42 @@ class PostgresDB(DatabaseAdapter):
             async with self.pool.acquire() as conn:
                 command = "SELECT * FROM nodes WHERE scenario = $1 ORDER BY CAST(idx AS INTEGER) ASC;"
                 result = await conn.fetch(command, scenario_name)
-                return [dict(record) for record in result]
+                rows = []
+                for record in result:
+                    row = dict(record)
+                    extras = row.get("extras")
+                    if isinstance(extras, str):
+                        try:
+                            extras = json.loads(extras)
+                        except json.JSONDecodeError:
+                            extras = None
+                    if isinstance(extras, dict):
+                        if "latitude" in extras and "latitude" not in row:
+                            row["latitude"] = extras.get("latitude")
+                        if "longitude" in extras and "longitude" not in row:
+                            row["longitude"] = extras.get("longitude")
+                    rows.append(row)
+                return rows
         except Exception as e:
             logging.error(f"Error occurred while listing nodes by scenario name: {e}")
             return None
 
 
     async def update_node_record(
-        self, node_uid, idx, ip, port, role, neighbors, latitude, longitude,
-        timestamp, federation, federation_round, scenario, run_hash, malicious,
+        self,
+        node_uid,
+        idx,
+        ip,
+        port,
+        role,
+        neighbors,
+        extras,
+        timestamp,
+        federation,
+        federation_round,
+        scenario,
+        run_hash,
+        malicious,
     ):
         """
         Inserts or updates a node record in the database for a given scenario, ensuring thread-safe access.
@@ -227,6 +271,19 @@ class PostgresDB(DatabaseAdapter):
         async with _node_lock:
             async with self.pool.acquire() as conn:
                 try:
+                    # Ensure `extras` is a JSON string when provided
+                    extras_payload = None
+                    if extras is not None:
+                        if isinstance(extras, str):
+                            extras_payload = extras
+                        else:
+                            try:
+                                extras_payload = json.dumps(extras)
+                            except (TypeError, ValueError):
+                                # Fallback to empty JSON object on serialization issues
+                                logging.warning("Unable to serialize extras to JSON, storing as empty object.")
+                                extras_payload = json.dumps({})
+
                     async with conn.transaction():
                         result = await conn.fetchrow(
                             "SELECT * FROM nodes WHERE uid = $1 AND scenario = $2 FOR UPDATE;",
@@ -237,24 +294,26 @@ class PostgresDB(DatabaseAdapter):
                             # Insert new node
                             await conn.execute(
                                 """
-                                INSERT INTO nodes (uid, idx, ip, port, role, neighbors, latitude, longitude,
-                                                   timestamp, federation, round, scenario, hash, malicious)
-                                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14);
+                                INSERT INTO nodes (uid, idx, ip, port, role, neighbors,
+                                                   timestamp, federation, round, scenario, hash, extras, malicious)
+                                VALUES ($1, $2, $3, $4, $5, $6,
+                                        $7, $8, $9, $10, $11, $12::jsonb, $13);
                                 """,
-                                node_uid, idx, ip, port, role, neighbors, latitude, longitude,
-                                timestamp, federation, federation_round, scenario, run_hash, malicious,
+                                node_uid, idx, ip, port, role, neighbors,
+                                timestamp, federation, federation_round, scenario, run_hash, extras_payload, malicious,
                             )
                         else:
                             # Update existing node
                             await conn.execute(
                                 """
                                 UPDATE nodes SET idx = $1, ip = $2, port = $3, role = $4, neighbors = $5,
-                                latitude = $6, longitude = $7, timestamp = $8, federation = $9, round = $10,
-                                hash = $11, malicious = $12
-                                WHERE uid = $13 AND scenario = $14;
+                                timestamp = $6, federation = $7, round = $8,
+                                hash = $9, extras = $10::jsonb, malicious = $11
+                                WHERE uid = $12 AND scenario = $13;
                                 """,
-                                idx, ip, port, role, neighbors, latitude, longitude,
-                                timestamp, federation, federation_round, run_hash, malicious,
+                                idx, ip, port, role, neighbors,
+                                timestamp, federation, federation_round,
+                                run_hash, extras_payload, malicious,
                                 node_uid, scenario,
                             )
 

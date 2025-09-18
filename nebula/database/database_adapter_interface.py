@@ -73,10 +73,22 @@ class DatabaseAdapter(ABC):
 
     @abstractmethod
     async def update_node_record(
-        self, node_uid, idx, ip, port, role, neighbors, latitude, longitude,
-        timestamp, federation, federation_round, scenario, run_hash, malicious,
+        self,
+        node_uid,
+        idx,
+        ip,
+        port,
+        role,
+        neighbors,
+        extras,
+        timestamp,
+        federation,
+        federation_round,
+        scenario,
+        run_hash,
+        malicious,
     ):
-        """Inserts or updates a node record."""
+        """Inserts or updates a node record. Latitude/longitude must be included in `extras` (JSON)."""
         raise NotImplementedError
 
     @abstractmethod

@@ -389,7 +389,7 @@ async def stop_scenario(
     ScenarioManagement.cleanup_scenario_containers()
     try:
         path = factory_requests_path("stop")
-        payload = ScenarioStopRequest(scenario_name=scenario_name, all=all).dict()
+        payload = ScenarioStopRequest(scenario_name=scenario_name, all=all).model_dump()
         await APIUtils.post(f"{DATABASE_API_URL}{path}", data=payload)
     except Exception as e:
         logging.exception(f"Error setting scenario {scenario_name} to finished: {e}")
@@ -413,7 +413,7 @@ async def remove_scenario(
 
     try:
         path = factory_requests_path("remove")
-        payload = ScenarioRemoveRequest(scenario_name=scenario_name).dict()
+        payload = ScenarioRemoveRequest(scenario_name=scenario_name).model_dump()
         await APIUtils.post(f"{DATABASE_API_URL}{path}", data=payload)
         ScenarioManagement.remove_files_by_scenario(scenario_name)
 
@@ -478,7 +478,7 @@ async def update_scenario(
             scenario=scenario,
             status=status,
             username=username,
-        ).dict()
+        ).model_dump()
         path = factory_requests_path("update")
         return await APIUtils.post(f"{DATABASE_API_URL}{path}", data=payload)
     except Exception as e:
@@ -501,7 +501,7 @@ async def set_scenario_status_to_finished(
         dict: A message confirming the operation.
     """
     try:
-        payload = ScenarioFinishRequest(scenario_name=scenario_name, all=all).dict()
+        payload = ScenarioFinishRequest(scenario_name=scenario_name, all=all).model_dump()
         path = factory_requests_path("finish")
         return await APIUtils.post(f"{DATABASE_API_URL}{path}", data=payload)
     except Exception as e:
@@ -623,13 +623,18 @@ async def update_nodes(
 
         mobility_args = config.get("mobility_args", None)
         if not mobility_args:
-            config["mobility_args"] = {"38.0235", "-1.1744"}
+            # default Murcia coordinates if none provided
+            config["mobility_args"] = {"latitude": "38.0235", "longitude": "-1.1744"}
         # Validate and normalize payload
         validated = NodesUpdateRequest(**config)
 
-        # Update the node in database with validated data
+        # Build payload and include extras with mobility data
+        payload = validated.model_dump()
+        payload["extras"] = payload.get("mobility_args", {})
+
+        # Update the node in database with validated data and extras
         path = factory_requests_path("update_nodes")
-        await APIUtils.post(f"{DATABASE_API_URL}{path}", data=validated.dict())
+        await APIUtils.post(f"{DATABASE_API_URL}{path}", data=payload)
 
     except Exception as e:
         logging.exception(f"Error updating nodes: {e}")
@@ -681,7 +686,7 @@ async def remove_nodes_by_scenario_name_endpoint(scenario_name: str = Body(..., 
     """
     try:
         path = factory_requests_path("remove_nodes")
-        payload = NodesRemoveRequest(scenario_name=scenario_name).dict()
+        payload = NodesRemoveRequest(scenario_name=scenario_name).model_dump()
         await APIUtils.post(f"{DATABASE_API_URL}{path}", data=payload)
     except Exception as e:
         logging.exception(f"Error removing nodes: {e}")
@@ -719,7 +724,7 @@ async def update_notes_by_scenario_name(scenario_name: str = Body(..., embed=Tru
     Returns a success message or an error if something goes wrong.
     """
     try:
-        payload = NotesUpdateRequest(scenario_name=scenario_name, notes=notes).dict()
+        payload = NotesUpdateRequest(scenario_name=scenario_name, notes=notes).model_dump()
         path = factory_requests_path("update_notes")
         return await APIUtils.post(f"{DATABASE_API_URL}{path}", data=payload)
     except Exception as e:
@@ -739,7 +744,7 @@ async def remove_notes_by_scenario_name_endpoint(scenario_name: str = Body(..., 
     """
     try:
         path = factory_requests_path("remove_notes")
-        payload = NotesRemoveRequest(scenario_name=scenario_name).dict()
+        payload = NotesRemoveRequest(scenario_name=scenario_name).model_dump()
         await APIUtils.post(f"{DATABASE_API_URL}{path}", data=payload)
     except Exception as e:
         logging.exception(f"Error removing notes: {e}")
@@ -983,7 +988,7 @@ async def add_user_controller(user: str = Body(...), password: str = Body(...), 
     Returns a success message or an error if the user could not be added.
     """
     try:
-        payload = UserAddRequest(user=user, password=password, role=role).dict()
+        payload = UserAddRequest(user=user, password=password, role=role).model_dump()
         path = factory_requests_path("add_user")
         return await APIUtils.post(f"{DATABASE_API_URL}{path}", data=payload)
     except Exception as e:
@@ -1003,7 +1008,7 @@ async def remove_user_controller(user: str = Body(..., embed=True)):
     """
     try:
         path = factory_requests_path("delete_user")
-        payload = UserDeleteRequest(user=user).dict()
+        payload = UserDeleteRequest(user=user).model_dump()
         return await APIUtils.post(f"{DATABASE_API_URL}{path}", data=payload)
     except Exception as e:
         logging.exception(f"Error deleting user: {e}")
@@ -1023,7 +1028,7 @@ async def update_user_controller(user: str = Body(...), password: str = Body(...
     Returns a success message if the user is updated, or an HTTP error if an exception occurs.
     """
     try:
-        payload = UserUpdateRequest(user=user, password=password, role=role).dict()
+        payload = UserUpdateRequest(user=user, password=password, role=role).model_dump()
         path = factory_requests_path("update_user")
         return await APIUtils.post(f"{DATABASE_API_URL}{path}", data=payload)
     except Exception as e:
@@ -1043,7 +1048,7 @@ async def verify_user_controller(user: str = Body(...), password: str = Body(...
     Returns the user role on success or raises an error on failure.
     """
     try:
-        payload = UserVerifyRequest(user=user, password=password).dict()
+        payload = UserVerifyRequest(user=user, password=password).model_dump()
         path = factory_requests_path("verify_user")
         return await APIUtils.post(f"{DATABASE_API_URL}{path}", data=payload)
     except HTTPException as e:

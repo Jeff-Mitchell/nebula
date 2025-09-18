@@ -201,6 +201,9 @@ async def list_nodes_by_scenario_name_endpoint(
 @app.post(Routes.NODES_UPDATE)
 async def update_node_record(data: dict):
     try:
+        # Store latitude/longitude (and any mobility details) inside extras JSONB
+        # Prefer explicit `extras` sent by controller; fallback to `mobility_args` for backward compatibility
+        extras = data.get("extras") or data.get("mobility_args", {})
         await db.update_node_record(
             str(data["device_args"]["uid"]),
             str(data["device_args"]["idx"]),
@@ -208,8 +211,7 @@ async def update_node_record(data: dict):
             str(data["network_args"]["port"]),
             str(data["device_args"]["role"]),
             data["network_args"]["neighbors"],
-            str(data["mobility_args"]["latitude"]),
-            str(data["mobility_args"]["longitude"]),
+            extras,
             str(data["timestamp"]),
             str(data["scenario_args"]["federation"]),
             str(data["federation_args"]["round"]),

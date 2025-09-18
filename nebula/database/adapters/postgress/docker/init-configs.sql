@@ -21,15 +21,24 @@ CREATE TABLE IF NOT EXISTS nodes (
   port TEXT,
   role TEXT,
   neighbors TEXT[],
-  latitude TEXT,
-  longitude TEXT,
   timestamp TEXT,
   federation TEXT,
   round TEXT,
   scenario TEXT,
   hash TEXT,
+  extras JSONB,
   malicious TEXT
 );
+
+-- Ensure column exists for pre-existing installations
+ALTER TABLE IF EXISTS nodes
+  ADD COLUMN IF NOT EXISTS extras JSONB;
+
+-- Drop legacy columns for latitude/longitude if present
+ALTER TABLE IF EXISTS nodes
+  DROP COLUMN IF EXISTS latitude;
+ALTER TABLE IF EXISTS nodes
+  DROP COLUMN IF EXISTS longitude;
 
 -- 3) Configs as JSONB
 DROP INDEX IF EXISTS idx_configs_config_gin;
