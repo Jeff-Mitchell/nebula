@@ -2,8 +2,16 @@ import logging
 import os
 import socket
 
+import aiohttp
 import docker
 
+import re
+from typing import Optional
+
+from fastapi import HTTPException
+from aiohttp import ClientConnectorError
+from aiohttp.client_exceptions import ClientError
+import asyncio
 
 class FileUtils:
     """
@@ -95,7 +103,6 @@ class SocketUtils:
             if cls.is_port_open(port):
                 return port
         return None
-
 
 class DockerUtils:
     """
@@ -202,3 +209,150 @@ class DockerUtils:
             logging.exception("Error interacting with Docker")
         except Exception:
             logging.exception("Unexpected error")
+            
+
+class LoggerUtils:
+    
+    @staticmethod
+    def configure_logger(
+        name: Optional[str] = None,
+        log_file: Optional[str] = None,
+        level: int = logging.INFO,
+        console: bool = True,
+        strip_ansi: bool = True,
+        file_mode: str = "w",
+        log_format: str = "[%(asctime)s] [%(name)s] [%(levelname)s] %(message)s",
+        date_format: str = "%Y-%m-%d %H:%M:%S",
+    ) -> logging.Logger:
+        """
+        Configure and return a logger with optional console and file output.
+
+        Args:
+            name (str): Logger name. If None, the root logger is used.
+            log_file (str): Path to the log file.
+            level (int): Logging level (DEBUG, INFO, etc).
+            console (bool): If True, output is also printed to the console.
+            strip_ansi (bool): Placeholder for future ANSI stripping support.
+            file_mode (str): File mode for the log file ('a' for append, 'w' for overwrite).
+            log_format (str): Format for log messages.
+            date_format (str): Format for timestamps.
+
+        Returns:
+            logging.Logger: Configured logger instance.
+        """
+        logger = logging.getLogger(name)
+        logger.setLevel(level)
+
+        # Prevent duplicate handler setup
+        if getattr(logger, "_is_configured", False):
+            return logger
+
+        formatter = logging.Formatter(fmt=log_format, datefmt=date_format)
+
+        if log_file:
+            os.makedirs(os.path.dirname(log_file), exist_ok=True)
+            fh = logging.FileHandler(log_file, mode=file_mode)
+            fh.setLevel(level)
+            fh.setFormatter(formatter)
+            logger.addHandler(fh)
+
+        if console:
+            ch = logging.StreamHandler()
+            ch.setLevel(level)
+            ch.setFormatter(formatter)
+            logger.addHandler(ch)
+
+        # Mark this logger as configured to avoid re-adding handlers
+        logger._is_configured = True
+        logger.propagate = False
+
+        return logger
+    
+class APIUtils():
+    
+    @staticmethod
+    async def retry_with_backoff(func, *args, max_retries=5, initial_delay=1):
+        """
+        Retry a function with exponential backoff.
+
+        Args:
+            func: The async function to retry
+            *args: Arguments to pass to the function
+            max_retries: Maximum number of retry attempts
+            initial_delay: Initial delay between retries in seconds
+
+        Returns:
+            The result of the function if successful
+
+        Raises:
+            The last exception if all retries fail
+        """
+        delay = initial_delay
+        last_exception = None
+
+        for attempt in range(max_retries):
+            try:
+                return await func(*args)
+            except (ClientConnectorError, ClientError) as e:
+                last_exception = e
+                if attempt < max_retries - 1:
+                    logging.warning(f"Connection attempt {attempt + 1} failed: {str(e)}. Retrying in {delay} seconds...")
+                    await asyncio.sleep(delay)
+                    delay *= 2  # Exponential backoff
+                else:
+                    logging.error(f"All {max_retries} connection attempts failed")
+                    raise last_exception
+
+    @staticmethod
+    async def get(url):
+        """
+        Fetch JSON data from a remote controller endpoint via asynchronous HTTP GET.
+
+        Parameters:
+            url (str): The full URL of the controller API endpoint.
+
+        Returns:
+            Any: Parsed JSON response when the HTTP status code is 200.
+
+        Raises:
+            HTTPException: If the response status is not 200, raises with the response status code and an error detail.
+        """
+
+        async def _get():
+            async with aiohttp.ClientSession() as session:
+                async with session.get(url) as response:
+                    if response.status == 200:
+                        return await response.json()
+                    else:
+                        raise HTTPException(status_code=response.status, detail="Error fetching data")
+
+        return await APIUtils.retry_with_backoff(_get)
+
+    @staticmethod
+    async def post(url, data=None):
+        """
+        Asynchronously send a JSON payload via HTTP POST to a controller endpoint and parse the response.
+
+        Parameters:
+            url (str): The full URL of the controller API endpoint.
+            data (Any, optional): JSON-serializable payload to include in the POST request (default: None).
+
+        Returns:
+            Any: Parsed JSON response when the HTTP status code is 200.
+
+        Raises:
+            HTTPException: If the response status is not 200, with the status code and an error detail.
+        """
+
+        async def _post():
+            async with aiohttp.ClientSession() as session:
+                async with session.post(url, json=data) as response:
+                    if response.status == 200:
+                        return await response.json()
+                    else:
+                        detail = await response.text()
+                        raise HTTPException(status_code=response.status, detail=detail)
+
+        return await APIUtils.retry_with_backoff(_post)
+
+    

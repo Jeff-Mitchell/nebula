@@ -194,6 +194,9 @@ async def list_nodes_by_scenario_name(scenario_name):
     except Exception as e:
         logging.error(f"Error occurred while listing nodes by scenario name: {e}")
         return None
+    finally:
+        if conn:
+            await conn.close()
 
 
 async def update_node_record(
@@ -321,7 +324,7 @@ async def get_all_scenarios_and_check_completed(username, role, sort_by="start_t
     if sort_by not in allowed_sort_fields:
         sort_by = "start_time"  # Safe default value
 
-    # Building the ORDER BY clause
+    # Building the ORDER BY clause (same as get_all_scenarios)
     if sort_by == "start_time":
         order_by_clause = """
             ORDER BY
