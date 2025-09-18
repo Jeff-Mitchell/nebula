@@ -200,8 +200,9 @@ class DockerFederationController(FederationController):
                 
         return True #TODO care about cases
 
-    async def update_nodes(self, scenario_name: str, request: Request):
+    async def update_nodes(self, federation_id: str, request: Request):
         config = await request.json()
+        scenario_name = config["scenario_args"]["name"]
         fed_id = config["scenario_args"]["federation_id"]
 
         try:
@@ -230,15 +231,15 @@ class DockerFederationController(FederationController):
                                     adds_deployed.add(index)
             request_body = await request.json()
             payload = {"scenario_name": scenario_name, "data": request_body}
-            asyncio.create_task(self._send_to_hub("update", payload, fed_id))
+            asyncio.create_task(self._send_to_hub("update", payload, federation_id=fed_id))
             return {"message": "Node updated successfully in Federation Controller"}
         except Exception as e:
             self.logger.info(f"ERROR: federation ID: ({fed_id}), {e}")
             return {"message": "Node updated failed in Federation Controller"} 
 
-    async def node_done(self, scenario_name: str, request: Request):
+    async def node_done(self, federation_id: str, request: Request):
         request_body = await request.json()
-        federation_id = request_body["federation_id"]
+        scenario_name = request_body["scenario_args"]["name"]
         nebula_federation = self.nfp[federation_id]
         self.logger.info(f"Node-Done received from node on federation ID: ({federation_id})")
 
@@ -246,10 +247,10 @@ class DockerFederationController(FederationController):
             payload = {"federation_id": federation_id, "scenario_name": scenario_name, "data": request_body}
             self.logger.info(f"All nodes have finished on federation ID: ({federation_id}), reporting to hub..")
             await self._remove_nebula_federation_from_pool(federation_id)
-            asyncio.create_task(self._send_to_hub("finish", payload, federation_id))
+            asyncio.create_task(self._send_to_hub("finish", payload, federation_id=federation_id))
 
         payload = {"scenario_name": scenario_name, "data": request_body}
-        asyncio.create_task(self._send_to_hub("done", payload, federation_id))
+        asyncio.create_task(self._send_to_hub("done", payload, federation_id=federation_id))
         return {"message": "Nodes done received successfully"}
 
     """                                             ###############################
@@ -292,7 +293,7 @@ class DockerFederationController(FederationController):
     async def _send_to_hub(self, path, payload, scenario_name="",  federation_id="" ):
         try:
             url_request = self._hub_url + factory_requests_path(path, scenario_name, federation_id)
-            # self.logger.info(f"Seding to hub, url: {url_request}")
+            # self.logger.info(f"Sending to hub, url: {url_request}")
             # self.logger.info(f"payload sent to hub, data: {payload}")
             await APIUtils.post(url_request, payload)
         except Exception as e:

@@ -77,10 +77,7 @@ async def stop_scenario(stop_scenario_request: StopScenarioRequest):
 
 @app.post(Routes.UPDATE)
 async def update_nodes(
-    scenario_name: Annotated[
-        str,
-        Path(regex="^[a-zA-Z0-9_-]+$", min_length=1, max_length=50, description="Valid scenario name"),
-    ],
+    federation_id: str,
     request: Request,
 ):
     global fed_controllers
@@ -88,16 +85,13 @@ async def update_nodes(
     experiment_type = config["scenario_args"]["deployment"]
     controller = fed_controllers.get(experiment_type, None)
     if controller:
-        return await controller.update_nodes(scenario_name, request)
+        return await controller.update_nodes(federation_id, request)
     else:
         return {"message": "Experyment type not allowed on response for update message.."}
 
 @app.post(Routes.DONE)
 async def update_nodes(
-    scenario_name: Annotated[
-        str,
-        Path(regex="^[a-zA-Z0-9_-]+$", min_length=1, max_length=50, description="Valid scenario name"),
-    ],
+    federation_id: str,
     request: Request,
 ):
     global fed_controllers
@@ -105,7 +99,7 @@ async def update_nodes(
     experiment_type = config["deployment"]
     controller = fed_controllers.get(experiment_type, None)
     if controller:
-        return await controller.node_done(scenario_name, request)
+        return await controller.node_done(federation_id, request)
     else:
         return {"message": "Experyment type not allowed on responde for Node done message.."}
 
