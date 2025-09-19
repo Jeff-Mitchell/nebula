@@ -158,3 +158,6 @@ data/
 data-analysis/
 network-analysis/
 docker-compose.yml
+
+# Scenario jsons
+scenarios/
