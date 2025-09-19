@@ -177,12 +177,9 @@ class Lightning:
         self.create_logger()
         num_gpus = len(self.config.participant["device_args"]["gpu_id"])
         if self.config.participant["device_args"]["accelerator"] == "gpu" and num_gpus > 0:
-            # Use all available GPUs
-            if num_gpus > 1:
-                gpu_index = [self.config.participant["device_args"]["idx"] % num_gpus]
-            # Use the selected GPU
-            else:
-                gpu_index = self.config.participant["device_args"]["gpu_id"]
+            # In Docker containers, always use GPU 0 (mapped from host GPU)
+            # Since we're always using Docker deployment, host GPU always becomes container GPU 0
+            gpu_index = [0]
             logging_training.info(f"Creating trainer with accelerator GPU ({gpu_index})")
             self._trainer = Trainer(
                 callbacks=[ModelSummary(max_depth=1), NebulaProgressBar()],
@@ -326,8 +323,8 @@ class Lightning:
         try:
             self._trainer.test(self.model, self.datamodule, verbose=True)
             metrics = self._trainer.callback_metrics
-            loss = metrics.get('val_loss/dataloader_idx_0', None).item()
-            accuracy = metrics.get('val_accuracy/dataloader_idx_0', None).item()
+            loss = metrics.get("val_loss/dataloader_idx_0", None).item()
+            accuracy = metrics.get("val_accuracy/dataloader_idx_0", None).item()
             return loss, accuracy
         except Exception as e:
             logging_training.error(f"Error in _test_sync: {e}")

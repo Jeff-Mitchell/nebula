@@ -2181,20 +2181,9 @@ async def assign_available_gpu(scenario_data, role):
         else:
             available_gpus = available_system_gpus
 
-    # Assign gpus based in user role
-    if len(available_gpus) > 0:
-        if role == "user":
-            scenario_data["accelerator"] = "gpu"
-            scenario_data["gpu_id"] = [available_gpus.pop()]
-        elif role == "admin":
-            scenario_data["accelerator"] = "gpu"
-            scenario_data["gpu_id"] = available_gpus
-        else:
-            scenario_data["accelerator"] = "cpu"
-            scenario_data["gpu_id"] = []
-    else:
-        scenario_data["accelerator"] = "cpu"
-        scenario_data["gpu_id"] = []
+    # Hard coded to gpu0 due to docker mapping and limitations
+    scenario_data["accelerator"] = "gpu"
+    scenario_data["gpu_id"] = [0]
 
     return scenario_data
 

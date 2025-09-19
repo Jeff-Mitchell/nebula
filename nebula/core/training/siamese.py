@@ -59,19 +59,12 @@ class Siamese:
             leave=True,
         )
         if self.config.participant["device_args"]["accelerator"] == "gpu":
-            # NEBULA uses 2 GPUs (max) to distribute the nodes.
-            if self.config.participant["device_args"]["devices"] > 1:
-                # If you have more than 2 GPUs, you should specify which ones to use.
-                gpu_id = ([1] if self.config.participant["device_args"]["idx"] % 2 == 0 else [2],)
-            else:
-                # If there is only one GPU, it will be used.
-                gpu_id = [1]
-
+            # Hard coded to gpu0 due to docker mapping and limitations
             self.__trainer = Trainer(
                 callbacks=[RichModelSummary(max_depth=1), progress_bar],
                 max_epochs=self.epochs,
                 accelerator=self.config.participant["device_args"]["accelerator"],
-                devices=gpu_id,
+                devices=[0],
                 logger=self.logger,
                 log_every_n_steps=50,
                 enable_checkpointing=False,
