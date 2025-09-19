@@ -116,13 +116,13 @@ class NebulaModel(pl.LightningModule, ABC):
             logging_training.info(f"{phase} / Confusion Matrix:\n{cm}")
 
         if plot_cm:
-            cm_numpy = cm.numpy().astype(int)
+            cm_numpy = cm.numpy()
             classes = [i for i in range(self.num_classes)]
             fig, ax = plt.subplots(figsize=(12, 12))
             sns.heatmap(
                 cm_numpy,
-                annot=False,
-                fmt="",
+                annot=True,
+                fmt=".4f",
                 cmap="Blues",
                 ax=ax,
                 xticklabels=classes,
@@ -176,8 +176,8 @@ class NebulaModel(pl.LightningModule, ABC):
         self.test_metrics_global = metrics.clone(prefix="Test (Global)/")
         del metrics
         if confusion_matrix is None:
-            self.cm = MulticlassConfusionMatrix(num_classes=num_classes)
-            self.cm_global = MulticlassConfusionMatrix(num_classes=num_classes)
+            self.cm = MulticlassConfusionMatrix(num_classes=num_classes, normalize="true")
+            self.cm_global = MulticlassConfusionMatrix(num_classes=num_classes, normalize="true")
         if seed is not None:
             torch.manual_seed(seed)
             torch.cuda.manual_seed_all(seed)
@@ -306,7 +306,7 @@ class NebulaModel(pl.LightningModule, ABC):
         loss = self.criterion(y_pred, y)
         y_pred_classes = torch.argmax(y_pred, dim=1)
         accuracy = torch.mean((y_pred_classes == y).float())
-        
+
         if dataloader_idx == 0:
             self.log(f"val_loss", loss, on_epoch=True, prog_bar=False)
             self.log(f"val_accuracy", accuracy, on_epoch=True, prog_bar=False)
