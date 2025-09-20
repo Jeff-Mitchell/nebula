@@ -254,7 +254,7 @@ class TargetedSamplePoisoningStrategy(DataPoisoningStrategy):
         # Create X pattern
         for i in range(0, 10):
             for j in range(0, 10):
-                if i + j <= 9 or i == j:
+                if i + j == 9 or i == j:
                     if len(img.shape) == 3:  # RGB image
                         img[..., i, j] = pattern_value
                     else:  # Grayscale image
