@@ -235,6 +235,11 @@ class TargetedSamplePoisoningStrategy(DataPoisoningStrategy):
         img = self._convert_to_tensor(img)
         img, is_single_point = self._handle_single_point(img)
 
+        # Rearrange dimensions (32, 32, 3) to (3, 32, 32)
+        if len(img.shape) == 3 and img.shape[2] in [1, 3]:  # (H, W, C) format
+            dimensions_reordered = True
+            img = img.permute(2, 0, 1)
+
         # Handle batch dimension if present
         if len(img.shape) > 3:
             batch_size = img.shape[0]
@@ -243,7 +248,7 @@ class TargetedSamplePoisoningStrategy(DataPoisoningStrategy):
             batch_size = 1
 
         # Ensure image is large enough
-        if img.shape[-2] < 10 or img.shape[-1] < 10:
+        if img.shape[1] < 10 or img.shape[2] < 10:
             logging.warning(f"Image too small for X pattern: {img.shape}")
             return img
 
@@ -266,6 +271,13 @@ class TargetedSamplePoisoningStrategy(DataPoisoningStrategy):
 
         if is_single_point:
             img = img[0]
+
+        # Restore original dimensions
+        if dimensions_reordered:
+            img = img.permute(1, 2, 0)
+
+        # Convert back to PIL Image
+        img = Image.fromarray(img.numpy().astype(np.uint8))
 
         return img
 
