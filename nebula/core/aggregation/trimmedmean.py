@@ -12,7 +12,7 @@ class TrimmedMean(Aggregator):
     Note: https://arxiv.org/pdf/1803.01498.pdf
     """
 
-    def __init__(self, config=None, beta=0, **kwargs):
+    def __init__(self, config=None, beta=1, **kwargs):
         super().__init__(config, **kwargs)
         self.beta = beta
 
@@ -21,8 +21,8 @@ class TrimmedMean(Aggregator):
         weight_len = len(weights)
 
         if weight_len <= 2 * self.beta:
-            remaining_wrights = weights
-            res = torch.mean(remaining_wrights, 0)
+            remaining_weights = weights
+            res = torch.mean(remaining_weights, 0)
 
         else:
             # remove the largest and smallest β items
@@ -34,10 +34,8 @@ class TrimmedMean(Aggregator):
             sl = [slice(None)] * atmp.ndim
             sl[0] = slice(start, end)
             print(atmp[tuple(sl)])
-            arr_median = np.mean(atmp[tuple(sl)], axis=0)
-            res = torch.tensor(arr_median)
-
-        # get the mean of the remaining weights
+            arr_mean = np.mean(arr_weights, axis=0)
+            res = torch.tensor(arr_mean)
 
         return res
 
@@ -66,9 +64,6 @@ class TrimmedMean(Aggregator):
                 accum[layer] = w
 
             else:
-                # flatten the tensor
-                weight_layer_flatten = weight_layer.view(number_layer_weights)
-
                 # flatten the tensor of each model
                 models_layer_weight_flatten = torch.stack(
                     [models_params[j][layer].view(number_layer_weights) for j in range(0, total_models)],
