@@ -200,6 +200,73 @@ class NebulaModel(pl.LightningModule, ABC):
         self._current_loss = -1
         self._optimizer = None
 
+        # Backdoor evaluation tracking
+        self.backdoor_total_attacks = 0
+        self.backdoor_successful_attacks = 0
+
+    def add_x_to_image(self, x):
+        """
+        Add X pattern trigger to a batch of images for backdoor evaluation.
+
+        Args:
+            x: Input tensor of shape (batch_size, channels, height, width)
+
+        Returns:
+            Tensor with X pattern added to top-left corner of each image in the batch
+        """
+        x_backdoor = x.clone()
+
+        # Determine if images are normalized (0-1) or not (0-255)
+        is_normalized = x_backdoor.max() <= 1.0
+        pattern_value = 1.0 if is_normalized else 255.0
+
+        # Add 10x10 X pattern to top-left corner for all images in batch
+        height, width = x_backdoor.shape[2], x_backdoor.shape[3]
+        for i in range(min(10, height)):
+            for j in range(min(10, width)):
+                if i + j == 9 or i == j:  # X pattern condition
+                    # Apply to all channels and all images in batch
+                    x_backdoor[:, :, i, j] = pattern_value
+
+        return x_backdoor
+
+    def compute_backdoor_metrics(self, x, y):
+        with torch.no_grad():
+            x_backdoor = self.add_x_to_image(x)
+            outputs = self(x_backdoor)
+            preds = torch.argmax(outputs, dim=1)
+
+            target_label = 4
+
+            # Count samples that are NOT naturally target class (to avoid false positives)
+            non_target_mask = y != target_label
+
+            if non_target_mask.sum() > 0:
+                # Successful attacks: backdoored samples predicted as target_label
+                successful_attacks = (preds[non_target_mask] == target_label).sum().item()
+                total_attacks = non_target_mask.sum().item()
+
+                # Update tracking
+                self.backdoor_total_attacks += total_attacks
+                self.backdoor_successful_attacks += successful_attacks
+
+                # Compute batch backdoor accuracy
+                batch_ba = successful_attacks / total_attacks if total_attacks > 0 else 0.0
+
+                return {
+                    "batch_backdoor_accuracy": batch_ba,
+                    "batch_successful_attacks": successful_attacks,
+                    "batch_total_attacks": total_attacks,
+                    "batch_natural_targets": (y == target_label).sum().item(),
+                }
+            else:
+                return {
+                    "batch_backdoor_accuracy": 0.0,
+                    "batch_successful_attacks": 0,
+                    "batch_total_attacks": 0,
+                    "batch_natural_targets": len(y),
+                }
+
     def set_communication_manager(self, communication_manager):
         self.communication_manager = communication_manager
 
@@ -310,9 +377,14 @@ class NebulaModel(pl.LightningModule, ABC):
         if dataloader_idx == 0:
             self.log(f"val_loss", loss, on_epoch=True, prog_bar=False)
             self.log(f"val_accuracy", accuracy, on_epoch=True, prog_bar=False)
-            return self.step(batch, batch_idx=batch_idx, phase="Test (Local)")
+            result = self.step(batch, batch_idx=batch_idx, phase="Test (Local)")
         else:
-            return self.step(batch, batch_idx=batch_idx, phase="Test (Global)")
+            result = self.step(batch, batch_idx=batch_idx, phase="Test (Global)")
+
+            # Compute backdoor metrics on global test set
+            self.compute_backdoor_metrics(x, y)
+
+        return result
 
     def on_test_start(self):
         logging_training.info(f"{'=' * 10} [Testing] Started {'=' * 10}")
@@ -321,6 +393,14 @@ class NebulaModel(pl.LightningModule, ABC):
         logging_training.info(f"{'=' * 10} [Testing] Done {'=' * 10}")
 
     def on_test_epoch_end(self):
+        # Log cumulative backdoor accuracy before reset
+        if self.backdoor_total_attacks > 0:
+            cumulative_ba = self.backdoor_successful_attacks / self.backdoor_total_attacks
+            logging_training.info(
+                f"[Backdoor Evaluation] Round {self.round} - Total BA: {cumulative_ba:.4f} "
+                f"({self.backdoor_successful_attacks}/{self.backdoor_total_attacks})"
+            )
+
         # In general, the test phase is done in one epoch
         self.log_metrics_end("Test (Local)")
         self.log_metrics_end("Test (Global)")
@@ -330,6 +410,10 @@ class NebulaModel(pl.LightningModule, ABC):
         self.test_metrics_global.reset()
         self.global_number["Test (Local)"] += 1
         self.global_number["Test (Global)"] += 1
+
+        # Reset backdoor tracking for next round
+        self.backdoor_total_attacks = 0
+        self.backdoor_successful_attacks = 0
 
     def on_round_end(self):
         self.round += 1
