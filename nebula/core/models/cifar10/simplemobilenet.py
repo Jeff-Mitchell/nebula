@@ -53,14 +53,14 @@ class SimpleMobileNetV1(NebulaModel):
             conv_dw(64, 128, 2),
             conv_dw(128, 128, 1),
             conv_dw(128, 256, 2),
-            conv_dw(256, 256, 1),
+            conv_dw(256, 512, 1),
             nn.AdaptiveAvgPool2d(1),
         )
-        self.fc = nn.Linear(256, num_classes)
+        self.fc = nn.Linear(512, num_classes)
 
     def forward(self, x):
         x = self.model(x)
-        x = x.view(-1, 256)
+        x = x.view(-1, 512)
         x = self.fc(x)
         return x
 
