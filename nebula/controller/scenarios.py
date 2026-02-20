@@ -1203,7 +1203,7 @@ class ScenarioManagement:
                 host_config = client.api.create_host_config(
                     binds=[f"{self.root_path}:/nebula", "/var/run/docker.sock:/var/run/docker.sock"],
                     privileged=False,
-                    device_requests=[docker.types.DeviceRequest(driver="nvidia", device_ids=["3"], capabilities=[["gpu"]])],
+                    device_requests=[docker.types.DeviceRequest(driver="nvidia", device_ids=["0"], capabilities=[["gpu"]])],
                     extra_hosts={"host.docker.internal": "host-gateway"},
                 )
             else:
